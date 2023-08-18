@@ -1,0 +1,88 @@
+const mongoose = require("mongoose");
+const validator = require("validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+require('dotenv').config();
+
+const userSchema = new mongoose.Schema({
+    first_name: {
+        type: String,
+    },
+    last_name: {
+        type: String,
+    },
+    email: {
+        type: String,
+        unique: true,
+        validate: [validator.isEmail, "Please enter valid Email"],
+    },
+    password: {
+        type: String,
+        minLength: [8, "Minimum 8 character"],
+        select: false,
+    },
+    contact: { type: String, default: null },
+    billing_address: {
+        line1: { type: String, default: null },
+        line2: { type: String, default: null },
+        city: { type: String, default: null },
+        state: { type: String, default: null },
+        country: { type: String, default: null },
+        postal_code: { type: Number, default: null }
+    },
+    shipping_address: {
+        line1: { type: String, default: null },
+        line2: { type: String, default: null },
+        city: { type: String, default: null },
+        state: { type: String, default: null },
+        country: { type: String, default: null },
+        postal_code: { type: Number, default: null }
+    },
+    avatar: { type: String, default: 'user_default.svg' },
+    status: { type: String, default: "pending" },
+    isIndividual: { type: Boolean, default: false },
+    isPaidUser: { type: Boolean, default: false },
+    subscription_details: {
+        subscription: { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription' },
+        addones: [{ service: { type: String }, price: { type: Number } }],
+        total_amount: { type: Number },
+        payment_status: { type: String },
+    },
+    role: { type: String },
+    team: { type: String },
+    companyID: { type: mongoose.Schema.Types.ObjectId, ref: 'company' },
+    googleId: { type: String },
+    designation: [{ type: String }],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+}, { timestamps: true });
+
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) {
+        next();
+    }
+    this.password = await bcrypt.hash(this.password, 10);
+});
+
+userSchema.methods.getJWTToken = function () {
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRE,
+    });
+};
+
+userSchema.methods.comparePassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.getResetPasswordToken = function () {
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    this.resetPasswordToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+    this.resetPasswordExpire = Date.now() + 15 * 60 * 60 * 1000;
+    return resetToken;
+};
+
+module.exports = mongoose.model("user", userSchema);
