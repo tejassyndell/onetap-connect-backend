@@ -21,6 +21,7 @@ const url = 'http://localhost:3000';
 dotenv.config();
 
 app.use(express.json());
+app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
@@ -55,6 +56,12 @@ connectDatabase()
 //   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
 //   next();
 // });
+app.get('/',(req,res)=>{
+
+  const filePath = path.join(__dirname, '/utils/', 'template.html');
+  res.sendFile(filePath);
+  
+})
 
 app.get('/test', (req, res) => {
   const htmlResponse = `
@@ -91,40 +98,7 @@ app.get('/test', (req, res) => {
   res.send(htmlResponse);
 });
 
-app.get('/test', (req, res) => {
-  const htmlResponse = `
-    <html>
-      <head>
-        <style>
-          body {
-            background-color: #f2f2f2;
-            height: 100%;
-            font-family: Arial, sans-serif;
-            display:flex;
-            flex-direction: column;
-            align-items:center;
-            justify-content:center;
-          }
-          
-          h1 {
-            color: #333333;
-            text-align: center;
-          }
-          p{
-            color: #e65925;
-            display:block;
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Hello! &#128075;</h1>
-        <p>OneTapConnect Server</p>
-      </body>
-    </html>
-  `; // HTML content with inline CSS
 
-  res.send(htmlResponse);
-});
 
 
 app.listen(process.env.PORT,()=>{

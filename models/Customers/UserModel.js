@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema({
         country: { type: String, default: null },
         postal_code: { type: Number, default: null }
     },
+    isVerfied : {type : Boolean},
     avatar: { type: String, default: 'user_default.svg' },
     status: { type: String, default: "pending" },
     isIndividual: { type: Boolean, default: false },
@@ -49,9 +50,9 @@ const userSchema = new mongoose.Schema({
         total_amount: { type: Number },
         payment_status: { type: String },
     },
-    role: { type: String },
+    role: { type: String,default:'member' },
     team: { type: String },
-    companyID: { type: mongoose.Schema.Types.ObjectId, ref: 'company' },
+    companyID: { type: mongoose.Schema.Types.ObjectId, ref: 'company' ,default : null},
     googleId: { type: String },
     designation: [{ type: String }],
     resetPasswordToken: String,
@@ -62,6 +63,8 @@ userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
         next();
     }
+    console.log(this);
+    console.log(this.password);
     this.password = await bcrypt.hash(this.password, 10);
 });
 
