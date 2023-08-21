@@ -243,14 +243,14 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
-
+console.log(email,password)
   // checking if user has given password and email both
 
   if (!email || !password) {
     return next(new ErrorHandler("Please Enter Email & Password", 400));
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select('+password');
 
   if (!user) {
     return next(new ErrorHandler("Invalid email or password", 401));
