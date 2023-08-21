@@ -121,7 +121,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-};
+  };
 
   transporter.sendMail(message, (err, info) => {
     if (err) {
@@ -508,85 +508,195 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     user
   })
 })
-  // update user team
-  exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
-    const { users, teams } = req.body;
+// update user team
+exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
+  const { users, teams } = req.body;
 
-    // Loop through the array of user IDs
-    for (let i = 0; i < users.length; i++) {
-      const user = await User.findById(users[i]);
+  // Loop through the array of user IDs
+  for (let i = 0; i < users.length; i++) {
+    const user = await User.findById(users[i]);
 
-      if (!user) {
-        return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
-      }
-
-      // Update the user's team based on the corresponding team value
-      // user.team = teams[i].value;
-      //comment above line because this time we only select one team not multiple
-      user.team = teams.value;
-      await user.save(); // Save the changes to the user
+    if (!user) {
+      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
     }
 
-    res.status(200).json({
-      success: true,
-    });
+    // Update the user's team based on the corresponding team value
+    // user.team = teams[i].value;
+    //comment above line because this time we only select one team not multiple
+    user.team = teams.value;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({
+    success: true,
   });
+});
 
-  // updtae users status
-  exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
-    const { users, status } = req.body;
+// updtae users status
+exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
+  const { users, status } = req.body;
 
-    // Loop through the array of user IDs
-    for (let i = 0; i < users.length; i++) {
-      const user = await User.findById(users[i]);
+  // Loop through the array of user IDs
+  for (let i = 0; i < users.length; i++) {
+    const user = await User.findById(users[i]);
 
-      if (!user) {
-        return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
-      }
-
-      // Update the user's status based on the corresponding status value
-      user.status = status;
-      await user.save(); // Save the changes to the user
+    if (!user) {
+      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
     }
 
-    res.status(200).json({
-      success: true,
-    });
+    // Update the user's status based on the corresponding status value
+    user.status = status;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({
+    success: true,
   });
+});
 
-  //add card details
-  exports.addCardDetails = catchAsyncErrors(async (req, res) => {
-    const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
-    const { id } = req.user;
-    const cardData = {
-      nameOnCard,
-      cardNumber,
-      expirationDate,
-      CVV,
-      status,
-    };
-    const card = await Cards.create(cardData);
 
-    card.userID = id;
+// invite team member 
 
-    card.save();
+exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
-    res.status(201).json({
-      card,
-    });
-  });
+  const { email, first_name, last_name, team } = req.body.memberData;
+  const { companyID } = req.user
 
-  exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
-    const { id } = req.user;
+  if (!email || !first_name || !last_name || !team) {
 
-    const cards = await Cards.find({ userID: id });
-
-    if (!cards) {
-      return next(new ErrorHandler("No card details found for this user", 404));
+    if (!email) {
+      return next(new ErrorHandler('Please Enter Email', 400))
+    }
+    if (!first_name) {
+      return next(new ErrorHandler('Please Enter First Name', 400))
+    }
+    if (!last_name) {
+      return next(new ErrorHandler('Please Enter Last Name', 400))
+    }
+    if (!team) {
+      return next(new ErrorHandler('Please Enter Team', 400))
+    }
+    else {
+      return next(new ErrorHandler("Please fill out all details", 400))
     }
 
-    res.status(200).json({
-      success: true,
-      cards,
-    });
+  }
+  if (email) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailPattern.test(email) === false) {
+
+      return next(new ErrorHandler("Please enter valid email"))
+    }
+  }
+
+  let invitationToken = crypto.randomBytes(20).toString("hex");
+
+  const currentDate = new Date();
+
+  // Calculate the expiry date by adding 10 days
+  const expiryDate = new Date(currentDate);
+  expiryDate.setDate(currentDate.getDate() + 10);
+
+  // Convert the expiry date to ISO string format
+  // const expiryDateString = expiryDate.toISOString();
+
+
+
+  const member = await InvitaionModel.create({
+    email: email,
+    first_name: first_name,
+    last_name: last_name,
+    team: team,
+    companyId: companyID,
+    invitationToken: invitationToken,
+    invitationExpiry: expiryDate
+
+
   })
+
+  //  <h3>Hello ${first_name}</h3>
+  //  <p>Please click the buttons below link to complete your sign up with oneTapConnect to Join ${company.name}</p>
+  //  <p></p><a href="${process.env.FRONTEND_URL}/invitaion/${invitationToken}">Click me</a> to complete sign up</p>
+
+
+  // const transporter = nodemailer.createTransport({
+  //   service: "Gmail",
+  //   port: 587,
+  //   auth: {
+  //     user: process.env.NODMAILER_EMAIL,
+  //     pass: process.env.NODEMAILER_PASS,
+  //   },
+  // });
+
+  // const message = {
+  //   from: "mailto:manish.syndell@gmail.com",
+  //   to: email,
+  //   subject: `${company.name} Invited you to join OneTapConnect`,
+  //   html: `
+  //  <div>
+  //  <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div>
+  //  <h3>Welcome to OneTapConnect!</h3>
+  //  <p>Hi ${first_name}<br/>
+  //  You’ve been invited by ${company.name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+  //  <div><button>Accept invitation</button><button>Reject</button></div>
+  //  <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
+  //  <h5>Technical issue?</h5>
+  //  <p>In case you facing any technical issue, please contact our support team <a>here</a>.</p>
+  //  <a></a>
+  //  </div>
+
+  // `
+  // };
+
+  // transporter.sendMail(message, (err, info) => {
+  //   if (err) {
+  //     console.log(err)
+  //   }
+  //   else {
+  //     console.log(info.response)
+  //   }
+  // })
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully"
+  })
+
+})
+
+//add card details
+exports.addCardDetails = catchAsyncErrors(async (req, res) => {
+  const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
+  const { id } = req.user;
+  const cardData = {
+    nameOnCard,
+    cardNumber,
+    expirationDate,
+    CVV,
+    status,
+  };
+  const card = await Cards.create(cardData);
+
+  card.userID = id;
+
+  card.save();
+
+  res.status(201).json({
+    card,
+  });
+});
+
+exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.user;
+
+  const cards = await Cards.find({ userID: id });
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found for this user", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    cards,
+  });
+})
