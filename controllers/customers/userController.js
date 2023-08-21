@@ -219,7 +219,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
   // checking if user has given password and email both
 
 
-
+  console.log(req.user)
   const user = await User.findById(id)
 
   if (!user) {
@@ -466,6 +466,8 @@ exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
 
     // Update the user's team based on the corresponding team value
     user.team = teams[i].value;
+    console.log(teams[i]);
+    console.log(teams[i].value);
     await user.save(); // Save the changes to the user
 
   }
@@ -498,6 +500,25 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
   });
-
-
 })
+
+
+// exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
+
+//   const companyID = req.user.companyID
+//   console.log(companyID)
+//   const {teamName} = req.body;
+
+//   const company = await Company.findOne(companyID).populate('primary_account'); // Replace with proper query
+
+//   if (!company) {
+//       return res.status(404).json({ message: 'Company not found' });
+//   }
+
+//   company.teams.push(teamName);
+//   await company.save();
+
+//   res.status(201).json({ message: 'Team created successfully', company });
+
+
+// }) 
