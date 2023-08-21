@@ -6,24 +6,22 @@ const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
-const axios = require('axios')
-const jwt = require('jsonwebtoken');
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../../models/Customers/UserModel.js");
-const Company = require('../../models/Customers/CompanyModel.js');
+const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
-const InvitaionModel = require('../../models/Customers/InvitedTeamMemberModel.js')
+const InvitaionModel = require("../../models/Customers/InvitedTeamMemberModel.js");
+const Cards = require("../../models/Customers/CardsModel.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
-
 
 dotenv.config();
 
-
 //--sign up step - 1 ----
 exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
-
-  const { email } = req.body
-  console.log(email)
+  const { email } = req.body;
+  console.log(email);
 
   const user = await User.findOne({ email: email }).lean(); // Use .lean() to get a plain object
   // console.log(user);
@@ -122,9 +120,8 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
     </html>
     
     
-  `
-
-  };
+  `,
+};
 
   transporter.sendMail(message, (err, info) => {
     if (err) {
@@ -143,7 +140,6 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 
 
 });
-
 
 //sign-up step-2
 exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
@@ -173,22 +169,20 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
   );
   if (!user) {
-    return next(new ErrorHandler("Error while sign-up", 400)
-    )
+    return next(new ErrorHandler("Error while sign-up", 400));
   }
 
-  const trimedString = company_name.replace(/\s/g, '').toLowerCase();
-
+  const trimedString = company_name.replace(/\s/g, "").toLowerCase();
 
   const company = await Company.find();
 
   // checking if compnay already exists
   company.map((item) => {
-    if (item.company_name.replace(/\s/g, '').toLowerCase() === trimedString) {
-      console.log(item.company_name)
-      return next(new ErrorHandler("Company Already Exists", 400))
+    if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
+      console.log(item.company_name);
+      return next(new ErrorHandler("Company Already Exists", 400));
     }
-  })
+  });
 
   const newCompany = await Company.create({ primary_account: user._id, company_name, industry, team_size })
 
@@ -218,13 +212,15 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     contact,
     isIndividual,
     isPaidUser,
-    role
-  }
+    role,
+    company_name,
+    industry,
+  } = req.body;
+
 
   console.log(req.body);
 
   const user = await User.create(userData);
-
 
   const companyData = {
     company_name,
@@ -240,18 +236,9 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
 
   res.status(201).json({
     user,
-    company
-  })
-
-
-
-})
-
-
-
-
-
-
+    company,
+  });
+});
 
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
@@ -291,16 +278,13 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 //get profile user
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
 
   // checking if user has given password and email both
 
-
-
-  const user = await User.findById(id)
+  const user = await User.findById(id);
 
   if (!user) {
     return next(new ErrorHandler("user not found", 401));
@@ -308,9 +292,8 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user
-  })
-
+    user,
+  });
 });
 
 // forgot password
@@ -329,9 +312,6 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   const resetToken = user.getResetPasswordToken();
 
 //   await user.save({ validateBeforeSave: false });
-
-
-
 
 //   const transporter = nodemailer.createTransport({
 //     service: "Gmail",
@@ -376,8 +356,8 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   try {
     // Check if you're using the correct SMTP settings
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
+      service: "gmail",
+      host: "smtp.gmail.com",
       port: 587, // Use 465 for SSL
       secure: true, // true for 465, false for other ports
       auth: {
@@ -390,7 +370,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 404));
+      return next(new ErrorHandler("User not found", 404));
     }
 
     // Generate or retrieve resetToken here
@@ -399,9 +379,9 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: 'manish.syndell@gmail.com',
+      from: "manish.syndell@gmail.com",
       to: email, // Replace with the recipient's email
-      subject: 'Password Recovery Email',
+      subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
       html: `<div>
       <h3>Dear User</h3>
@@ -431,15 +411,13 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       message: `Email sent to ${email} successfully`,
     });
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("Error sending email:", error);
     res.send(error);
 
     // Handle the error properly
-    return next(new ErrorHandler('Email sending failed', 500));
+    return next(new ErrorHandler("Email sending failed", 500));
   }
 });
-
-
 
 //reset password
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
@@ -454,8 +432,8 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     resetPasswordExpire: { $gt: Date.now() },
   });
 
-  console.log(user)
-  console.log(req.body)
+  console.log(user);
+  console.log(req.body);
 
   if (!user) {
     return next(
@@ -529,165 +507,86 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     success: true,
     user
   })
-
 })
+  // update user team
+  exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
+    const { users, teams } = req.body;
 
-// update user team 
-exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
-  const { users, teams } = req.body;
+    // Loop through the array of user IDs
+    for (let i = 0; i < users.length; i++) {
+      const user = await User.findById(users[i]);
 
-  // Loop through the array of user IDs
-  for (let i = 0; i < users.length; i++) {
-    const user = await User.findById(users[i]);
+      if (!user) {
+        return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+      }
 
-    if (!user) {
-      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+      // Update the user's team based on the corresponding team value
+      // user.team = teams[i].value;
+      //comment above line because this time we only select one team not multiple
+      user.team = teams.value;
+      await user.save(); // Save the changes to the user
     }
 
-    // Update the user's team based on the corresponding team value
-    user.team = teams[i].value;
-    await user.save(); // Save the changes to the user
-
-  }
-
-  res.status(200).json({
-    success: true,
-  });
-});
-
-
-// updtae users status 
-exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
-
-  const { users, status } = req.body;
-
-  // Loop through the array of user IDs
-  for (let i = 0; i < users.length; i++) {
-    const user = await User.findById(users[i]);
-
-    if (!user) {
-      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
-    }
-
-    // Update the user's status based on the corresponding status value
-    user.status = status;
-    await user.save(); // Save the changes to the user
-
-  }
-
-  res.status(200).json({
-    success: true,
+    res.status(200).json({
+      success: true,
+    });
   });
 
+  // updtae users status
+  exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
+    const { users, status } = req.body;
 
-})
+    // Loop through the array of user IDs
+    for (let i = 0; i < users.length; i++) {
+      const user = await User.findById(users[i]);
 
+      if (!user) {
+        return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+      }
 
-// invite team member 
-
-exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-
-  const { email, first_name, last_name, team } = req.body.memberData;
-  const { companyID } = req.user
-
-  if (!email || !first_name || !last_name || !team) {
-
-    if (!email) {
-      return next(new ErrorHandler('Please Enter Email', 400))
-    }
-    if (!first_name) {
-      return next(new ErrorHandler('Please Enter First Name', 400))
-    }
-    if (!last_name) {
-      return next(new ErrorHandler('Please Enter Last Name', 400))
-    }
-    if (!team) {
-      return next(new ErrorHandler('Please Enter Team', 400))
-    }
-    else {
-      return next(new ErrorHandler("Please fill out all details", 400))
+      // Update the user's status based on the corresponding status value
+      user.status = status;
+      await user.save(); // Save the changes to the user
     }
 
-  }
-  if (email) {
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailPattern.test(email) === false) {
+    res.status(200).json({
+      success: true,
+    });
+  });
 
-      return next(new ErrorHandler("Please enter valid email"))
+  //add card details
+  exports.addCardDetails = catchAsyncErrors(async (req, res) => {
+    const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
+    const { id } = req.user;
+    const cardData = {
+      nameOnCard,
+      cardNumber,
+      expirationDate,
+      CVV,
+      status,
+    };
+    const card = await Cards.create(cardData);
+
+    card.userID = id;
+
+    card.save();
+
+    res.status(201).json({
+      card,
+    });
+  });
+
+  exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.user;
+
+    const cards = await Cards.find({ userID: id });
+
+    if (!cards) {
+      return next(new ErrorHandler("No card details found for this user", 404));
     }
-  }
 
-  let invitationToken = crypto.randomBytes(20).toString("hex");
-
-  const currentDate = new Date();
-
-  // Calculate the expiry date by adding 10 days
-  const expiryDate = new Date(currentDate);
-  expiryDate.setDate(currentDate.getDate() + 10);
-
-  // Convert the expiry date to ISO string format
-  // const expiryDateString = expiryDate.toISOString();
-
-
-
-  const member = await InvitaionModel.create({
-    email: email,
-    first_name: first_name,
-    last_name: last_name,
-    team: team,
-    companyId: companyID,
-    invitationToken: invitationToken,
-    invitationExpiry: expiryDate
-
-
+    res.status(200).json({
+      success: true,
+      cards,
+    });
   })
-
-  //  <h3>Hello ${first_name}</h3>
-  //  <p>Please click the buttons below link to complete your sign up with oneTapConnect to Join ${company.name}</p>
-  //  <p></p><a href="${process.env.FRONTEND_URL}/invitaion/${invitationToken}">Click me</a> to complete sign up</p>
-
-
-  // const transporter = nodemailer.createTransport({
-  //   service: "Gmail",
-  //   port: 587,
-  //   auth: {
-  //     user: process.env.NODMAILER_EMAIL,
-  //     pass: process.env.NODEMAILER_PASS,
-  //   },
-  // });
-
-  // const message = {
-  //   from: "manish.syndell@gmail.com",
-  //   to: email,
-  //   subject: `${company.name} Invited you to join OneTapConnect`,
-  //   html: `
-  //  <div>
-  //  <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div>
-  //  <h3>Welcome to OneTapConnect!</h3>
-  //  <p>Hi ${first_name}<br/>
-  //  You’ve been invited by ${company.name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
-  //  <div><button>Accept invitation</button><button>Reject</button></div>
-  //  <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
-  //  <h5>Technical issue?</h5>
-  //  <p>In case you facing any technical issue, please contact our support team <a>here</a>.</p>
-  //  <a></a>
-  //  </div>
-
-  // `
-  // };
-
-  // transporter.sendMail(message, (err, info) => {
-  //   if (err) {
-  //     console.log(err)
-  //   }
-  //   else {
-  //     console.log(info.response)
-  //   }
-  // })
-
-  res.status(201).json({
-    success: true,
-    message: "Invitaion Email sent Successfully"
-  })
-
-})

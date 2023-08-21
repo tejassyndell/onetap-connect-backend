@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema({
         addones: [{ service: { type: String }, price: { type: Number } }],
         total_amount: { type: Number },
         payment_status: { type: String },
+        billing_cycle: {type: String},
+        plan: {type: String},
+        total_user: {type: Number},
+        recurring_amount: {type: Number}
+
     },
     role: { type: String,default:'member' },
     team: { type: String },
