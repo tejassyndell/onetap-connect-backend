@@ -6,30 +6,27 @@ const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
-const axios = require('axios')
-const jwt = require('jsonwebtoken');
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../../models/Customers/UserModel.js");
-const Company = require('../../models/Customers/CompanyModel.js');
+const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
-const InvitaionModel = require('../../models/Customers/InvitedTeamMemberModel.js')
+const InvitaionModel = require("../../models/Customers/InvitedTeamMemberModel.js");
+const Cards = require("../../models/Customers/CardsModel.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
-
 
 dotenv.config();
 
-
 //--sign up step - 1 ----
 exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
-
-  const { email } = req.body
-  console.log(email)
+  const { email } = req.body;
+  console.log(email);
 
   const user = await User.create(req.body);
 
   if (!user) {
-    return next(new ErrorHandler("Error while sign-up", 400)
-    )
+    return next(new ErrorHandler("Error while sign-up", 400));
   }
 
   const transporter = nodemailer.createTransport({
@@ -57,80 +54,80 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
     Best regards,<br>
 The One Tap Connect Team</p>
     
-  `
-
+  `,
   };
 
   transporter.sendMail(message, (err, info) => {
     if (err) {
-      console.log(err)
+      console.log(err);
+    } else {
+      console.log(info.envelope);
     }
-    else {
-      console.log(info.envelope)
-    }
-  })
+  });
 
   res.status(200).json({
     success: true,
     user,
-    message: "Email sent successfully"
-  })
-
+    message: "Email sent successfully",
+  });
 });
-
 
 //sign-up step-2
 exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
-
-  const { id } = req.params
-  const { first_name, last_name, contact, isCompany, industry, company_name, team_size } = req.body.signupData;
-  console.log(req.body)
+  const { id } = req.params;
+  const {
+    first_name,
+    last_name,
+    contact,
+    isCompany,
+    industry,
+    company_name,
+    team_size,
+  } = req.body.signupData;
+  console.log(req.body);
 
   const user = await User.findById(id);
   if (!user) {
-    return next(new ErrorHandler("Error while sign-up", 400)
-    )
+    return next(new ErrorHandler("Error while sign-up", 400));
   }
 
-  const trimedString = company_name.replace(/\s/g, '').toLowerCase();
-
+  const trimedString = company_name.replace(/\s/g, "").toLowerCase();
 
   const company = await Company.find();
 
   // checking if compnay already exists
   company.map((item) => {
-    if (item.company_name.replace(/\s/g, '').toLowerCase() === trimedString) {
-      console.log(item.company_name)
-      return next(new ErrorHandler("Company Already Exists", 400))
+    if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
+      console.log(item.company_name);
+      return next(new ErrorHandler("Company Already Exists", 400));
     }
-  })
+  });
 
-  const newCompany = await Company.create({ primary_account: id, company_name, industry, team_size })
+  const newCompany = await Company.create({
+    primary_account: id,
+    company_name,
+    industry,
+    team_size,
+  });
 
   user.first_name = first_name;
   user.last_name = last_name;
   user.contact = contact;
   if (isCompany) {
     user.isCompanyMember = true;
-  }
-  else {
+  } else {
     user.isCompanyMember = false;
   }
   await user.save({ validateBeforeSave: true });
 
   res.status(200).json({
     message: "user saved successfully",
-    user
-  })
-
-})
-
+    user,
+  });
+});
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
-
-  const { first_name, last_name, email, password, contact, isIndividual, isPaidUser, role,company_name,industry, } = req.body;
-  const userData = {
-
+  const {
     first_name,
     last_name,
     email,
@@ -138,40 +135,41 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     contact,
     isIndividual,
     isPaidUser,
-    role
-  }
+    role,
+    company_name,
+    industry,
+  } = req.body;
+  const userData = {
+    first_name,
+    last_name,
+    email,
+    password,
+    contact,
+    isIndividual,
+    isPaidUser,
+    role,
+  };
 
   console.log(req.body);
 
   const user = await User.create(userData);
 
-
   const companyData = {
     company_name,
     industry,
-    primary_account : user._id
+    primary_account: user._id,
+  };
 
-  }
-
-  const company = await  Company.create(companyData);
+  const company = await Company.create(companyData);
 
   user.companyID = company._id;
   user.save();
 
   res.status(201).json({
     user,
-    company
-  })
-
-
-
-})
-
-
-
-
-
-
+    company,
+  });
+});
 
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
@@ -211,16 +209,13 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 //get profile user
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
 
   // checking if user has given password and email both
 
-
-
-  const user = await User.findById(id)
+  const user = await User.findById(id);
 
   if (!user) {
     return next(new ErrorHandler("user not found", 401));
@@ -228,9 +223,8 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user
-  })
-
+    user,
+  });
 });
 
 // forgot password
@@ -249,9 +243,6 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   const resetToken = user.getResetPasswordToken();
 
 //   await user.save({ validateBeforeSave: false });
-
-
-
 
 //   const transporter = nodemailer.createTransport({
 //     service: "Gmail",
@@ -296,21 +287,21 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   try {
     // Check if you're using the correct SMTP settings
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
+      service: "gmail",
+      host: "smtp.gmail.com",
       port: 587, // Use 465 for SSL
       secure: true, // true for 465, false for other ports
       auth: {
         user: process.env.NODMAILER_EMAIL,
         pass: process.env.NODEMAILER_PASS,
       },
-      tls: {rejectUnauthorized: false}
+      tls: { rejectUnauthorized: false },
     });
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 404));
+      return next(new ErrorHandler("User not found", 404));
     }
 
     // Generate or retrieve resetToken here
@@ -319,11 +310,11 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: 'manish.syndell@gmail.com',
+      from: "manish.syndell@gmail.com",
       to: email, // Replace with the recipient's email
-      subject: 'Password Recovery Email',
+      subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
-      html:  `<div>
+      html: `<div>
       <h3>Dear User</h3>
       <p>We received a request to reset the password associated with your account. If you did not initiate this request, please disregard this email.</p>
       
@@ -339,8 +330,6 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       <p>Best regards,<br>The One Tap Connect Team</p>
      </div>`,
     };
-    
-
 
     // Attempt to send the email
     await transporter.sendMail(message);
@@ -351,15 +340,13 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       message: `Email sent to ${email} successfully`,
     });
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("Error sending email:", error);
     res.send(error);
 
     // Handle the error properly
-    return next(new ErrorHandler('Email sending failed', 500));
+    return next(new ErrorHandler("Email sending failed", 500));
   }
 });
-
-
 
 //reset password
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
@@ -374,8 +361,8 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     resetPasswordExpire: { $gt: Date.now() },
   });
 
-  console.log(user)
-  console.log(req.body)
+  console.log(user);
+  console.log(req.body);
 
   if (!user) {
     return next(
@@ -395,64 +382,54 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
-
-
-exports.getCompanyDetails = catchAsyncErrors(async(req,res,next)=>{
-
-
-  const {companyID} = req.user
-  const company = await Company.findById(companyID).populate('primary_account');
-  if(!company){
-    return next(new ErrorHandler("No company details Found",404));
+exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
+  const company = await Company.findById(companyID).populate("primary_account");
+  if (!company) {
+    return next(new ErrorHandler("No company details Found", 404));
   }
 
   res.status(200).json({
-    success : true,
-    company
-  })
-
-})
-
-
+    success: true,
+    company,
+  });
+});
 
 // get all team members
-exports.getUsers = catchAsyncErrors(async(req,res,next)=>{
-
-  const {companyID} = req.user
-  const users = await User.find({companyID});
-  if(!users){
-    return next(new ErrorHandler("No company details Found",404));
+exports.getUsers = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
+  const users = await User.find({ companyID });
+  if (!users) {
+    return next(new ErrorHandler("No company details Found", 404));
   }
 
   res.status(200).json({
-    success : true,
-    users
-  })
-
-})
-
+    success: true,
+    users,
+  });
+});
 
 // get single team members
-exports.getUserDetails = catchAsyncErrors(async(req,res,next)=>{
-
-  const {id} = req.params
+exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
   const user = await User.findById(id);
-  if(!user){
-    return next(new ErrorHandler("No company details Found",404));
+  if (!user) {
+    return next(new ErrorHandler("No company details Found", 404));
   }
-console.log(user.companyID,req.user.companyID)
-  if(user.companyID.toString() !== req.user.companyID.toString()){
-    return next(new ErrorHandler("You are not authorized to access this route",401));
+  console.log(user.companyID, req.user.companyID);
+  if (user.companyID.toString() !== req.user.companyID.toString()) {
+    return next(
+      new ErrorHandler("You are not authorized to access this route", 401)
+    );
   }
 
   res.status(200).json({
-    success : true,
-    user
-  })
+    success: true,
+    user,
+  });
+});
 
-})
-
-// update user team 
+// update user team
 exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
   const { users, teams } = req.body;
 
@@ -465,9 +442,10 @@ exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
     }
 
     // Update the user's team based on the corresponding team value
-    user.team = teams[i].value;
+    // user.team = teams[i].value;
+    //comment above line because this time we only select one team not multiple
+    user.team = teams.value;
     await user.save(); // Save the changes to the user
-
   }
 
   res.status(200).json({
@@ -475,10 +453,8 @@ exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
-// updtae users status 
+// updtae users status
 exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
-
   const { users, status } = req.body;
 
   // Loop through the array of user IDs
@@ -492,12 +468,46 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
     // Update the user's status based on the corresponding status value
     user.status = status;
     await user.save(); // Save the changes to the user
-
   }
 
   res.status(200).json({
     success: true,
   });
+});
 
+//add card details
+exports.addCardDetails = catchAsyncErrors(async (req, res) => {
+  const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
+  const { id } = req.user;
+  const cardData = {
+    nameOnCard,
+    cardNumber,
+    expirationDate,
+    CVV,
+    status,
+  };
+  const card = await Cards.create(cardData);
 
-})
+  card.userID = id;
+
+  card.save();
+
+  res.status(201).json({
+    card,
+  });
+});
+
+exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.user;
+
+  const cards = await Cards.find({ userID: id });
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found for this user", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    cards,
+  });
+});
