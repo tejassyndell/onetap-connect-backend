@@ -501,3 +501,110 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
 
 
 })
+
+
+// invite team member 
+
+exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
+
+  const {email, first_name, last_name, team} = req.body.memberData;
+  const {companyID} = req.user
+
+  if (!email || !first_name  || !last_name || !team) {
+
+    if (!email) {
+      return next(new ErrorHandler('Please Enter Email', 400))
+    }
+    if (!first_name) {
+      return next(new ErrorHandler('Please Enter First Name', 400))
+    }
+    if (!last_name) {
+      return next(new ErrorHandler('Please Enter Last Name', 400))
+    }
+    if (!team) {
+      return next(new ErrorHandler('Please Enter Team', 400))
+    }
+    else {
+      return next(new ErrorHandler("Please fill out all details", 400))
+    }
+
+  }
+  if (email) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailPattern.test(email) === false) {
+
+      return next(new ErrorHandler("Please enter valid email"))
+    }
+  }
+
+  let invitationToken = crypto.randomBytes(20).toString("hex");
+
+  const currentDate = new Date();
+
+  // Calculate the expiry date by adding 10 days
+  const expiryDate = new Date(currentDate);
+  expiryDate.setDate(currentDate.getDate() + 10);
+
+  // Convert the expiry date to ISO string format
+  // const expiryDateString = expiryDate.toISOString();
+
+  
+
+  const member = await InvitaionModel.create({
+    email : email,
+    first_name : first_name,
+    last_name:last_name,
+    team : team,
+    companyId: companyID,
+    invitationToken :invitationToken,
+    invitationExpiry : expiryDate
+
+
+   })
+
+
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const message = {
+    from: "mailto:manish.syndell@gmail.com",
+    to: email,
+    subject: `${company.name} Invited you to join OneTapConnect`,
+    html: `
+   <div>
+   <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div>
+   <h3>Welcome to OneTapConnect!</h3>
+   <p>Hi ${first_name}<br/>
+   You’ve been invited by ${company.name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+   <div><button>Accept invitation</button><button>Reject</button></div>
+   <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
+   <h5>Technical issue?</h5>
+   <p>In case you facing any technical issue, please contact our support team <a>here</a>.</p>
+   <a></a>
+   </div>
+
+  `
+  };
+
+  transporter.sendMail(message, (err, info) => {
+    if (err) {
+      console.log(err)
+    }
+    else {
+      console.log(info.response)
+    }
+  })
+
+  res.status(201).json({
+    success : true,
+    message:"Invitaion Email sent Successfully"
+  })
+
+})
