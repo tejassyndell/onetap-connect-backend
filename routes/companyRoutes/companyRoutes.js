@@ -1,6 +1,6 @@
 const express = require('express');
 const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.js");
-const { login, registerUser, forgotPassword, resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, createNewTeam } = require('../../controllers/customers/userController.js');
+const { login, registerUser, forgotPassword, resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, createNewTeam, updateTeamName } = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -15,7 +15,8 @@ router.get('/users',isAuthenticatedUser,getUsers)
 router.get('/profile',isAuthenticatedUser,getProfile)
 router.get('/user/:id',isAuthenticatedUser,getUserDetails)
 router.put('/user/update/team',isAuthenticatedUser,updateTeam)
+router.put('/user/update/users/team',isAuthenticatedUser,updateTeamName)
 router.put('/user/update/status',isAuthenticatedUser,updateStatus)
-// router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
+router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 
 module.exports = router;

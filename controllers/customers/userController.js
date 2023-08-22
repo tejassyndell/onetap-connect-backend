@@ -468,6 +468,7 @@ exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
     user.team = teams[i].value;
     console.log(teams[i]);
     console.log(teams[i].value);
+    console.log(user.team)
     await user.save(); // Save the changes to the user
 
   }
@@ -476,6 +477,7 @@ exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
     success: true,
   });
 });
+
 
 
 // updtae users status 
@@ -502,23 +504,46 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   });
 })
 
+// Create new Team 
+exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
 
-// exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
+  const companyID = req.user.companyID
+  console.log(companyID)
+  const {teamName} = req.body;
 
-//   const companyID = req.user.companyID
-//   console.log(companyID)
-//   const {teamName} = req.body;
+  const company = await Company.findOne(companyID).populate('primary_account'); // Replace with proper query
 
-//   const company = await Company.findOne(companyID).populate('primary_account'); // Replace with proper query
+  if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+  }
 
-//   if (!company) {
-//       return res.status(404).json({ message: 'Company not found' });
-//   }
+  if (company.teams.includes(teamName)) {
+    return res.status(400).json({ message: 'This team already exists' });
+  }
 
-//   company.teams.push(teamName);
-//   await company.save();
+  company.teams.push(teamName);
+  await company.save();
 
-//   res.status(201).json({ message: 'Team created successfully', company });
+  res.status(201).json({ message: 'Team created successfully', company });
+}) 
 
+// for Create new Team and update User Team
+exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers, teamName } = req.body;
 
-// }) 
+  // Loop through the array of selected user IDs
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: `User not found with ID: ${userId}` });
+    }
+
+    // Update the user's team with the new team name
+    user.team = teamName;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({ message: 'Users updated successfully' });
+});
+
