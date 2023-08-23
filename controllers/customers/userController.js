@@ -634,7 +634,6 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   // const expiryDateString = expiryDate.toISOString();
 
 
-
   const member = await InvitedTeamMemberModel.create({
     email: email,
     first_name: first_name,
@@ -734,6 +733,25 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+// Remove a User from a Team
+exports.removeUserFromTeam = catchAsyncErrors(async (req, res, next) => {
+  const { userId, teamName } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ message: `User not found with ID: ${userId}` });
+  }
+
+  if (user.team !== teamName) {
+    return res.status(400).json({ message: `User is not a part of team ${teamName}` });
+  }
+
+  user.team = ''; // Remove user from the team by setting an empty string
+  await user.save(); // Save the changes to the user
+
+  res.status(200).json({ message: 'User removed from the team successfully' });
+});
+
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
   const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
@@ -806,3 +824,47 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ error: "Error updating user billing address." });
   }
 });
+
+// for Create new Team and update User Team
+exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers, teamName } = req.body;
+
+  // Loop through the array of selected user IDs
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: `User not found with ID: ${userId}` });
+    }
+
+    // Update the user's team with the new team name
+    user.team = teamName;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({ message: 'Users updated successfully' });
+  
+});
+
+// Create new Team 
+exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
+
+  const companyID = req.user.companyID
+  console.log(companyID)
+  const {teamName} = req.body;
+
+  const company = await Company.findOne(companyID).populate('primary_account'); // Replace with proper query
+
+  if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+  }
+
+  if (company.teams.includes(teamName)) {
+    return res.status(400).json({ message: 'This team already exists' });
+  }
+
+  company.teams.push(teamName);
+  await company.save();
+
+  res.status(201).json({ message: 'Team created successfully', company });
+}) 

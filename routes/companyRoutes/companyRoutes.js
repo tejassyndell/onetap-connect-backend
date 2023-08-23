@@ -1,11 +1,14 @@
 const express = require('express');
 const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.js");
-const { login, registerUser, forgotPassword, resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails,updateBillingAddress } = require('../../controllers/customers/userController.js');
+const { login,
+     registerUser,
+     forgotPassword, 
+     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
-router.post('/register',signUP1)
-router.post('/register/step-2/:token',signUP2)
+router.post('/register', signUP1)
+router.post('/register/step-2/:token', signUP2)
 router.post("/login", login);
 router.get("/logout", logout);
 router.post("/forgot/password", forgotPassword);
@@ -19,9 +22,11 @@ router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
-router.post('/invite/user',isAuthenticatedUser,inviteTeamMember)
-router.get('/invitedusers',isAuthenticatedUser,getinvitedUsers)
+router.post('/invite/user', isAuthenticatedUser, inviteTeamMember)
+router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
 router.put("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
+router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
+router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 
 
 
