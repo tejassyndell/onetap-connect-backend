@@ -15,6 +15,10 @@ const CompanySchema = new mongoose.Schema({
         ref: "user",
         required: true,
     },
+    primary_billing: [{
+        type: mongoose.Schema.ObjectId,
+        ref: "user",
+    }],
     global_email : {tyep:String},
     contact: { 
         type: Number, 
@@ -42,4 +46,4 @@ const CompanySchema = new mongoose.Schema({
     teams :[{type:String}],
 }, { timestamps: true });
 
-module.exports = mongoose.model("company", CompanySchema);
+module.exports = mongoose.model("companies_information", CompanySchema);

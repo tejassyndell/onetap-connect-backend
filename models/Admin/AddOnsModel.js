@@ -23,6 +23,6 @@ const addOnSchema = new mongoose.Schema({
   }
 });
 
-const AddOn = mongoose.model('addon', addOnSchema);
+const AddOn = mongoose.model('plan_package_addons', addOnSchema);
 
 module.exports = AddOn;

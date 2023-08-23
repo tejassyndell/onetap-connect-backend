@@ -34,4 +34,4 @@ const PlanPackageSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-module.exports = mongoose.model("planpackage", PlanPackageSchema);
+module.exports = mongoose.model("plan_packages", PlanPackageSchema);

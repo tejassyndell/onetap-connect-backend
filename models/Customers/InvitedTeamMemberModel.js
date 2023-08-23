@@ -50,6 +50,6 @@ const invitedTeamMemberSchema = new mongoose.Schema({
 
 }, { timestamps: true } );
 
-module.exports = mongoose.model('InvitedTeamMember', invitedTeamMemberSchema);
+module.exports = mongoose.model('invited_team_members', invitedTeamMemberSchema);
 
 // module.exports = InvitedTeamMember;

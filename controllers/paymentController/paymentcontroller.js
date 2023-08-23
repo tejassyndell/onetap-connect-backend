@@ -22,7 +22,7 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
         city: Address.Bcity,
         state: Address.Bstate,
         postal_code: Address.BpostalCode,
-        country: Address.Bstate,
+        country: Address.Bcountry,
       },
       name: req.body.name
     },

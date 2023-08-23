@@ -10,4 +10,4 @@ const industriesSchema = new mongoose.Schema({
 
 })
 
-module.exports = mongoose.model('Industries', industriesSchema);
+module.exports = mongoose.model('company_industry_list', industriesSchema);
