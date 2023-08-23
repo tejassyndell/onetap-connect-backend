@@ -26,19 +26,18 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findOne({ email: email }).lean(); // Use .lean() to get a plain object
   // console.log(user);
 
-
   if (user) {
-    console.log(user.email)
-    return next(new ErrorHandler("This Email is already in use", 409))
+    console.log(user.email);
+    return next(new ErrorHandler("This Email is already in use", 409));
   } else {
-    console.log("else part")
+    console.log("else part");
   }
 
   const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
-    expiresIn: '1d',
+    expiresIn: "1d",
   });
   const date = new Date();
-  console.log(date)
+  console.log(date);
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     port: 587,
@@ -111,49 +110,46 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 
   transporter.sendMail(message, (err, info) => {
     if (err) {
-      console.log("error", err)
-      return next(new ErrorHandler("Email Not Sent ,Please Try Agian Later", 500))
-    }
-    else {
-      console.log(info)
+      console.log("error", err);
+      return next(
+        new ErrorHandler("Email Not Sent ,Please Try Agian Later", 500)
+      );
+    } else {
+      console.log(info);
       res.status(200).json({
         success: true,
-        message: "Email sent successfully"
-      })
+        message: "Email sent successfully",
+      });
     }
-  })
-
-
-
+  });
 });
 
 //sign-up step-2
 exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
-
-  const { token } = req.params
-  const { first_name, last_name, contact, isCompany, industry, company_name, team_size, password } = req.body.signupData;
+  const { token } = req.params;
+  const {
+    first_name,
+    last_name,
+    contact,
+    isCompany,
+    industry,
+    company_name,
+    team_size,
+    password,
+  } = req.body.signupData;
   // console.log(req.body)
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-  const email = decodedData.email
+  const email = decodedData.email;
 
-
-
-
-  const user = await User.create(
-
-    {
-      email,
-      first_name,
-      last_name,
-      contact,
-      isIndividual: !isCompany,
-      password
-    }
-
-
-
-  );
+  const user = await User.create({
+    email,
+    first_name,
+    last_name,
+    contact,
+    isIndividual: !isCompany,
+    password,
+  });
   if (!user) {
     return next(new ErrorHandler("Error while sign-up", 400));
   }
@@ -170,7 +166,12 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     }
   });
 
-  const newCompany = await Company.create({ primary_account: user._id, company_name, industry, team_size })
+  const newCompany = await Company.create({
+    primary_account: user._id,
+    company_name,
+    industry,
+    team_size,
+  });
 
   user.companyID = newCompany._id;
   user.isVerfied = true;
@@ -181,16 +182,11 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   //   user
   // })
 
-  sendToken(user, 200, res)
-
-})
-
+  sendToken(user, 200, res);
+});
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
-
-  const { first_name, last_name, email, password, contact, isIndividual, isPaidUser, role, company_name, industry, } = req.body;
-  const userData = {
-
+  const {
     first_name,
     last_name,
     email,
@@ -202,7 +198,18 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     company_name,
     industry,
   } = req.body;
-
+  const userData = ({
+    first_name,
+    last_name,
+    email,
+    password,
+    contact,
+    isIndividual,
+    isPaidUser,
+    role,
+    company_name,
+    industry,
+  } = req.body);
 
   console.log(req.body);
 
@@ -211,9 +218,8 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   const companyData = {
     company_name,
     industry,
-    primary_account: user._id
-
-  }
+    primary_account: user._id,
+  };
 
   const company = await Company.create(companyData);
 
@@ -229,14 +235,14 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
-console.log(email,password)
+  console.log(email, password);
   // checking if user has given password and email both
 
   if (!email || !password) {
     return next(new ErrorHandler("Please Enter Email & Password", 400));
   }
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Invalid email or password", 401));
@@ -350,7 +356,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
         user: process.env.NODMAILER_EMAIL,
         pass: process.env.NODEMAILER_PASS,
       },
-      tls: { rejectUnauthorized: false }
+      tls: { rejectUnauthorized: false },
     });
 
     const user = await User.findOne({ email });
@@ -423,8 +429,6 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     //   <p>Best regards,<br>The One Tap Connect Team</p>
     //  </div>
 
-
-
     // Attempt to send the email
     await transporter.sendMail(message);
 
@@ -476,30 +480,21 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
-
-
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
-
-
-  const { companyID } = req.user
-  const company = await Company.findById(companyID).populate('primary_account');
+  const { companyID } = req.user;
+  const company = await Company.findById(companyID).populate("primary_account").populate("primary_manager").populate("primary_billing");
   if (!company) {
     return next(new ErrorHandler("No company details Found", 404));
   }
-
   res.status(200).json({
     success: true,
-    company
-  })
-
-})
-
-
+    company,
+  });
+});
 
 // get all team members
 exports.getUsers = catchAsyncErrors(async (req, res, next) => {
-
-  const { companyID } = req.user
+  const { companyID } = req.user;
   const users = await User.find({ companyID });
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
@@ -535,22 +530,23 @@ exports.getinvitedUsers = catchAsyncErrors(async (req, res, next) => {
 
 // get single team members
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
-
-  const { id } = req.params
+  const { id } = req.params;
   const user = await User.findById(id);
   if (!user) {
     return next(new ErrorHandler("No company details Found", 404));
   }
-  console.log(user.companyID, req.user.companyID)
+  console.log(user.companyID, req.user.companyID);
   if (user.companyID.toString() !== req.user.companyID.toString()) {
-    return next(new ErrorHandler("You are not authorized to access this route", 401));
+    return next(
+      new ErrorHandler("You are not authorized to access this route", 401)
+    );
   }
 
   res.status(200).json({
     success: true,
-    user
-  })
-})
+    user,
+  });
+});
 // update user team
 exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
   const { users, teams } = req.body;
@@ -597,38 +593,32 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
-// invite team member 
+// invite team member
 
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-
   const { email, first_name, last_name, team } = req.body.memberData;
-  const { companyID } = req.user
+  const { companyID } = req.user;
 
   if (!email || !first_name || !last_name || !team) {
-
     if (!email) {
-      return next(new ErrorHandler('Please Enter Email', 400))
+      return next(new ErrorHandler("Please Enter Email", 400));
     }
     if (!first_name) {
-      return next(new ErrorHandler('Please Enter First Name', 400))
+      return next(new ErrorHandler("Please Enter First Name", 400));
     }
     if (!last_name) {
-      return next(new ErrorHandler('Please Enter Last Name', 400))
+      return next(new ErrorHandler("Please Enter Last Name", 400));
     }
     if (!team) {
-      return next(new ErrorHandler('Please Enter Team', 400))
+      return next(new ErrorHandler("Please Enter Team", 400));
+    } else {
+      return next(new ErrorHandler("Please fill out all details", 400));
     }
-    else {
-      return next(new ErrorHandler("Please fill out all details", 400))
-    }
-
   }
   if (email) {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailPattern.test(email) === false) {
-
-      return next(new ErrorHandler("Please enter valid email"))
+      return next(new ErrorHandler("Please enter valid email"));
     }
   }
 
@@ -652,10 +642,8 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     team: team,
     companyId: companyID,
     invitationToken: invitationToken,
-    invitationExpiry: expiryDate
-
-
-  })
+    invitationExpiry: expiryDate,
+  });
 
 
   const company = await Company.findById(companyID);
@@ -742,10 +730,9 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
-    message: "Invitaion Email sent Successfully"
-  })
-
-})
+    message: "Invitaion Email sent Successfully",
+  });
+});
 
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
@@ -769,6 +756,8 @@ exports.addCardDetails = catchAsyncErrors(async (req, res) => {
   });
 });
 
+//show card details
+
 exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
 
@@ -778,8 +767,42 @@ exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("No card details found for this user", 404));
   }
 
-  res.status(200).json({
+  res.status(201).json({
     success: true,
     cards,
   });
-})
+});
+
+//update billing address
+
+exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
+  const { id, companyID } = req.user;
+  const { firstName, lastName, company_name, billing_address } = req.body;
+
+  try {
+    const updateBilling = await User.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          first_name: firstName,
+          last_name: lastName,
+          billing_address: billing_address,
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    const updateCompany = await Company.findByIdAndUpdate(
+      companyID,
+      { $set: { company_name: company_name } },
+      { new: true, runValidators: true }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "User Billing Address and Company Name Updated Successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error updating user billing address." });
+  }
+});
