@@ -547,3 +547,22 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ message: 'Users updated successfully' });
 });
 
+// Remove a User from a Team
+exports.removeUserFromTeam = catchAsyncErrors(async (req, res, next) => {
+  const { userId, teamName } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ message: `User not found with ID: ${userId}` });
+  }
+
+  if (user.team !== teamName) {
+    return res.status(400).json({ message: `User is not a part of team ${teamName}` });
+  }
+
+  user.team = ''; // Remove user from the team by setting an empty string
+  await user.save(); // Save the changes to the user
+
+  res.status(200).json({ message: 'User removed from the team successfully' });
+});
+
