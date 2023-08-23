@@ -13,6 +13,7 @@ const {
   getCompanyDetails,
   getUsers,
   getUserDetails,
+  updateUserDetails,
   getProfile,
   inviteTeamMember,
   logout,
@@ -35,6 +36,7 @@ router.get("/company/profile", isAuthenticatedUser, getCompanyDetails);
 router.get("/users", isAuthenticatedUser, getUsers);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
+router.put("/user/update/:id", isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
