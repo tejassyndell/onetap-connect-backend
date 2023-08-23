@@ -548,36 +548,9 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   })
 })
 
-// update single team members
 
-exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const updatedUserDetails = req.body; // Assuming the updated details are provided in the request body
 
-  try {
-    const user = await User.findById(id);
-    
-    if (!user) {
-      return next(new ErrorHandler("User not found", 404));
-    }
 
-    if (user.companyID.toString() !== req.user.companyID.toString()) {
-      return next(new ErrorHandler("You are not authorized to update this user", 401));
-    }
-
-    // Update the user details
-    user.set(updatedUserDetails);
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: "User details updated successfully",
-      user: user
-    });
-  } catch (error) {
-    next(error);
-  }
-});
 
 // update user team
 exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
