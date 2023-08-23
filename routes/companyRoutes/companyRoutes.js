@@ -20,6 +20,7 @@ const {
   updateStatus,
   addCardDetails,
   showCardDetails,
+  updateBillingAddress,
 } = require("../../controllers/customers/userController.js");
 
 const router = express.Router();
@@ -39,7 +40,8 @@ router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
-router.post('/invite/user',isAuthenticatedUser,inviteTeamMember)
+router.post('/invite/user',isAuthenticatedUser,inviteTeamMember);
+router.put("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
 
 
 
