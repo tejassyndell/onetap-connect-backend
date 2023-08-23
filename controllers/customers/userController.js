@@ -12,7 +12,7 @@ const { OAuth2Client } = require("google-auth-library");
 const User = require("../../models/Customers/UserModel.js");
 const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
-const InvitaionModel = require("../../models/Customers/InvitedTeamMemberModel.js");
+const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
 const Cards = require("../../models/Customers/CardsModel.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
 
@@ -645,7 +645,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
 
 
-  const member = await InvitaionModel.create({
+  const member = await InvitedTeamMemberModel.create({
     email: email,
     first_name: first_name,
     last_name: last_name,
