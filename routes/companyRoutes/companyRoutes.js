@@ -3,7 +3,7 @@ const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.j
 const { login,
      registerUser,
      forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName} = require('../../controllers/customers/userController.js');
+     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, inviteTeamMember, updateUserDetails,getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -18,6 +18,7 @@ router.get("/company/profile", isAuthenticatedUser, getCompanyDetails);
 router.get("/users", isAuthenticatedUser, getUsers);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
+router.put("/user/update/:id", isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
