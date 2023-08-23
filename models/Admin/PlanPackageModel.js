@@ -1,16 +1,17 @@
 const mongoose = require("mongoose");
 
-const SubscriptionSchema = new mongoose.Schema({
+const PlanPackageSchema = new mongoose.Schema({
 
-    name: {
+    planName: {
         type: String,
         required: [true, "Please Enter Plan type"],
-        enum: ['free', 'starter', 'team', 'enterprise'],
+        
     },
     description: {
         type: String,
         required: true,
     },
+    paymentDetails : {type:String},
     type: {
         type: String,
         // required: true,
@@ -27,12 +28,10 @@ const SubscriptionSchema = new mongoose.Schema({
         required: [true, "Please Enter Plan Price"],
         min: 0,
     },
-    features: {
-        type: [String],
-        required: true,
-    },
+    features: [{type:String}],
+    isActive : {type:Boolean,default:false}
 
 }, { timestamps: true });
 
 
-module.exports = mongoose.model("subscription", SubscriptionSchema);
+module.exports = mongoose.model("plan_packages", PlanPackageSchema);

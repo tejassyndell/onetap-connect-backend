@@ -52,5 +52,5 @@ cardsSchema.methods.compareCVV = async function (CVV) {
   }
 };
 
-module.exports = mongoose.model("card", cardsSchema);
+module.exports = mongoose.model("payment_cards", cardsSchema);
 

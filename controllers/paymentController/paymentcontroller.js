@@ -1,18 +1,36 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
-const stripe = require("stripe")("sk_test_51NRARzSAvu6sJ8LMLvdPw2mTAjjegBo6RUCuj3ZAjI47e7LA2xZykjvEdfFxIoZkOC7K36jaZG9nAm5QpOL9ARwq00djjNdI0r");
 const dotenv = require('dotenv');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// const { v4: uuidv4 } = require('uuid');
 
 dotenv.config()
-exports.processPayment = catchAsyncErrors( async(amount) => {
+exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   console.log(req.body)
-  return await stripe.paymentIntents.create({
-    amount: amount,
-    currency: "inr",
+  const Address = req.body.billingAddress;
+
+  const myPayment = await stripe.paymentIntents.create({
+    amount: req.body.amount * 100,
+    currency: "usd",
+    description: 'Test description', // Provide an export-related description
     metadata: {
-      company: "Ecommerce",
+      company: req.body.company_name,
+    },
+    shipping: {
+      address: {
+        line1: Address.Bstreet1,
+        line2: Address.Bstreet2,
+        city: Address.Bcity,
+        state: Address.Bstate,
+        postal_code: Address.BpostalCode,
+        country: Address.Bcountry,
+      },
+      name: req.body.name
     },
   });
-
   
+  console.log(myPayment)
+  
+
+  res.status(200).json({ success: true, client_secret: myPayment.client_secret });
 });
 

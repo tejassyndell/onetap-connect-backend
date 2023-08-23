@@ -1,22 +1,28 @@
 const mongoose = require('mongoose');
 
-
-const addOnsSchema = new mongoose.Schema({
-  name: {
+const addOnSchema = new mongoose.Schema({
+  title: {
     type: String,
-    required: true,
+    required: true
   },
   description: {
     type: String,
-    required: true,
+    required: true
   },
   price: {
     type: Number,
-    // required: true,
-    min: 0,
+    required: true
   },
- 
-}, { timestamps: true } );
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isOneTime : {
+    type: Boolean,
+    default: true
+  }
+});
 
-module.exports= mongoose.model('addOns', addOnsSchema);
+const AddOn = mongoose.model('plan_package_addons', addOnSchema);
 
+module.exports = AddOn;

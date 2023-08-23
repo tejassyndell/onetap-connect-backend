@@ -15,6 +15,11 @@ const CompanySchema = new mongoose.Schema({
         ref: "user",
         required: true,
     },
+    primary_billing: [{
+        type: mongoose.Schema.ObjectId,
+        ref: "user",
+    }],
+    global_email : {tyep:String},
     contact: { 
         type: Number, 
         default: null, 
@@ -27,10 +32,18 @@ const CompanySchema = new mongoose.Schema({
         maxLength: [30, "Fax Number must be 10 digits"], 
         minLength: [10, "Fax number must be 10 digits"] 
     },
+    address : {
+        line1: { type: String, default: null },
+        line2: { type: String, default: null },
+        city: { type: String, default: null },
+        state: { type: String, default: null },
+        country: { type: String, default: null },
+        postal_code: { type: Number, default: null }
+      },
     company_website: { type: String },
     team_size: { type: String },
     total_members: { type: Number },
     teams :[{type:String}],
 }, { timestamps: true });
 
-module.exports = mongoose.model("company", CompanySchema);
+module.exports = mongoose.model("companies_information", CompanySchema);
