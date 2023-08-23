@@ -23,6 +23,14 @@ const userSchema = new mongoose.Schema({
         select: false,
     },
     contact: { type: String, default: null },
+    address: {
+        line1: { type: String, default: null },
+        line2: { type: String, default: null },
+        city: { type: String, default: null },
+        state: { type: String, default: null },
+        country: { type: String, default: null },
+        postal_code: { type: Number, default: null }
+    },
     billing_address: {
         line1: { type: String, default: null },
         line2: { type: String, default: null },
@@ -31,14 +39,14 @@ const userSchema = new mongoose.Schema({
         country: { type: String, default: null },
         postal_code: { type: Number, default: null }
     },
-    shipping_address: {
+    shipping_address: [{
         line1: { type: String, default: null },
         line2: { type: String, default: null },
         city: { type: String, default: null },
         state: { type: String, default: null },
         country: { type: String, default: null },
         postal_code: { type: Number, default: null }
-    },
+    }],
     isVerfied : {type : Boolean},
     avatar: { type: String, default: 'user_default.svg' },
     status: { type: String, default: "pending" },
