@@ -1,26 +1,6 @@
-const express = require("express");
-const {
-  isAuthenticatedUser,
-  authorizeRoles,
-} = require("../../middleware/auth.js");
-const {
-  login,
-  registerUser,
-  signUP1,
-  signUP2,
-  forgotPassword,
-  resetPassword,
-  getCompanyDetails,
-  getUsers,
-  getUserDetails,
-  getProfile,
-  inviteTeamMember,
-  logout,
-  updateTeam,
-  updateStatus,
-  addCardDetails,
-  showCardDetails,
-} = require("../../controllers/customers/userController.js");
+const express = require('express');
+const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.js");
+const { login, registerUser, forgotPassword, resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails } = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -40,6 +20,7 @@ router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
 router.post('/invite/user',isAuthenticatedUser,inviteTeamMember)
+router.get('/invitedusers',isAuthenticatedUser,getinvitedUsers)
 
 
 
