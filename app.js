@@ -15,10 +15,9 @@ const { OAuth2Client } = require('google-auth-library');
 const connectDatabase = require('./db/db.js')
 
 
-// const url = 'http://localhost:3000';
-const url = 'https://onetapconnect.sincprojects.com';
-
 dotenv.config();
+const url = process.env.FRONTEND_URL;
+
 
 app.use(express.json());
 app.use(bodyParser.json());
