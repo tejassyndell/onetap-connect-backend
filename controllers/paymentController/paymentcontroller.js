@@ -3,16 +3,21 @@ const stripe = require("stripe")("sk_test_51NRARzSAvu6sJ8LMLvdPw2mTAjjegBo6RUCuj
 const dotenv = require('dotenv');
 
 dotenv.config()
-exports.processPayment = catchAsyncErrors( async(amount) => {
-  console.log(req.body)
-  return await stripe.paymentIntents.create({
-    amount: amount,
+exports.processPayment = catchAsyncErrors(async (req, res, next) => {
+
+  const myPayment = await stripe.paymentIntents.create({
+    amount: req.body.amount * 100,
     currency: "inr",
     metadata: {
-      company: "Ecommerce",
+      company: "Test",
     },
   });
-
   
+  console.log(myPayment)
+  
+
+  res
+    .status(200)
+    .json({ success: true, client_secret: myPayment.client_secret });
 });
 
