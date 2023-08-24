@@ -95,17 +95,16 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 </body>
 
 </html>    
-  `
+  `,
     //     <h3>Dear User</h3><br>
     //     <p>Thank you for choosing One Tap Connect LLC! We're thrilled to have you join our community. To complete your sign-up process, please click the button below:</p><br>
     //     <p></p><a href="${process.env.FRONTEND_URL}/sign-up/step-2/${user._id}">Click me</a> to complete sign up</p>
-    //     <p>If you have any questions or need assistance, feel free to reach out to our customer support team at <a href="mailto:admin@onetapconnect.com">admin@onetapconnect.com</a></p><br>   
+    //     <p>If you have any questions or need assistance, feel free to reach out to our customer support team at <a href="mailto:admin@onetapconnect.com">admin@onetapconnect.com</a></p><br>
     //     <p>We're excited to have you on board and can't wait to see you make the most of our services.
     //     </p>
     //     <p>
     //     Best regards,<br>
     // The One Tap Connect Team</p>
-
   };
 
   transporter.sendMail(message, (err, info) => {
@@ -482,7 +481,11 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
-  const company = await Company.findById(companyID).populate("primary_account").populate("primary_manager").populate("primary_billing");
+
+  const company = await Company.findById(companyID)
+    .populate("primary_account")
+    .populate("primary_manager")
+    .populate("primary_billing");
   if (!company) {
     return next(new ErrorHandler("No company details Found", 404));
   }
@@ -502,17 +505,18 @@ exports.getUsers = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    users
-  })
-
-})
+    users,
+  });
+});
 
 exports.getinvitedUsers = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
 
   try {
     // Fetch invited users based on companyID
-    const invitedusers = await InvitedTeamMemberModel.find({ companyId: companyID });
+    const invitedusers = await InvitedTeamMemberModel.find({
+      companyId: companyID,
+    });
 
     if (invitedusers.length === 0) {
       return next(new ErrorHandler("No invited users found", 404));
@@ -526,7 +530,6 @@ exports.getinvitedUsers = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 500));
   }
 });
-
 
 // get single team members
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
@@ -633,8 +636,6 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   // Convert the expiry date to ISO string format
   // const expiryDateString = expiryDate.toISOString();
 
-
-
   const member = await InvitedTeamMemberModel.create({
     email: email,
     first_name: first_name,
@@ -645,9 +646,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     invitationExpiry: expiryDate,
   });
 
-
   const company = await Company.findById(companyID);
-
 
   const transporter = nodemailer.createTransport({
     service: "Gmail",
@@ -721,12 +720,11 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
   transporter.sendMail(message, (err, info) => {
     if (err) {
-      console.log(err)
+      console.log(err);
+    } else {
+      console.log(info.response);
     }
-    else {
-      console.log(info.response)
-    }
-  })
+  });
 
   res.status(201).json({
     success: true,
@@ -804,5 +802,36 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Error updating user billing address." });
+  }
+});
+
+//update company details
+
+exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id, companyID } = req.user;
+  const { companyDetails } = req.body;
+  console.log(companyID);
+  console.log(companyDetails);
+
+  try {
+    const company = await Company.findByIdAndUpdate(
+      companyID,
+      {
+        $set: {
+          primary_account: companyDetails.primaryAccount,
+          primary_billing: companyDetails.selectedPrimaryBilling,
+          primary_manager: companyDetails.primaryManager,
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Company Data Updated Successfully",
+      company,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error updating company addresses." });
   }
 });

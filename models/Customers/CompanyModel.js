@@ -16,12 +16,6 @@ const CompanySchema = new mongoose.Schema(
       ref: "user",
       required: true,
     },
-    primary_billing: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: "user",
-      },
-    ],
     primary_manager: {
       type: mongoose.Schema.ObjectId,
       ref: "user",
