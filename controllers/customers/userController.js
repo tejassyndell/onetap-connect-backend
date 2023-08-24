@@ -733,24 +733,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// Remove a User from a Team
-exports.removeUserFromTeam = catchAsyncErrors(async (req, res, next) => {
-  const { userId, teamName } = req.body;
 
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json({ message: `User not found with ID: ${userId}` });
-  }
-
-  if (user.team !== teamName) {
-    return res.status(400).json({ message: `User is not a part of team ${teamName}` });
-  }
-
-  user.team = ''; // Remove user from the team by setting an empty string
-  await user.save(); // Save the changes to the user
-
-  res.status(200).json({ message: 'User removed from the team successfully' });
-});
 
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
@@ -868,3 +851,22 @@ exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
 
   res.status(201).json({ message: 'Team created successfully', company });
 }) 
+
+// Remove Team from Users
+exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers } = req.body;
+
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: `User not found with ID: ${userId}` });
+    }
+
+    user.team = null; // Remove the team association
+    await user.save();
+  }
+
+  res.status(200).json({ message: 'Team removed from users successfully' });
+});
+
