@@ -11,6 +11,7 @@ const CompanySchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // slug:{type:String},
     primary_account: {
       type: mongoose.Schema.ObjectId,
       ref: "user",

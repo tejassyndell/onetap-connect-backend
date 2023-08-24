@@ -873,3 +873,18 @@ exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
 
   res.status(201).json({ message: 'Team created successfully', company });
 }) 
+
+
+// exports.checkslugavailiblity = catchAsyncErrors(async (req,res,next)=> {
+//   const { slug } = req.body;
+
+//   console.log(slug)
+//     const existingSlug = await Company.findOne({ slug });
+//     if (existingSlug) {
+//       return res.status(400).json({ message: 'Slug is already taken.' });
+//     } 
+      
+//       return res.status(200).json({ message: 'Slug is available.' });
+    
+  
+// });
