@@ -3,12 +3,13 @@ const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.j
 const { login,
      registerUser,
      forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers} = require('../../controllers/customers/userController.js');
+     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
 router.post('/register', signUP1)
 router.post('/register/step-2/:token', signUP2)
+router.post('/checkout', isAuthenticatedUser,checkoutHandler)
 router.post("/login", login);
 router.get("/logout", logout);
 router.post("/forgot/password", forgotPassword);
@@ -30,6 +31,7 @@ router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update",isAuthenticatedUser,updateCompanyDetails);
+router.put("/company/update/information",isAuthenticatedUser,updateCompanyDetailsInfo);
 router.post('/user/remove/team',isAuthenticatedUser,removeTeamFromUsers)
 
 

@@ -39,12 +39,15 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const date = new Date();
   console.log(date);
   const transporter = nodemailer.createTransport({
-    service: "Gmail",
-    port: 587,
+    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587, // Use 465 for SSL
+    secure: true, // true for 465, false for other ports
     auth: {
       user: process.env.NODMAILER_EMAIL,
       pass: process.env.NODEMAILER_PASS,
     },
+    tls: { rejectUnauthorized: false },
   });
 
   const message = {
@@ -476,7 +479,11 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
   await user.save();
 
-  sendToken(user, 200, res);
+  // sendToken(user, 200, res);
+  res.status(200).json({
+    success : true,
+    message : "Password Updated Successfully"
+  })
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
@@ -892,6 +899,9 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     user.set(updatedUserDetails);
     await user.save();
 
+
+
+
     res.status(200).json({
       success: true,
       message: "User details updated successfully",
@@ -949,3 +959,55 @@ exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ message: 'Team removed from users successfully' });
 });
 
+
+// update company details
+exports.updateCompanyDetailsInfo = catchAsyncErrors(async(req,res,next)=>{
+
+  const {companyID } = req.user;
+
+  const {updatedCompanyDetails} = req.body;
+
+  const company = await Company.findById(companyID);
+
+  if (!company) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  if (company._id.toString() !== req.user.companyID.toString()) {
+    return next(new ErrorHandler("You are not authorized to update this user", 401));
+  }
+
+
+  company.set(updatedCompanyDetails);
+  await company.save();
+
+  res.status(200).json({
+    company
+  })
+
+})
+
+  //checkout handler
+exports.checkoutHandler = catchAsyncErrors(async(req,res,next)=>{
+
+  const {id} = req.user
+  const {userData} = req.body
+
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  user.isPaidUser = true;
+  user.first_name = userData.first_name;
+  user.first_last = userData.first_last;
+  user.billing_address = userData.billing_address;
+  user.shipping_address = userData.shipping_address;
+  await user.save();
+
+  res.status(200).json({
+    success :true
+  })
+
+
+})
