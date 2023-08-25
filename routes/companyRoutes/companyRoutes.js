@@ -26,7 +26,7 @@ router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
 router.post('/invite/user', isAuthenticatedUser, inviteTeamMember)
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
-router.put("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
+router.post("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
 router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
