@@ -481,9 +481,9 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
   // sendToken(user, 200, res);
   res.status(200).json({
-    success : true,
-    message : "Password Updated Successfully"
-  })
+    success: true,
+    message: "Password Updated Successfully",
+  });
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
@@ -554,13 +554,9 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user
-  })
-})
-
-
-
-
+    user,
+  });
+});
 
 // update user team
 exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
@@ -744,8 +740,6 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
-
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
   const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
@@ -828,7 +822,9 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: `User not found with ID: ${userId}` });
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
     }
 
     // Update the user's team with the new team name
@@ -836,33 +832,30 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
     await user.save(); // Save the changes to the user
   }
 
-  res.status(200).json({ message: 'Users updated successfully' });
-  
+  res.status(200).json({ message: "Users updated successfully" });
 });
 
-// Create new Team 
-exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
+// Create new Team
+exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
+  const companyID = req.user.companyID;
+  console.log(companyID);
+  const { teamName } = req.body;
 
-  const companyID = req.user.companyID
-  console.log(companyID)
-  const {teamName} = req.body;
-
-  const company = await Company.findOne(companyID).populate('primary_account'); // Replace with proper query
+  const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
 
   if (!company) {
-      return res.status(404).json({ message: 'Company not found' });
+    return res.status(404).json({ message: "Company not found" });
   }
 
   if (company.teams.includes(teamName)) {
-    return res.status(400).json({ message: 'This team already exists' });
+    return res.status(400).json({ message: "This team already exists" });
   }
 
   company.teams.push(teamName);
   await company.save();
 
-  res.status(201).json({ message: 'Team created successfully', company });
-}) 
-
+  res.status(201).json({ message: "Team created successfully", company });
+});
 
 // exports.checkslugavailiblity = catchAsyncErrors(async (req,res,next)=> {
 //   const { slug } = req.body;
@@ -871,11 +864,10 @@ exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
 //     const existingSlug = await Company.findOne({ slug });
 //     if (existingSlug) {
 //       return res.status(400).json({ message: 'Slug is already taken.' });
-//     } 
-      
+//     }
+
 //       return res.status(200).json({ message: 'Slug is available.' });
-    
-  
+
 // });
 //update company details
 // update single team members
@@ -886,32 +878,30 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
 
   try {
     const user = await User.findById(id);
-    
+
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
 
     if (user.companyID.toString() !== req.user.companyID.toString()) {
-      return next(new ErrorHandler("You are not authorized to update this user", 401));
+      return next(
+        new ErrorHandler("You are not authorized to update this user", 401)
+      );
     }
 
     // Update the user details
     user.set(updatedUserDetails);
     await user.save();
 
-
-
-
     res.status(200).json({
       success: true,
       message: "User details updated successfully",
-      user: user
+      user: user,
     });
   } catch (error) {
     next(error);
   }
 });
-
 
 exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
@@ -949,23 +939,23 @@ exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: `User not found with ID: ${userId}` });
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
     }
 
     user.team = null; // Remove the team association
     await user.save();
   }
 
-  res.status(200).json({ message: 'Team removed from users successfully' });
+  res.status(200).json({ message: "Team removed from users successfully" });
 });
 
-
 // update company details
-exports.updateCompanyDetailsInfo = catchAsyncErrors(async(req,res,next)=>{
+exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
 
-  const {companyID } = req.user;
-
-  const {updatedCompanyDetails} = req.body;
+  const { updatedCompanyDetails } = req.body;
 
   const company = await Company.findById(companyID);
 
@@ -974,40 +964,55 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async(req,res,next)=>{
   }
 
   if (company._id.toString() !== req.user.companyID.toString()) {
-    return next(new ErrorHandler("You are not authorized to update this user", 401));
+    return next(
+      new ErrorHandler("You are not authorized to update this user", 401)
+    );
   }
-
 
   company.set(updatedCompanyDetails);
   await company.save();
 
   res.status(200).json({
-    company
-  })
+    company,
+  });
+});
 
-})
+//checkout handler
+exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
+  const { id,companyID } = req.user;
+  const { userData, planData, cardInfo } = req.body;
 
-  //checkout handler
-exports.checkoutHandler = catchAsyncErrors(async(req,res,next)=>{
 
-  const {id} = req.user
-  const {userData} = req.body
+  const cardData = {
+    cardNumber: cardInfo.cardNumber,
+    brand: cardInfo.brand,
+  };
 
   const user = await User.findById(id);
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
 
+  const card = await Cards.create(cardData);
+  card.userID = id;
+
+
   user.isPaidUser = true;
   user.first_name = userData.first_name;
   user.first_last = userData.first_last;
+  user.address = userData.billing_address;
   user.billing_address = userData.billing_address;
   user.shipping_address = userData.shipping_address;
+  user.subscription_details = planData;
+
+  const company = await Company.findById(companyID);
+  company.address = userData.billing_address;
+
   await user.save();
+  await card.save();
+  await company.save();
 
   res.status(200).json({
-    success :true
-  })
-
-
-})
+    success: true,
+  });
+});

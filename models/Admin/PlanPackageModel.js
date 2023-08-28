@@ -28,6 +28,9 @@ const PlanPackageSchema = new mongoose.Schema({
         required: [true, "Please Enter Plan Price"],
         min: 0,
     },
+    discoutedPercentage:{
+        type: Number,
+    },
     features: [{type:String}],
     isActive : {type:Boolean,default:false}
 

@@ -64,7 +64,8 @@ const userSchema = new mongoose.Schema({
         billing_cycle: {type: String},
         plan: {type: String},
         total_user: {type: Number},
-        recurring_amount: {type: Number}
+        recurring_amount: {type: Number},
+        renewal_date : {type: Date}
 
     },
     role: { type: String,default:'member' },
