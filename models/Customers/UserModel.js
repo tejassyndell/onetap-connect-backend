@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
     websiteUrl:{type:String,default:null},
     isVerfied : {type : Boolean},
     avatar: { type: String, default: 'user_default.svg' },
-    status: { type: String, default: "pending" },
+    status: { type: String, default: "active" },
     isIndividual: { type: Boolean, default: false },
     isPaidUser: { type: Boolean, default: false },
     subscription_details: {
