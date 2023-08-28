@@ -911,7 +911,7 @@ exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
       return res.status(404).json({ message: `User not found with ID: ${userId}` });
     }
 
-    user.team = null; // Remove the team association
+    user.team = ""; // Remove the team association
     await user.save();
   }
 
