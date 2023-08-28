@@ -26,7 +26,8 @@ const CompanySchema = new mongoose.Schema(
         type: mongoose.Schema.ObjectId,
         ref: "user",
     }],
-    global_email : {tyep:String},
+    global_email : {type:String},
+    keywords : {type:String},
     contact: { 
         type: Number, 
         default: null, 
