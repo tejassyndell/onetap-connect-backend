@@ -427,6 +427,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
 
+
   try {
     // Check if you're using the correct SMTP settings
     const transporter = nodemailer.createTransport({
@@ -445,6 +446,10 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
+    }
+
+    if(user.googleId){
+      return next(new ErrorHandler("This email is associated with Gmail",401))
     }
 
     // Generate or retrieve resetToken here
