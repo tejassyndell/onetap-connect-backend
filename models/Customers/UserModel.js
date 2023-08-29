@@ -69,7 +69,7 @@ const userSchema = new mongoose.Schema({
 
     },
     role: { type: String,default:'member' },
-    team: { type: String },
+    team: { type: String ,default :''},
     companyID: { type: mongoose.Schema.Types.ObjectId, ref: 'company' ,default : null},
     googleId: { type: String },
     designation: [{ type: String }],
