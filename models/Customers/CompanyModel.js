@@ -46,7 +46,7 @@ const CompanySchema = new mongoose.Schema(
         city: { type: String, default: null },
         state: { type: String, default: null },
         country: { type: String, default: null },
-        postal_code: { type: Number, default: null }
+        postal_code: { type: String, default: null }
       },
     company_website: { type: String },
     team_size: { type: String },

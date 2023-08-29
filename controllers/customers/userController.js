@@ -138,22 +138,35 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     company_name,
     team_size,
     password,
+    googleId
   } = req.body.signupData;
-  // console.log(req.body)
+  console.log("goole",googleId)
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
   const email = decodedData.email;
-
-  const user = await User.create({
-    email,
-    first_name,
-    last_name,
-    contact,
-    isIndividual: !isCompany,
-    password,
-  });
+ let user;
+  if(password === undefined){
+     user = await User.create({
+      email,
+      first_name,
+      last_name,
+      contact,
+      isIndividual: !isCompany,
+      googleId
+    });
+  }
+  else{
+     user = await User.create({
+      email,
+      first_name,
+      last_name,
+      contact,
+      isIndividual: !isCompany,
+      password
+    });
+  }
   if (!user) {
-    return next(new ErrorHandler("Error while sign-up", 400));
+     return next(new ErrorHandler("Something went wrong please try again", 400));
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -172,6 +185,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     primary_account: user._id,
     company_name,
     industry,
+    contact,
     team_size,
   });
 
@@ -185,6 +199,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   // })
 
   sendToken(user, 200, res);
+  // res.send("hello")
 });
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -232,7 +247,72 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     user,
     company,
   });
-});
+})
+
+
+//google signup
+exports.googleSignUP = catchAsyncErrors(async(req,res,next)=>{
+  const JWT_SECRET_KEY = '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';
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token } = req.body;
+
+
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const googleId = payload.sub;
+
+  const urlToken = jwt.sign({ email: payload.email }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+
+  const {name} = payload
+
+// Split the fullName into an array of parts using space as the separator
+const parts = name.split(' ');
+
+// Extract the first name (assuming it's the first element) and the last name (assuming it's the second element)
+const first_name = parts[0]; // 'Manish'
+const last_name = parts[1];  // 'Shakya'
+
+  const googleData = {
+    first_name,
+    last_name,
+googleId : payload.sub
+  }
+
+  res.status(200).json({
+    success :true,
+    token : urlToken,
+    googleData
+  })
+
+})
+
+exports.googleLogin = catchAsyncErrors(async(req,res,next)=> {
+  const JWT_SECRET_KEY = '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';
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token } = req.body;
+
+
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  const user = await User.findOne({email :payload.email});
+
+  if(!user){
+    return next(new ErrorHandler("User Not Found",404));
+  }
+
+  // res.send(payload)
+  sendToken(user, 200, res);
+
+})
 
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
@@ -991,6 +1071,7 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async(req,res,next)=>{
 exports.checkoutHandler = catchAsyncErrors(async(req,res,next)=>{
 
   const {id} = req.user
+  const {companyID} = req.user
   const {userData} = req.body
 
   const user = await User.findById(id);
@@ -1001,9 +1082,16 @@ exports.checkoutHandler = catchAsyncErrors(async(req,res,next)=>{
   user.isPaidUser = true;
   user.first_name = userData.first_name;
   user.first_last = userData.first_last;
+  user.address = userData.billing_address;
   user.billing_address = userData.billing_address;
   user.shipping_address = userData.shipping_address;
   await user.save();
+
+  const company = await Company.findById(companyID);
+
+  company.address =  userData.billing_address;
+
+  await company.save();
 
   res.status(200).json({
     success :true

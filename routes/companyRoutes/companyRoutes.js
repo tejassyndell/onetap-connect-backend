@@ -3,12 +3,14 @@ const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.j
 const { login,
      registerUser,
      forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler} = require('../../controllers/customers/userController.js');
+     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler, googleSignUP, googleLogin} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
 router.post('/register', signUP1)
 router.post('/register/step-2/:token', signUP2)
+router.post('/google-sign-up',googleSignUP)
+router.post('/google-login',googleLogin)
 router.post('/checkout', isAuthenticatedUser,checkoutHandler)
 router.post("/login", login);
 router.get("/logout", logout);
