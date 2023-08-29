@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
     websiteUrl:{type:String,default:null},
     isVerfied : {type : Boolean},
     avatar: { type: String, default: 'user_default.svg' },
-    status: { type: String, default: "pending" },
+    status: { type: String, default: "active" },
     isIndividual: { type: Boolean, default: false },
     isPaidUser: { type: Boolean, default: false },
     subscription_details: {
@@ -64,7 +64,8 @@ const userSchema = new mongoose.Schema({
         billing_cycle: {type: String},
         plan: {type: String},
         total_user: {type: Number},
-        recurring_amount: {type: Number}
+        recurring_amount: {type: Number},
+        renewal_date : {type: Date}
 
     },
     role: { type: String,default:'member' },

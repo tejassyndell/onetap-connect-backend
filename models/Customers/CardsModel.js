@@ -5,19 +5,18 @@ const bcrypt = require('bcryptjs');
 const cardsSchema = new mongoose.Schema({
   nameOnCard: {
     type: String,
-    required: true,
   },
   cardNumber: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true,
-    // Validate card number using regex (this is a basic example)
-    match: /^[0-9]{16}$/, // Assuming a 16-digit card number format
   },
   expirationDate: {
     type: Date,
   },
   CVV: {
+    type: String,
+  },
+  brand:{
     type: String,
     required: true,
   },
