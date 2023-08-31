@@ -198,8 +198,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   //   user
   // })
 
-  sendToken(user, 200, res);
-  // res.send("hello")
+  sendToken(req,user, 200, res);
 });
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -335,8 +334,8 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   if (!isPasswordMatched) {
     return next(new ErrorHandler("Invalid email or password", 401));
   }
-
-  sendToken(user, 200, res);
+  
+  sendToken(req,user, 200, res);
 });
 
 //logout
