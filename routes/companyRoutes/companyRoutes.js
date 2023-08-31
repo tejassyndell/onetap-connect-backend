@@ -11,7 +11,7 @@ router.post('/register', signUP1)
 router.post('/register/step-2/:token', signUP2)
 router.post('/checkout', isAuthenticatedUser,checkoutHandler)
 router.post("/login", login);
-router.get("/logout", logout);
+router.post("/logout", logout);
 router.post("/forgot/password", forgotPassword);
 router.put("/reset/password/:token", resetPassword);
 router.post("/register/new", registerUser);
