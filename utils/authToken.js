@@ -1,20 +1,50 @@
-const sendToken = (user, statusCode, res) => {
+const jwt = require('jsonwebtoken');
+
+
+const extractDigits = (number) => {
+    const numberString = number.toString();
+    const firstTwoDigits = numberString.slice(0, 2);
+    const middleTwoDigits = numberString.slice(Math.max(0, numberString.length - 3), -1);
+    const lastTwoDigits = numberString.slice(-2);
+    return `${firstTwoDigits}${middleTwoDigits}${lastTwoDigits}`;
+};
+
+
+const sendToken = (req,user, statusCode, res) => {
     const token = user.getJWTToken();
-  
-    //options for cookies
-  
-    const option = {
-      expires: new Date(
-        Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
+    const secretUserID = extractDigits(user.id);
+    const userID = user.id;
+
+    const jwtPayload = {
+        secretUserID,
     };
-  
-    res.status(statusCode).cookie('token', token, option).json({
-      success: true,
-      user,
-      token,
+    const userIDpayLoad = {
+        userID,
+    };
+
+    // Options for cookies
+    const cookieOptions = {
+        expires: new Date(
+            Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+        ),
+        httpOnly: true,
+    };
+
+    const userCookie = jwt.sign(jwtPayload, process.env.JWT_SECRET);
+    const encryptedUserID = jwt.sign(userIDpayLoad, process.env.JWT_SECRET);
+     
+    
+    res
+    .status(statusCode)
+    .cookie(`token_${secretUserID}`, token, cookieOptions)
+    .cookie('combinedId', userCookie, cookieOptions)
+    .cookie('active_account', encryptedUserID, cookieOptions)
+    .json({
+        success: true,
+        user,
+        token,
+        encryptedUserID
     });
-  };
-  
+};
+
 module.exports = sendToken;

@@ -5,22 +5,24 @@ const User = require("../models/Customers/UserModel");
 const Company = require('../models/Customers/CompanyModel');
 
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
-  const { token } = req.cookies;
+  const { combinedId, active_account } = req.cookies;
 
-  if (!token) {
+  const decodedUserID = jwt.verify(combinedId, process.env.JWT_SECRET);
+  const activeUserId = jwt.verify(active_account, process.env.JWT_SECRET);
+  const tokenKey = `token_${decodedUserID.secretUserID}`;
+  const tokenValue = req.cookies[tokenKey];
+
+  if (!tokenValue) {
+    return next(new ErrorHandler("Please Login to Access this resource", 401));
+  }
+  if (!activeUserId.userID) {
     return next(new ErrorHandler("Please Login to Access this resource", 401));
   }
 
-  const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+  const decodedData = jwt.verify(tokenValue, process.env.JWT_SECRET);
 
-
-  
-
-  req.user = await User.findById(decodedData.id);
-
-  // console.log("User",req.user)s
-
-
+  req.user = await User.findById(activeUserId.userID);
+  console.log("user is authenticated")
   next();
 });
 

@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const companyRoutes = require('./routes/companyRoutes/companyRoutes.js');
 const paymentRoutes = require('./routes/paymentRoutes/paymentRoutes.js')
 const SuperAdminRoutes = require('./routes/SuperAdminRoutes/superAdminRoutes.js');
+const AccountRoutes = require('./routes/accountSwitch/accountRoutes.js')
 const errorMiddleware = require('./middleware/error.js');
 const app = express();
 const path = require('path')
@@ -13,7 +14,6 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const connectDatabase = require('./db/db.js')
-
 
 dotenv.config();
 const url = process.env.FRONTEND_URL;
@@ -32,9 +32,7 @@ app.use(
     })
   );
 
-app.use('/api/v1',companyRoutes)
-app.use('/api/v1',SuperAdminRoutes)
-app.use('/api/v1',paymentRoutes)
+
 app.get('/profile/:filename',(req,res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, '/uploads/profileImages', filename);
@@ -49,6 +47,11 @@ app.get('/api/v1/profile/img/:filename',(req,res) => {
 })
 app.use(errorMiddleware) 
 connectDatabase()
+
+app.use('/api/v1',companyRoutes)
+app.use('/api/v1',SuperAdminRoutes)
+app.use('/api/v1',paymentRoutes)
+app.use('/api/v1',AccountRoutes)
 
 
 // app.use((req, res, next) => {
@@ -96,9 +99,6 @@ app.get('/test', (req, res) => {
 
   res.send(htmlResponse);
 });
-
-
-
 
 app.listen(process.env.PORT,()=>{
     console.log('server listening on port ',process.env.PORT);
