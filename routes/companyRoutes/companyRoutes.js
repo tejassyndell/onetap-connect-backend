@@ -13,7 +13,7 @@ router.post('/google-sign-up',googleSignUP)
 router.post('/google-login',googleLogin)
 router.post('/checkout', isAuthenticatedUser,checkoutHandler)
 router.post("/login", login);
-router.get("/logout", logout);
+router.post("/logout", logout);
 router.post("/forgot/password", forgotPassword);
 router.put("/reset/password/:token", resetPassword);
 router.post("/register/new", registerUser);

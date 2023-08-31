@@ -9,7 +9,7 @@ const CompanySchema = new mongoose.Schema(
     industry: { type: String },
     about: {
       type: String,
-      default: null,
+      default: null
     },
     // slug:{type:String},
     primary_account: {
