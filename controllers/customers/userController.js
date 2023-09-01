@@ -942,6 +942,104 @@ exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({ message: "Team created successfully", company });
 });
 
+// Remove Team from Users
+exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers } = req.body;
+
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    user.team = ""; // Remove the team association
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Team removed from users successfully" });
+});
+
+
+// rename teams name
+exports.renameTeam = catchAsyncErrors(async (req, res, next) => {
+  const companyID = req.user.companyID; // Assuming you have this value available
+  const { oldTeamName, newTeamName } = req.body;
+  
+  // Find the company
+  const company = await Company.findById(companyID);
+  if (!company) {
+    return res.status(404).json({ message: 'Company not found' });
+  }
+
+  // Find the team index in the company's teams array
+  const teamIndex = company.teams.findIndex(team => team.localeCompare(oldTeamName, undefined, { sensitivity: 'base' }) === 0);
+
+  if (teamIndex === -1) {
+    return res.status(400).json({ message: 'Team not found in company' });
+  }
+
+  const isExistingTeam = company.teams.some(team => team.localeCompare(newTeamName, undefined, { sensitivity: 'base' }) === 0);
+
+  if (isExistingTeam) {
+    return res.status(400).json({ message: 'New team name already exists' });
+  }
+
+  // Update team name in company's teams array
+  const oldTeam = company.teams[teamIndex];
+  company.teams[teamIndex] = newTeamName;
+  await company.save();
+
+  // Update user's team name
+  const usersToUpdate = await User.find({ team: oldTeam }); // Find users belonging to the old team
+  for (const user of usersToUpdate) {
+    user.team = newTeamName;
+    await user.save();
+  }
+
+  res.status(200).json({ message: 'Team renamed successfully', company });
+});
+
+
+
+// delete team
+exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
+  const companyID = req.user.companyID; // Assuming you have this value available
+  const { teamname } = req.body; 
+
+  // Find the company
+  const company = await Company.findById(companyID);
+  if (!company) {
+    return res.status(404).json({ message: 'Company not found' });
+  }
+
+  // Find the team index in the company's teams array
+  const teamIndex = company.teams.indexOf(teamname);
+  if (teamIndex === -1) {
+    return res.status(400).json({ message: 'Team not found in company' });
+  }
+
+  // Remove team from the company's teams array
+  const deletedTeam = company.teams.splice(teamIndex, 1)[0];
+  await company.save();
+
+  // Find users belonging to the deleted team
+  const usersToDelete = await User.find({ team: deletedTeam });
+
+  // Remove the team association from the users
+  for (const user of usersToDelete) {
+    user.team = '';
+    await user.save();
+  }
+
+  res.status(200).json({ message: 'Team deleted successfully', company });
+});
+
+
+
+
 // exports.checkslugavailiblity = catchAsyncErrors(async (req,res,next)=> {
 //   const { slug } = req.body;
 
@@ -1016,25 +1114,7 @@ exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ error: "Error updating company addresses." });
   }
 });
-// Remove Team from Users
-exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
-  const { selectedUsers } = req.body;
 
-  for (const userId of selectedUsers) {
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({ message: `User not found with ID: ${userId}` });
-    }
-
-    user.team = ""; // Remove the team association
-    await user.save();
-  }
-
-  res.status(200).json({ message: "Team removed from users successfully" });
-});
 
 // update company details
 exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
