@@ -183,6 +183,8 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
   const newCompany = await Company.create({
     primary_account: user._id,
+    primary_manager: user._id,
+    primary_billing: user._id,
     company_name,
     industry,
     contact,
@@ -1145,7 +1147,7 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
 //checkout handler
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id,companyID } = req.user;
-  const { userData, planData, cardInfo } = req.body;
+  const { userData, planData, cardInfo, shipping_method } = req.body;
 
 
   const cardData = {
@@ -1169,6 +1171,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.billing_address = userData.billing_address;
   user.shipping_address = userData.shipping_address;
   user.subscription_details = planData;
+  user.shipping_method = shipping_method;
 
   const company = await Company.findById(companyID);
   company.address = userData.billing_address;
