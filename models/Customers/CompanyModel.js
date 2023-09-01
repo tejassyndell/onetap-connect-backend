@@ -40,12 +40,6 @@ const CompanySchema = new mongoose.Schema(
       maxLength: [30, "Fax Number must be 10 digits"],
       minLength: [10, "Fax number must be 10 digits"],
     },
-    companyurlslug: {
-      type: String,
-      default: function () {
-          return this.company_name.toLowerCase().replace(/[^a-z0-9-]/g, '');
-      }
-  },
     address : {
         line1: { type: String, default: null },
         line2: { type: String, default: null },
