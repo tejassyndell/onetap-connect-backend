@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema(
         postal_code: { type: String, default: null }
     }],
     aboutUser:{type:String,default:null},
-    officeNumber:{type:String,default:null},
+    officeNumber:{type:String,default:"-"},
     keywords:{type:String,default:null},
     websiteUrl:{type:String,default:null},
     isVerfied : {type : Boolean},
@@ -81,7 +81,7 @@ const userSchema = new mongoose.Schema(
       renewal_date: { type: Date },
     },
     role: { type: String, default: "member" },
-    team: { type: String },
+    team: { type: String , default:'' },
     companyID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "company",
