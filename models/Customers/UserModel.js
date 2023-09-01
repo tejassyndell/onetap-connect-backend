@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
         postal_code: { type: String, default: null }
     }],
     aboutUser:{type:String,default:null},
-    officeNumber:{type:String,default:null},
+    officeNumber:{type:String, default:'-'},
     keywords:{type:String,default:null},
     websiteUrl:{type:String,default:null},
     isVerfied : {type : Boolean},
@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema({
     status: { type: String, default: "active" },
     isIndividual: { type: Boolean, default: false },
     isPaidUser: { type: Boolean, default: false },
+    userurlslug: {
+      type: String,
+      default: function () {
+        const firstName = this.first_name.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        const lastName = this.last_name.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        return `${firstName}${lastName}`;
+      }
+  },
     subscription_details: {
         subscription: { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription' },
         addones: [{ service: { type: String }, price: { type: Number } }],
