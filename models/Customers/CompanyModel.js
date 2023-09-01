@@ -65,6 +65,8 @@ const CompanySchema = new mongoose.Schema(
       },
     ],
     booking_link: { type: String, default: null },
+    facebook_link: { type: String, default: null },
+    linkedin_link: { type: String, default: null },
     additional_colors: [
       {
         name: { type: String, default: null },
