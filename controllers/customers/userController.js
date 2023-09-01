@@ -945,6 +945,8 @@ exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({ message: "Team created successfully", company });
 });
 
+
+
 // Remove Team from Users
 exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
   const { selectedUsers } = req.body;
@@ -1143,6 +1145,47 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     company,
   });
+});
+
+exports.checkcompanyurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
+  const { companyurlslug } = req.body;
+
+  console.log(companyurlslug);
+  const existingcompanyurlslug = await Company.findOne({ companyurlslug });
+  if (existingcompanyurlslug) {
+    return res.status(400).json({ message: 'companyurlslug is already taken.' });
+  }
+
+  // Check case-sensitive duplicates
+  const caseSensitivecompanyurlslug = await Company.findOne({ companyurlslug: new RegExp(`^${companyurlslug}$`, 'i') });
+  if (caseSensitivecompanyurlslug) {
+    return res.status(400).json({ message: 'companyurlslug is already taken.' });
+  }
+
+  return res.status(200).json({ message: 'companyurlslug is available.' });
+});
+
+
+exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
+  const { companyId, companyurlslug } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
+  console.log(companyurlslug,"sdfds")
+  console.log(companyId)
+  try {
+    const updatedCompany = await Company.findByIdAndUpdate(
+      companyId,
+      { companyurlslug: companyurlslug },
+    );
+  
+    if (!updatedCompany) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+  
+    res.json({ message: "Company slug updated successfully", updatedCompany });
+  } catch (error) {
+    console.error("Error updating company slug:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+  
 });
 
 //checkout handler
