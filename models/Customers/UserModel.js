@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema({
     keywords:{type:String,default:null},
     websiteUrl:{type:String,default:null},
     isVerfied : {type : Boolean},
-    avatar: { type: String, default: 'user_default.svg' },
+    avatar: { type: String, default: '' },
     status: { type: String, default: "active" },
     isIndividual: { type: Boolean, default: false },
     isPaidUser: { type: Boolean, default: false },
