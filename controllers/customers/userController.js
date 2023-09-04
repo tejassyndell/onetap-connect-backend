@@ -138,22 +138,35 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     company_name,
     team_size,
     password,
+    googleId
   } = req.body.signupData;
-  // console.log(req.body)
+  console.log("goole",googleId)
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
   const email = decodedData.email;
-
-  const user = await User.create({
-    email,
-    first_name,
-    last_name,
-    contact,
-    isIndividual: !isCompany,
-    password,
-  });
+ let user;
+  if(password === undefined){
+     user = await User.create({
+      email,
+      first_name,
+      last_name,
+      contact,
+      isIndividual: !isCompany,
+      googleId
+    });
+  }
+  else{
+     user = await User.create({
+      email,
+      first_name,
+      last_name,
+      contact,
+      isIndividual: !isCompany,
+      password
+    });
+  }
   if (!user) {
-    return next(new ErrorHandler("Error while sign-up", 400));
+     return next(new ErrorHandler("Something went wrong please try again", 400));
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -170,8 +183,11 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
   const newCompany = await Company.create({
     primary_account: user._id,
+    primary_manager: user._id,
+    primary_billing: user._id,
     company_name,
     industry,
+    contact,
     team_size,
   });
 
@@ -184,7 +200,9 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   //   user
   // })
 
-  sendToken(req,user, 200, res);
+  // sendToken(req,user, 200, res);
+  sendToken(user, 200, res);
+  // res.send("hello")
 });
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -232,7 +250,72 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     user,
     company,
   });
-});
+})
+
+
+//google signup
+exports.googleSignUP = catchAsyncErrors(async(req,res,next)=>{
+  const JWT_SECRET_KEY = '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';
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token } = req.body;
+
+
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const googleId = payload.sub;
+
+  const urlToken = jwt.sign({ email: payload.email }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+
+  const {name} = payload
+
+// Split the fullName into an array of parts using space as the separator
+const parts = name.split(' ');
+
+// Extract the first name (assuming it's the first element) and the last name (assuming it's the second element)
+const first_name = parts[0]; // 'Manish'
+const last_name = parts[1];  // 'Shakya'
+
+  const googleData = {
+    first_name,
+    last_name,
+googleId : payload.sub
+  }
+
+  res.status(200).json({
+    success :true,
+    token : urlToken,
+    googleData
+  })
+
+})
+
+exports.googleLogin = catchAsyncErrors(async(req,res,next)=> {
+  const JWT_SECRET_KEY = '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';
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token } = req.body;
+
+
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  const user = await User.findOne({email :payload.email});
+
+  if(!user){
+    return next(new ErrorHandler("User Not Found",404));
+  }
+
+  // res.send(payload)
+  sendToken(user, 200, res);
+
+})
 
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
@@ -249,10 +332,11 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("Invalid email or password", 401));
   }
-
+  
   const isPasswordMatched = await user.comparePassword(password);
 
   if (!isPasswordMatched) {
+    console.log("2")
     return next(new ErrorHandler("Invalid email or password", 401));
   }
   
@@ -361,6 +445,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
 
+
   try {
     // Check if you're using the correct SMTP settings
     const transporter = nodemailer.createTransport({
@@ -379,6 +464,10 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
+    }
+
+    if(user.googleId){
+      return next(new ErrorHandler("This email is associated with Gmail",401))
     }
 
     // Generate or retrieve resetToken here
@@ -495,9 +584,9 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
   // sendToken(user, 200, res);
   res.status(200).json({
-    success : true,
-    message : "Password Updated Successfully"
-  })
+    success: true,
+    message: "Password Updated Successfully",
+  });
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
@@ -568,13 +657,9 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user
-  })
-})
-
-
-
-
+    user,
+  });
+});
 
 // update user team
 exports.updateTeam = catchAsyncErrors(async (req, res, next) => {
@@ -758,8 +843,6 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
-
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
   const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
@@ -842,7 +925,9 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: `User not found with ID: ${userId}` });
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
     }
 
     // Update the user's team with the new team name
@@ -850,32 +935,129 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
     await user.save(); // Save the changes to the user
   }
 
-  res.status(200).json({ message: 'Users updated successfully' });
-  
+  res.status(200).json({ message: "Users updated successfully" });
 });
 
-// Create new Team 
-exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
+// Create new Team
+exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
+  const companyID = req.user.companyID;
+  console.log(companyID);
+  const { teamName } = req.body;
 
-  const companyID = req.user.companyID
-  console.log(companyID)
-  const {teamName} = req.body;
-
-  const company = await Company.findOne(companyID).populate('primary_account'); // Replace with proper query
+  const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
 
   if (!company) {
-      return res.status(404).json({ message: 'Company not found' });
+    return res.status(404).json({ message: "Company not found" });
   }
 
   if (company.teams.includes(teamName)) {
-    return res.status(400).json({ message: 'This team already exists' });
+    return res.status(400).json({ message: "This team already exists" });
   }
 
   company.teams.push(teamName);
   await company.save();
 
-  res.status(201).json({ message: 'Team created successfully', company });
-}) 
+  res.status(201).json({ message: "Team created successfully", company });
+});
+
+
+
+// Remove Team from Users
+exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers } = req.body;
+
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    user.team = ""; // Remove the team association
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Team removed from users successfully" });
+});
+
+
+// rename teams name
+exports.renameTeam = catchAsyncErrors(async (req, res, next) => {
+  const companyID = req.user.companyID; // Assuming you have this value available
+  const { oldTeamName, newTeamName } = req.body;
+  
+  // Find the company
+  const company = await Company.findById(companyID);
+  if (!company) {
+    return res.status(404).json({ message: 'Company not found' });
+  }
+
+  // Find the team index in the company's teams array
+  const teamIndex = company.teams.findIndex(team => team.localeCompare(oldTeamName, undefined, { sensitivity: 'base' }) === 0);
+
+  if (teamIndex === -1) {
+    return res.status(400).json({ message: 'Team not found in company' });
+  }
+
+  const isExistingTeam = company.teams.some(team => team.localeCompare(newTeamName, undefined, { sensitivity: 'base' }) === 0);
+
+  if (isExistingTeam) {
+    return res.status(400).json({ message: 'New team name already exists' });
+  }
+
+  // Update team name in company's teams array
+  const oldTeam = company.teams[teamIndex];
+  company.teams[teamIndex] = newTeamName;
+  await company.save();
+
+  // Update user's team name
+  const usersToUpdate = await User.find({ team: oldTeam }); // Find users belonging to the old team
+  for (const user of usersToUpdate) {
+    user.team = newTeamName;
+    await user.save();
+  }
+
+  res.status(200).json({ message: 'Team renamed successfully', company });
+});
+
+
+
+// delete team
+exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
+  const companyID = req.user.companyID; // Assuming you have this value available
+  const { teamname } = req.body; 
+
+  // Find the company
+  const company = await Company.findById(companyID);
+  if (!company) {
+    return res.status(404).json({ message: 'Company not found' });
+  }
+
+  // Find the team index in the company's teams array
+  const teamIndex = company.teams.indexOf(teamname);
+  if (teamIndex === -1) {
+    return res.status(400).json({ message: 'Team not found in company' });
+  }
+
+  // Remove team from the company's teams array
+  const deletedTeam = company.teams.splice(teamIndex, 1)[0];
+  await company.save();
+
+  // Find users belonging to the deleted team
+  const usersToDelete = await User.find({ team: deletedTeam });
+
+  // Remove the team association from the users
+  for (const user of usersToDelete) {
+    user.team = '';
+    await user.save();
+  }
+
+  res.status(200).json({ message: 'Team deleted successfully', company });
+});
+
+
 
 
 // exports.checkslugavailiblity = catchAsyncErrors(async (req,res,next)=> {
@@ -885,11 +1067,10 @@ exports.createNewTeam = catchAsyncErrors(async (req,res,next)=> {
 //     const existingSlug = await Company.findOne({ slug });
 //     if (existingSlug) {
 //       return res.status(400).json({ message: 'Slug is already taken.' });
-//     } 
-      
+//     }
+
 //       return res.status(200).json({ message: 'Slug is available.' });
-    
-  
+
 // });
 //update company details
 // update single team members
@@ -900,32 +1081,30 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
 
   try {
     const user = await User.findById(id);
-    
+
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
 
     if (user.companyID.toString() !== req.user.companyID.toString()) {
-      return next(new ErrorHandler("You are not authorized to update this user", 401));
+      return next(
+        new ErrorHandler("You are not authorized to update this user", 401)
+      );
     }
 
     // Update the user details
     user.set(updatedUserDetails);
     await user.save();
 
-
-
-
     res.status(200).json({
       success: true,
       message: "User details updated successfully",
-      user: user
+      user: user,
     });
   } catch (error) {
     next(error);
   }
 });
-
 
 exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
@@ -955,31 +1134,13 @@ exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ error: "Error updating company addresses." });
   }
 });
-// Remove Team from Users
-exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
-  const { selectedUsers } = req.body;
-
-  for (const userId of selectedUsers) {
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: `User not found with ID: ${userId}` });
-    }
-
-    user.team = null; // Remove the team association
-    await user.save();
-  }
-
-  res.status(200).json({ message: 'Team removed from users successfully' });
-});
 
 
 // update company details
-exports.updateCompanyDetailsInfo = catchAsyncErrors(async(req,res,next)=>{
+exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
 
-  const {companyID } = req.user;
-
-  const {updatedCompanyDetails} = req.body;
+  const { updatedCompanyDetails } = req.body;
 
   const company = await Company.findById(companyID);
 
@@ -988,40 +1149,99 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async(req,res,next)=>{
   }
 
   if (company._id.toString() !== req.user.companyID.toString()) {
-    return next(new ErrorHandler("You are not authorized to update this user", 401));
+    return next(
+      new ErrorHandler("You are not authorized to update this user", 401)
+    );
   }
-
 
   company.set(updatedCompanyDetails);
   await company.save();
 
   res.status(200).json({
-    company
-  })
+    company,
+  });
+});
 
-})
+exports.checkcompanyurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
+  const { companyurlslug } = req.body;
 
-  //checkout handler
-exports.checkoutHandler = catchAsyncErrors(async(req,res,next)=>{
+  console.log(companyurlslug);
+  const existingcompanyurlslug = await Company.findOne({ companyurlslug });
+  if (existingcompanyurlslug) {
+    return res.status(400).json({ message: 'companyurlslug is already taken.' });
+  }
 
-  const {id} = req.user
-  const {userData} = req.body
+  // Check case-sensitive duplicates
+  const caseSensitivecompanyurlslug = await Company.findOne({ companyurlslug: new RegExp(`^${companyurlslug}$`, 'i') });
+  if (caseSensitivecompanyurlslug) {
+    return res.status(400).json({ message: 'companyurlslug is already taken.' });
+  }
+
+  return res.status(200).json({ message: 'companyurlslug is available.' });
+});
+
+
+exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
+  const { companyId, companyurlslug } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
+  console.log(companyurlslug,"sdfds")
+  console.log(companyId)
+  try {
+    const updatedCompany = await Company.findByIdAndUpdate(
+      companyId,
+      { companyurlslug: companyurlslug },
+    );
+  
+    if (!updatedCompany) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+  
+    res.json({ message: "Company slug updated successfully", updatedCompany });
+  } catch (error) {
+    console.error("Error updating company slug:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+  
+});
+
+//checkout handler
+exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
+  const { id,companyID } = req.user;
+  const { userData, planData, cardInfo, shipping_method } = req.body;
+
+
+  const cardData = {
+    cardNumber: cardInfo.cardNumber,
+    brand: cardInfo.brand,
+  };
 
   const user = await User.findById(id);
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
 
+  const card = await Cards.create(cardData);
+  card.userID = id;
+
+
   user.isPaidUser = true;
   user.first_name = userData.first_name;
   user.first_last = userData.first_last;
+  user.address = userData.billing_address;
   user.billing_address = userData.billing_address;
   user.shipping_address = userData.shipping_address;
+  user.subscription_details = planData;
+  user.shipping_method = shipping_method;
+
+  const company = await Company.findById(companyID);
+  company.address = userData.billing_address;
+
   await user.save();
+  await card.save();
+  await company.save();
+
+
 
   res.status(200).json({
-    success :true
-  })
-
-
-})
+    success: true,
+  });
+});
