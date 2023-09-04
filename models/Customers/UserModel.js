@@ -49,6 +49,12 @@ const userSchema = new mongoose.Schema(
         country: { type: String, default: null },
         postal_code: { type: String, default: null }
     }],
+    social_media: [
+      {
+        name: { type: String, default: null },
+        link: { type: String, default: null },
+      },
+    ],
     aboutUser:{type:String,default:null},
     officeNumber:{type:String,default:"-"},
     keywords:{type:String,default:null},

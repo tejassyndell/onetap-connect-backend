@@ -12,6 +12,8 @@ const { OAuth2Client } = require("google-auth-library");
 const User = require("../../models/Customers/UserModel.js");
 const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
+const multer = require("multer");
+const path = require("path");
 const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
 const Cards = require("../../models/Customers/CardsModel.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
@@ -1230,3 +1232,55 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     success: true,
   });
 });
+
+// multer image upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/profileimages");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const extension = file.originalname.split(".").pop(); // Get the file extension
+    cb(null, `profile-${uniqueSuffix}.${extension}`);
+  },
+});
+
+const upload = multer({ storage });
+// Define a function to handle profile picture upload
+exports.uploadProfilePicture = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Use async/await for better error handling and readability
+    const userId = req.user.id;
+    upload.single('profilePicture')(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: 'File upload failed.' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded.' });
+      }
+
+      const profilePicturePath = req.file.filename;
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { avatar: profilePicturePath }, // Update the 'avatar' field
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Profile picture uploaded successfully.',
+        user,
+      });
+    });
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
