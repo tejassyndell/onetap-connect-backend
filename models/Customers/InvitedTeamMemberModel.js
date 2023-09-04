@@ -37,7 +37,7 @@ const invitedTeamMemberSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  avatar : {type:String,default:'user_default.svg'},
+  avatar : {type:String,default:''},
   companyId: {
     type: mongoose.Types.ObjectId,
     ref: 'company',
