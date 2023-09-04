@@ -1167,14 +1167,19 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(async (req, res, next)
 
 
 exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
-  const { companyId, companyurlslug } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
-  console.log(companyurlslug,"sdfds")
+  const { companyId, companyurlslug, company_url_edit_permission } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
+  console.log(companyurlslug)
   console.log(companyId)
+  console.log(company_url_edit_permission)
   try {
     const updatedCompany = await Company.findByIdAndUpdate(
       companyId,
-      { companyurlslug: companyurlslug },
+      {
+        companyurlslug: companyurlslug,
+        company_url_edit_permission: company_url_edit_permission,
+      },
     );
+    
   
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
