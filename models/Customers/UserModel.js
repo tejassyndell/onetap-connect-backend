@@ -79,6 +79,7 @@ const userSchema = new mongoose.Schema(
       total_user: { type: Number },
       recurring_amount: { type: Number },
       renewal_date: { type: Date },
+      auto_renewal : { type: Boolean, default: true },
     },
     role: { type: String, default: "member" },
     team: { type: String , default:'' },
