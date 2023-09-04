@@ -28,7 +28,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 
   if (user) {
     console.log(user.email);
-    return next(new ErrorHandler("This Email is already in use", 409));
+    return next(new ErrorHandler("The email is already in use.", 409));
   } else {
     console.log("else part");
   }
@@ -51,7 +51,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   });
 
   const message = {
-    from: "manish.syndell@gmail.com",
+    from: process.env.NODMAILER_EMAIL,
     to: email,
     subject: `Creating new account`,
     //   text: `Your Verification code is ${code}`,
@@ -68,16 +68,16 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+      <img src="${process.env.FRONTEND_URL}/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-        <div style="font-weight: bold;">Email verification</div>
+        <div style="font-weight: bold; text-align: center;">Email verification</div>
         <p>Please click the “Verify email” button below to continue with the setup of your OneTapConnect account.</p>
         <p>If you believe you received the email by mistake, you may disregard this email, or contact our support team for any information.</p>
-        <div style="display: flex; justify-content: center; gap: 25px; margin-top: 25px;">
+        <div class="main-div-" style="display:block; margin-top: 25px; width:50%; juatify-content:center;  text-align: center;">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
-                <a href="${process.env.FRONTEND_URL}/register/${token}" style="display: inline-block; width: 93%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Verify email</a>
+                <a href="${process.env.FRONTEND_URL}/register/${token}" style="display: inline-block; ; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Verify email</a>
             </div>
         </div>
         <div style="margin-top: 25px;">
@@ -85,8 +85,8 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
             <p>${process.env.FRONTEND_URL}/register/${token}</p>
         </div>
         <div style="margin-top: 25px;">
-            <div style="font-weight: bold;">Technical issue?</div>
-            <div>
+            <div style="font-weight: bold; text-align: center;">Technical issue?</div>
+            <div style="text-align: center;">
                 <span>In case you're facing any technical issue, please contact our support team </span>
                 <span style="color: #2572e6;"><a href="https://support.onetapconnect.com/">here.</a></span>
             </div>
@@ -114,13 +114,13 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
     if (err) {
       console.log("error", err);
       return next(
-        new ErrorHandler("Email Not Sent ,Please Try Agian Later", 500)
+        new ErrorHandler("The email was not sent. Please try again later.", 500)
       );
     } else {
       console.log(info);
       res.status(200).json({
         success: true,
-        message: "Email sent successfully",
+        message: "Email sent successfully.",
       });
     }
   });
@@ -166,7 +166,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   if (!user) {
-     return next(new ErrorHandler("Something went wrong please try again", 400));
+     return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -177,7 +177,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   company.map((item) => {
     if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
       console.log(item.company_name);
-      return next(new ErrorHandler("Company Already Exists", 400));
+      return next(new ErrorHandler("Company Already Exists. ", 400));
     }
   });
 
@@ -327,14 +327,19 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-    return next(new ErrorHandler("Invalid email or password", 401));
+    return next(new ErrorHandler("Please enter valid email. ", 401));
   }
+
+    // Check if the user signed up with Google
+    if (user.googleId) {
+      return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
+    }
   
   const isPasswordMatched = await user.comparePassword(password);
 
   if (!isPasswordMatched) {
     console.log("2")
-    return next(new ErrorHandler("Invalid email or password", 401));
+    return next(new ErrorHandler("Please enter valid password.", 401));
   }
 
   sendToken(user, 200, res);
@@ -446,11 +451,11 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      return next(new ErrorHandler("User not found.", 404));
     }
 
     if(user.googleId){
-      return next(new ErrorHandler("This email is associated with Gmail",401))
+      return next(new ErrorHandler("This email is associated with Gmail.",401))
     }
 
     // Generate or retrieve resetToken here
