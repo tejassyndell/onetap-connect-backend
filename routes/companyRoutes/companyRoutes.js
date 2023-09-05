@@ -3,7 +3,7 @@ const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.j
 const { login,
      registerUser,
      forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug , uploadProfilePicture} = require('../../controllers/customers/userController.js');
+     resetPassword, getCompanyDetails,uploadLogo, uploadfavicon,getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug , uploadProfilePicture} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -37,6 +37,16 @@ router.post(
      "/upload-profile-picture/:id",
      isAuthenticatedUser,
      uploadProfilePicture
+   );
+   router.post(
+     "/uploadlogo",
+     isAuthenticatedUser,
+     uploadLogo
+   );
+   router.post(
+     "/uploadfavicon",
+     isAuthenticatedUser,
+     uploadfavicon
    );
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update",isAuthenticatedUser,updateCompanyDetails);

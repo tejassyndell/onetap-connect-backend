@@ -81,7 +81,9 @@ const CompanySchema = new mongoose.Schema(
     ],
     company_logo_name: { type: String, default: null },
     logo_alt:{ type: String, default: null },
+    logopath:{ type: String, default: '' },
     fav_icon: { type: String, default: null },
+    fav_icon_path :{type: String, default: ''},
     website_url_permission: {
       type: Boolean,
       default: false,
