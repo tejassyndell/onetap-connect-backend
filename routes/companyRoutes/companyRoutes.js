@@ -3,7 +3,7 @@ const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.j
 const { login,
      registerUser,
      forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug} = require('../../controllers/customers/userController.js');
+     resetPassword, getCompanyDetails, getUsers, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug,  addTeamMemberManually, inviteTeamMemberByCSV} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -26,7 +26,10 @@ router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
-router.post('/invite/user', isAuthenticatedUser, inviteTeamMember)
+router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
+// router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
+
+router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
 router.post("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
 router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
