@@ -152,6 +152,16 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    default_crm_link:{ type: String, default: null },
+    default_crm_link_permission:{
+      type: Boolean,
+      default: false,
+    },
+    default_connect_msg:{ type: String, default: null },
+    default_connect_msg_permission:{
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
