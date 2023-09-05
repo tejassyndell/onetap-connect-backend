@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [8, "Minimum 8 character"],
       select: false,
+      default :null,
     },
     contact: { type: String, default: null },
     address: {
@@ -94,7 +95,7 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    googleId: { type: String },
+    googleId: { type: String,default:null },
     designation: [{ type: String }],
     resetPasswordToken: String,
     resetPasswordExpire: Date,

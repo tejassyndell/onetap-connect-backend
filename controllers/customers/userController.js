@@ -309,6 +309,11 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User Not Found", 404));
   }
 
+  if(user.googleId === null){
+    return next(new ErrorHandler("User signed up with Email Password , Please use Email and Password", 400));
+
+  }
+
   // res.send(payload)
   sendToken(user, 200, res);
 });
@@ -326,13 +331,15 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-    return next(new ErrorHandler("Please enter valid email. ", 401));
+    return next(new ErrorHandler("User does not found. ", 401));
   }
 
     // Check if the user signed up with Google
-    if (user.googleId) {
+    if (user.googleId !== null) {
       return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
     }
+
+    
   
   const isPasswordMatched = await user.comparePassword(password);
 
