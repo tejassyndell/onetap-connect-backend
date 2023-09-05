@@ -32,7 +32,7 @@ const CompanySchema = new mongoose.Schema(
       },
     ],
     global_email: { type: String },
-    timezone:{ type: String, default: '' },
+    timezone: { type: String, default: "" },
     keywords: { type: String },
     contact: {
       type: Number,
@@ -112,10 +112,10 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    logo_alt:{ type: String, default: null },
-    logopath:{ type: String, default: '' },
+    logo_alt: { type: String, default: null },
+    logopath: { type: String, default: "" },
     fav_icon: { type: String, default: null },
-    fav_icon_path :{type: String, default: ''},
+    fav_icon_path: { type: String, default: "" },
     website_url_permission: {
       type: Boolean,
       default: false,
@@ -156,19 +156,20 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    default_crm_link:{ type: String, default: null },
-    default_crm_link_permission:{
+    default_crm_link: { type: String, default: null },
+    default_crm_link_permission: {
       type: Boolean,
       default: false,
     },
-    default_connect_msg:{ type: String, default: null },
-    default_connect_msg_permission:{
+    default_connect_msg: { type: String, default: null },
+    default_connect_msg_permission: {
       type: Boolean,
       default: false,
 
-    company_url_edit_permission: {
-      type: Boolean,
-      default: true,
+      company_url_edit_permission: {
+        type: Boolean,
+        default: true,
+      },
     },
   },
   { timestamps: true }
