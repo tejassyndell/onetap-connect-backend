@@ -689,54 +689,13 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
 // invite team member
 
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-  const { email, first_name, last_name, team } = req.body.memberData;
+  const { memberData } = req.body;
   const { companyID } = req.user;
 
-  if (!email || !first_name || !last_name || !team) {
-    if (!email) {
-      return next(new ErrorHandler("Please Enter Email", 400));
-    }
-    if (!first_name) {
-      return next(new ErrorHandler("Please Enter First Name", 400));
-    }
-    if (!last_name) {
-      return next(new ErrorHandler("Please Enter Last Name", 400));
-    }
-    if (!team) {
-      return next(new ErrorHandler("Please Enter Team", 400));
-    } else {
-      return next(new ErrorHandler("Please fill out all details", 400));
-    }
+  // Check if CSVMemberData is an array and contains data
+  if (!Array.isArray(memberData) || memberData.length === 0) {
+    return next(new ErrorHandler("No user data provided", 400));
   }
-  if (email) {
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailPattern.test(email) === false) {
-      return next(new ErrorHandler("Please enter valid email"));
-    }
-  }
-
-  let invitationToken = crypto.randomBytes(20).toString("hex");
-
-  const currentDate = new Date();
-
-  // Calculate the expiry date by adding 10 days
-  const expiryDate = new Date(currentDate);
-  expiryDate.setDate(currentDate.getDate() + 10);
-
-  // Convert the expiry date to ISO string format
-  // const expiryDateString = expiryDate.toISOString();
-
-  const member = await InvitedTeamMemberModel.create({
-    email: email,
-    first_name: first_name,
-    last_name: last_name,
-    team: team,
-    companyId: companyID,
-    invitationToken: invitationToken,
-    invitationExpiry: expiryDate,
-  });
-
-  const company = await Company.findById(companyID);
 
   const transporter = nodemailer.createTransport({
     service: "Gmail",
@@ -747,25 +706,64 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  const message = {
-    from: "manish.syndell@gmail.com",
-    to: email,
-    subject: `${company.company_name} Invited you to join OneTapConnect`,
-    //   html: `
-    //  <div>
-    //  <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div>
-    //  <h3>Welcome to OneTapConnect!</h3>
-    //  <p>Hi ${first_name}<br/>
-    //  You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
-    //  <div><button>Accept invitation</button><button>Reject</button></div>
-    //  <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
-    //  <h5>Technical issue?</h5>
-    //  <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
-    //  <a></a>
-    //  </div>
-    // `
+  const company = await Company.findById(companyID);
 
-    html: `
+  for (const userData of memberData) {
+    const { email, first_name, last_name, team } = userData;
+
+    if (!email || !first_name || !last_name || !team) {
+      if (!email) {
+        return next(new ErrorHandler("Please Enter Email", 400));
+      }
+      if (!first_name) {
+        return next(new ErrorHandler("Please Enter First Name", 400));
+      }
+      if (!last_name) {
+        return next(new ErrorHandler("Please Enter Last Name", 400));
+      }
+      if (!team) {
+        return next(new ErrorHandler("Please Enter Team", 400));
+      } else {
+        return next(new ErrorHandler("Please fill out all details", 400));
+      }
+    }
+    if (email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailPattern.test(email) === false) {
+        return next(new ErrorHandler("Please enter valid email"));
+      }
+    }
+
+    let invitationToken = crypto.randomBytes(20).toString("hex");
+
+    const currentDate = new Date();
+
+    // Calculate the expiry date by adding 10 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 10);
+
+    // Convert the expiry date to ISO string format
+    // const expiryDateString = expiryDate.toISOString();
+
+    const message = {
+      from: "manish.syndell@gmail.com",
+      to: email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+      //   html: `
+      //  <div>
+      //  <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div>
+      //  <h3>Welcome to OneTapConnect!</h3>
+      //  <p>Hi ${first_name}<br/>
+      //  You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+      //  <div><button>Accept invitation</button><button>Reject</button></div>
+      //  <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
+      //  <h5>Technical issue?</h5>
+      //  <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      //  <a></a>
+      //  </div>
+      // `
+
+      html: `
   <!DOCTYPE html>
   <html>
   
@@ -806,15 +804,26 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   
   
 `,
-  };
+    };
 
-  transporter.sendMail(message, (err, info) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(info.response);
-    }
-  });
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+    await InvitedTeamMemberModel.create({
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      team: team,
+      companyId: companyID,
+      invitationToken: invitationToken,
+      invitationExpiry: expiryDate,
+    });
+  }
 
   res.status(201).json({
     success: true,
@@ -1240,9 +1249,12 @@ exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+//invite team member by CSV
+
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
-  const { companyID } = req.user;
+  const { companyID, id } = req.user;
+  console.log(CSVMemberData)
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -1259,9 +1271,10 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   });
 
   const company = await Company.findById(companyID);
+  const userInfo = await User.findById(id);
 
   for (const userData of CSVMemberData) {
-    const password = generatePassword()
+    const password = generatePassword();
     const { email, first_name, last_name, team } = userData;
 
     if (!email || !first_name || !last_name || !team) {
@@ -1272,16 +1285,6 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     if (!emailPattern.test(email)) {
       return next(new ErrorHandler("Please enter a valid email", 400));
     }
-
-
-    const member = await User.create({
-      email: email,
-      first_name: first_name,
-      last_name: last_name,
-      team: team,
-      companyId: companyID,
-      password : password,
-    });
 
     const message = {
       from: "manish.syndell@gmail.com",
@@ -1306,22 +1309,18 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
             </div>
             <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
             <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-            <h3>Welcome to OneTapConnect!</h3>
-            <p>Hi ${first_name}<br/>
-            your login password is ${password}<br/>
-            You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
-            <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
-            <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-              <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
-                  <a href="${process.env.FRONTEND_URL}/sign-up" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
-              </div>
-              <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
-                  <a href="${process.env.FRONTEND_URL}/plan-selection" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
-              </div>
-          </div>
-            <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
-            <h5>Technical issue?</h5>
-            <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+           
+            <p>Dear ${first_name}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <a href="${process.env.FRONTEND_URL}/login">Click here to Login</a><br/><br/>
+            Your temporary password is: ${password}<br/><br/>
+            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${userInfo.first_name} ${userInfo.last_name}<br/>
+            ${company.company_name}
         </div>
     
     </body>
@@ -1338,6 +1337,15 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       } else {
         console.log(`Email sent to ${email}: ${info.response}`);
       }
+    });
+
+    await User.create({
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      team: team,
+      companyID: companyID,
+      password: password,
     });
   }
 
