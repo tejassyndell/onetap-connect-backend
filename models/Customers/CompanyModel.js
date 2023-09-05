@@ -32,6 +32,7 @@ const CompanySchema = new mongoose.Schema(
       },
     ],
     global_email: { type: String },
+    timezone:{ type: String, default: '' },
     keywords: { type: String },
     contact: {
       type: Number,
@@ -68,6 +69,7 @@ const CompanySchema = new mongoose.Schema(
         icon: { type: String, default: null },
         name: { type: String, default: null },
         link: { type: String, default: null },
+        permission: { type: Boolean, default: false },
       },
     ],
     booking_link: { type: String, default: null },
@@ -85,11 +87,17 @@ const CompanySchema = new mongoose.Schema(
     company_video: { type: String, default: null },
     custom_fields_data: [
       {
-        data: { type: String, default: null },
+        value: { type: String, default: null },
         permission: { type: Boolean, default: false },
       },
     ],
-    other_links: [{ type: String, default: null }],
+    other_links: [
+      {
+        name: { type: String, default: null },
+        link: { type: String, default: null },
+        permission: { type: Boolean, default: false },
+      },
+    ],
     custom_link: { type: String, default: null },
     license: { type: String, default: null },
     booking_link_permission: {
