@@ -112,6 +112,10 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    logo_alt:{ type: String, default: null },
+    logopath:{ type: String, default: '' },
+    fav_icon: { type: String, default: null },
+    fav_icon_path :{type: String, default: ''},
     website_url_permission: {
       type: Boolean,
       default: false,
@@ -161,6 +165,10 @@ const CompanySchema = new mongoose.Schema(
     default_connect_msg_permission:{
       type: Boolean,
       default: false,
+
+    company_url_edit_permission: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }
