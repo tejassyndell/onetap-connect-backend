@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [8, "Minimum 8 character"],
       select: false,
+      default :null,
     },
     contact: { type: String, default: null },
     address: {
@@ -49,6 +50,12 @@ const userSchema = new mongoose.Schema(
         country: { type: String, default: null },
         postal_code: { type: String, default: null }
     }],
+    social_media: [
+      {
+        name: { type: String, default: null },
+        link: { type: String, default: null },
+      },
+    ],
     aboutUser:{type:String,default:null},
     officeNumber:{type:String,default:"-"},
     keywords:{type:String,default:null},
@@ -79,6 +86,7 @@ const userSchema = new mongoose.Schema(
       total_user: { type: Number },
       recurring_amount: { type: Number },
       renewal_date: { type: Date },
+      auto_renewal : { type: Boolean, default: true },
     },
     role: { type: String, default: "member" },
     team: { type: String , default:'' },
@@ -87,7 +95,7 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    googleId: { type: String },
+    googleId: { type: String,default:null },
     designation: [{ type: String }],
     resetPasswordToken: String,
     resetPasswordExpire: Date,

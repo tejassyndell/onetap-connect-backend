@@ -48,17 +48,17 @@ const CompanySchema = new mongoose.Schema(
     companyurlslug: {
       type: String,
       default: function () {
-          return this.company_name.toLowerCase().replace(/[^a-z0-9-]/g, '');
-      }
-  },
-    address : {
-        line1: { type: String, default: null },
-        line2: { type: String, default: null },
-        city: { type: String, default: null },
-        state: { type: String, default: null },
-        country: { type: String, default: null },
-        postal_code: { type: String, default: null }
+        return this.company_name.toLowerCase().replace(/[^a-z0-9-]/g, "");
       },
+    },
+    address: {
+      line1: { type: String, default: null },
+      line2: { type: String, default: null },
+      city: { type: String, default: null },
+      state: { type: String, default: null },
+      country: { type: String, default: null },
+      postal_code: { type: String, default: null },
+    },
     company_website: { type: String },
     team_size: { type: String },
     total_members: { type: Number },
@@ -80,8 +80,30 @@ const CompanySchema = new mongoose.Schema(
       },
     ],
     company_logo_name: { type: String, default: null },
-    logo_alt:{ type: String, default: null },
+    logo_alt: { type: String, default: null },
     fav_icon: { type: String, default: null },
+    company_video: { type: String, default: null },
+    custom_fields_data: [
+      {
+        data: { type: String, default: null },
+        permission: { type: Boolean, default: false },
+      },
+    ],
+    other_links: [{ type: String, default: null }],
+    custom_link: { type: String, default: null },
+    license: { type: String, default: null },
+    booking_link_permission: {
+      type: Boolean,
+      default: false,
+    },
+    license_permission: {
+      type: Boolean,
+      default: false,
+    },
+    custom_link_permission: {
+      type: Boolean,
+      default: false,
+    },
     website_url_permission: {
       type: Boolean,
       default: false,
