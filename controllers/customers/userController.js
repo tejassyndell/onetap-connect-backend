@@ -170,7 +170,9 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   if (!user) {
-     return next(new ErrorHandler("Something went wrong please try again.", 400));
+    return next(
+      new ErrorHandler("Something went wrong please try again.", 400)
+    );
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -311,9 +313,13 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User Not Found", 404));
   }
 
-  if(user.googleId === null){
-    return next(new ErrorHandler("User signed up with Email Password , Please use Email and Password", 400));
-
+  if (user.googleId === null) {
+    return next(
+      new ErrorHandler(
+        "User signed up with Email Password , Please use Email and Password",
+        400
+      )
+    );
   }
 
   // res.send(payload)
@@ -336,17 +342,17 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User does not found. ", 401));
   }
 
-    // Check if the user signed up with Google
-    if (user.googleId !== null) {
-      return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
-    }
+  // Check if the user signed up with Google
+  if (user.googleId !== null) {
+    return next(
+      new ErrorHandler("User signed up with Google. Use Google login.", 400)
+    );
+  }
 
-    
-  
   const isPasswordMatched = await user.comparePassword(password);
 
   if (!isPasswordMatched) {
-    console.log("2")
+    console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
 
@@ -461,8 +467,10 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("User not found.", 404));
     }
 
-    if(user.googleId){
-      return next(new ErrorHandler("This email is associated with Gmail.",401))
+    if (user.googleId) {
+      return next(
+        new ErrorHandler("This email is associated with Gmail.", 401)
+      );
     }
 
     // Generate or retrieve resetToken here
@@ -702,7 +710,6 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 // invite team member
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData } = req.body;
@@ -847,13 +854,12 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 //invite team member by CSV
 
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
   const { companyID, id } = req.user;
-  console.log(CSVMemberData)
+  console.log(CSVMemberData);
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -955,23 +961,30 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
 });
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
-  const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
+  const { formData } = req.body;
   const { id } = req.user;
+
   const cardData = {
-    nameOnCard,
-    cardNumber,
-    expirationDate,
-    CVV,
-    status,
+    nameOnCard: formData.cardName,
+    cardNumber: formData.cardNumber,
+    cardExpiryMonth: formData.cardExpiry.slice(0, 2), 
+    cardExpiryYear: formData.cardExpiry.slice(3),   
+    CVV: formData.cardCVV,
+    brand: formData.cardType,
+    status: formData.isPrimary ? 'primary' : 'active',
   };
+  
+
   const card = await Cards.create(cardData);
+
 
   card.userID = id;
 
   card.save();
 
   res.status(201).json({
-    card,
+    success: true,
+    message: "Card Added successfully",
   });
 });
 
@@ -989,6 +1002,69 @@ exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({
     success: true,
     cards,
+  });
+});
+//fetch card details
+
+exports.fetchCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  const cards = await Cards.findById(id);
+
+  console.log(cards)
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    cards,
+  });
+});
+
+//delete card details
+exports.deleteCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  console.log(id,"weff");
+
+  const deletedCard = await Cards.findByIdAndDelete(id);
+
+  if (!deletedCard) {
+    return next(new ErrorHandler("No card details found for this id", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Card deleted successfully",
+  });
+});
+
+exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
+  const { formData } = req.body;
+  const { id } = req.params
+
+  const cardData = {
+    nameOnCard: formData.cardName,
+    cardNumber: formData.cardNumber,
+    cardExpiryMonth: formData.cardExpiry.slice(0, 2), 
+    cardExpiryYear: formData.cardExpiry.slice(3),   
+    CVV: formData.cardCVV,
+    brand: formData.cardType,
+    status: formData.isPrimary ? 'primary' : 'active',
+  };
+  
+  const card = await Cards.findByIdAndUpdate(id,cardData);
+
+
+
+
+  await card.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Card Updated successfully",
   });
 });
 
@@ -1297,19 +1373,15 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
 exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   const { companyId, companyurlslug, company_url_edit_permission } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
-  console.log(companyurlslug)
-  console.log(companyId)
-  console.log(company_url_edit_permission)
+  console.log(companyurlslug);
+  console.log(companyId);
+  console.log(company_url_edit_permission);
   try {
-    const updatedCompany = await Company.findByIdAndUpdate(
-      companyId,
-      {
-        companyurlslug: companyurlslug,
-        company_url_edit_permission: company_url_edit_permission,
-      },
-    );
-    
-  
+    const updatedCompany = await Company.findByIdAndUpdate(companyId, {
+      companyurlslug: companyurlslug,
+      company_url_edit_permission: company_url_edit_permission,
+    });
+
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
@@ -1324,12 +1396,18 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 //checkout handler
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  const { userData, planData, cardInfo, shipping_method } = req.body;
+  const { userData, planData, cardDetails, shipping_method } = req.body;
 
   const cardData = {
-    cardNumber: cardInfo.cardNumber,
-    brand: cardInfo.brand,
+    cardNumber: cardDetails.cardNumber,
+    brand: cardDetails.brand,
+    nameOnCard: cardDetails.cardName,
+    cardExpiryMonth: cardDetails.cardExpiryMonth,
+    cardExpiryYear: cardDetails.cardExpiryYear,
+    // CVV: cardDetails.cardCVV
   };
+
+  console.log(cardData);
 
   const user = await User.findById(id);
   if (!user) {
@@ -1486,7 +1564,7 @@ exports.uploadProfilePicture = async (req, res) => {
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
   const { companyID, id } = req.user;
-  console.log(CSVMemberData)
+  console.log(CSVMemberData);
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
