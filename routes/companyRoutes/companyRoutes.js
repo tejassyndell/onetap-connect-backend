@@ -4,7 +4,8 @@ const { login,
      registerUser,
      forgotPassword, 
      resetPassword, getCompanyDetails, getUsers,uploadLogo, uploadfavicon, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug, updateAutoRenewal, inviteTeamMemberByCSV,  uploadProfilePicture,
-     addTeamMemberManually} = require('../../controllers/customers/userController.js');
+     addTeamMemberManually,
+     createShippingAddress} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -60,6 +61,7 @@ router.post("/updatecompanyslug", updateCompanySlug);
 router.post('/check-availability', isAuthenticatedUser,checkcompanyurlslugavailiblity)
 router.post("/update-AutoRenewal", isAuthenticatedUser,updateAutoRenewal);
 router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
+router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddress)
 
 
 

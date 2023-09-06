@@ -43,6 +43,9 @@ const userSchema = new mongoose.Schema(
     },
     shipping_address: [
       {
+        first_name:{ type: String, default: null },
+        last_name:{ type: String, default: null },
+        company_name:{ type: String, default: null },
         line1: { type: String, default: null },
         line2: { type: String, default: null },
         city: { type: String, default: null },
