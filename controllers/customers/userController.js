@@ -169,7 +169,9 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   if (!user) {
-     return next(new ErrorHandler("Something went wrong please try again.", 400));
+    return next(
+      new ErrorHandler("Something went wrong please try again.", 400)
+    );
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -310,9 +312,13 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User Not Found", 404));
   }
 
-  if(user.googleId === null){
-    return next(new ErrorHandler("User signed up with Email Password , Please use Email and Password", 400));
-
+  if (user.googleId === null) {
+    return next(
+      new ErrorHandler(
+        "User signed up with Email Password , Please use Email and Password",
+        400
+      )
+    );
   }
 
   // res.send(payload)
@@ -335,17 +341,17 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User does not found. ", 401));
   }
 
-    // Check if the user signed up with Google
-    if (user.googleId !== null) {
-      return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
-    }
+  // Check if the user signed up with Google
+  if (user.googleId !== null) {
+    return next(
+      new ErrorHandler("User signed up with Google. Use Google login.", 400)
+    );
+  }
 
-    
-  
   const isPasswordMatched = await user.comparePassword(password);
 
   if (!isPasswordMatched) {
-    console.log("2")
+    console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
 
@@ -460,8 +466,10 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("User not found.", 404));
     }
 
-    if(user.googleId){
-      return next(new ErrorHandler("This email is associated with Gmail.",401))
+    if (user.googleId) {
+      return next(
+        new ErrorHandler("This email is associated with Gmail.", 401)
+      );
     }
 
     // Generate or retrieve resetToken here
@@ -701,7 +709,6 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 // invite team member
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData } = req.body;
@@ -846,13 +853,12 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 //invite team member by CSV
 
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
   const { companyID, id } = req.user;
-  console.log(CSVMemberData)
+  console.log(CSVMemberData);
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -954,23 +960,30 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
 });
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
-  const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
+  const { formData } = req.body;
   const { id } = req.user;
+
   const cardData = {
-    nameOnCard,
-    cardNumber,
-    expirationDate,
-    CVV,
-    status,
+    nameOnCard: formData.cardName,
+    cardNumber: formData.cardNumber,
+    cardExpiryMonth: formData.cardExpiry.slice(0, 2), 
+    cardExpiryYear: formData.cardExpiry.slice(3),   
+    CVV: formData.cardCVV,
+    brand: formData.cardType,
+    status: formData.isPrimary ? 'primary' : 'active',
   };
+  
+
   const card = await Cards.create(cardData);
+
 
   card.userID = id;
 
   card.save();
 
   res.status(201).json({
-    card,
+    success: true,
+    message: "Card Added successfully",
   });
 });
 
@@ -988,6 +1001,69 @@ exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({
     success: true,
     cards,
+  });
+});
+//fetch card details
+
+exports.fetchCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  const cards = await Cards.findById(id);
+
+  console.log(cards)
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    cards,
+  });
+});
+
+//delete card details
+exports.deleteCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  console.log(id,"weff");
+
+  const deletedCard = await Cards.findByIdAndDelete(id);
+
+  if (!deletedCard) {
+    return next(new ErrorHandler("No card details found for this id", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Card deleted successfully",
+  });
+});
+
+exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
+  const { formData } = req.body;
+  const { id } = req.params
+
+  const cardData = {
+    nameOnCard: formData.cardName,
+    cardNumber: formData.cardNumber,
+    cardExpiryMonth: formData.cardExpiry.slice(0, 2), 
+    cardExpiryYear: formData.cardExpiry.slice(3),   
+    CVV: formData.cardCVV,
+    brand: formData.cardType,
+    status: formData.isPrimary ? 'primary' : 'active',
+  };
+  
+  const card = await Cards.findByIdAndUpdate(id,cardData);
+
+
+
+
+  await card.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Card Updated successfully",
   });
 });
 
@@ -1296,19 +1372,15 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
 exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   const { companyId, companyurlslug, company_url_edit_permission } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
-  console.log(companyurlslug)
-  console.log(companyId)
-  console.log(company_url_edit_permission)
+  console.log(companyurlslug);
+  console.log(companyId);
+  console.log(company_url_edit_permission);
   try {
-    const updatedCompany = await Company.findByIdAndUpdate(
-      companyId,
-      {
-        companyurlslug: companyurlslug,
-        company_url_edit_permission: company_url_edit_permission,
-      },
-    );
-    
-  
+    const updatedCompany = await Company.findByIdAndUpdate(companyId, {
+      companyurlslug: companyurlslug,
+      company_url_edit_permission: company_url_edit_permission,
+    });
+
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
@@ -1323,12 +1395,18 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 //checkout handler
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  const { userData, planData, cardInfo, shipping_method } = req.body;
+  const { userData, planData, cardDetails, shipping_method } = req.body;
 
   const cardData = {
-    cardNumber: cardInfo.cardNumber,
-    brand: cardInfo.brand,
+    cardNumber: cardDetails.cardNumber,
+    brand: cardDetails.brand,
+    nameOnCard: cardDetails.cardName,
+    cardExpiryMonth: cardDetails.cardExpiryMonth,
+    cardExpiryYear: cardDetails.cardExpiryYear,
+    // CVV: cardDetails.cardCVV
   };
+
+  console.log(cardData);
 
   const user = await User.findById(id);
   if (!user) {
@@ -1399,13 +1477,13 @@ exports.uploadProfilePicture = async (req, res) => {
     const user = await User.findById(id);
     const oldAvatarPath = user.avatar;
 
-    upload.single('profilePicture')(req, res, async (err) => {
+    upload.single("profilePicture")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
+        return res.status(400).json({ error: "No file uploaded." });
       }
 
       const profilePicturePath = req.file.filename;
@@ -1415,10 +1493,10 @@ exports.uploadProfilePicture = async (req, res) => {
         // Remove the old profile picture file from the storage folder
         fs.unlink(`./uploads/profileimages/${oldAvatarPath}`, (unlinkErr) => {
           if (unlinkErr) {
-            console.error('Error deleting old profile picture:', unlinkErr);
+            console.error("Error deleting old profile picture:", unlinkErr);
           }
         });
-        
+
         // Remove the old avatar path from the user document in the database
         await User.findByIdAndUpdate(id, { avatar: null });
       }
@@ -1430,18 +1508,18 @@ exports.uploadProfilePicture = async (req, res) => {
       );
 
       if (!user) {
-        return res.status(404).json({ error: 'User not found.' });
+        return res.status(404).json({ error: "User not found." });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Profile picture uploaded successfully.',
+        message: "Profile picture uploaded successfully.",
         user,
       });
     });
   } catch (error) {
-    console.error('Error updating profile picture:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating profile picture:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
 //invite team member by CSV
@@ -1449,7 +1527,7 @@ exports.uploadProfilePicture = async (req, res) => {
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
   const { companyID, id } = req.user;
-  console.log(CSVMemberData)
+  console.log(CSVMemberData);
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -1549,8 +1627,8 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     message: "Invitaion Email sent Successfully",
   });
 });
-//Logo  update API 
-// multer image upload 
+//Logo  update API
+// multer image upload
 const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/logo");
@@ -1562,7 +1640,6 @@ const logostorage = multer.diskStorage({
   },
 });
 
-
 const logoupload = multer({
   storage: logostorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit (adjust as needed)
@@ -1570,23 +1647,21 @@ const logoupload = multer({
 
 // Define a function to handle profile picture upload
 exports.uploadLogo = async (req, res) => {
- 
-
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
 
-      // Check if the company already has a logo path
-      const company = await Company.findById(companyID);
-      const oldLogoPath = company.logopath;
+    // Check if the company already has a logo path
+    const company = await Company.findById(companyID);
+    const oldLogoPath = company.logopath;
 
-    logoupload.single('logoimage')(req, res, async (err) => {
+    logoupload.single("logoimage")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
+        return res.status(400).json({ error: "No file uploaded." });
       }
 
       const logoPicturePath = req.file.filename;
@@ -1596,7 +1671,7 @@ exports.uploadLogo = async (req, res) => {
         // Remove the old logo file from the storage folder
         fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
           if (unlinkErr) {
-            console.error('Error deleting old logo:', unlinkErr);
+            console.error("Error deleting old logo:", unlinkErr);
           }
         });
       }
@@ -1608,22 +1683,22 @@ exports.uploadLogo = async (req, res) => {
       );
 
       if (!updatedCompany) {
-        return res.status(404).json({ error: 'Company not found.' });
+        return res.status(404).json({ error: "Company not found." });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Logo uploaded successfully.',
+        message: "Logo uploaded successfully.",
         updatedCompany,
       });
     });
   } catch (error) {
-    console.error('Error updating Logo:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating Logo:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
 // --------------------------------------------------------------------------------------------------------------------------------------
-//favicon update API 
+//favicon update API
 // multer image upload
 const faviconstorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1636,7 +1711,6 @@ const faviconstorage = multer.diskStorage({
   },
 });
 
-
 const faviconupload = multer({
   storage: faviconstorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit (adjust as needed)
@@ -1644,35 +1718,33 @@ const faviconupload = multer({
 
 // Define a function to handle profile picture upload
 exports.uploadfavicon = async (req, res) => {
- 
-
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
 
-         // Check if the company already has a favicon path
-         const company = await Company.findById(companyID);
-         const oldfaviconPath = company.fav_icon_path;
+    // Check if the company already has a favicon path
+    const company = await Company.findById(companyID);
+    const oldfaviconPath = company.fav_icon_path;
 
-    faviconupload.single('faviconimage')(req, res, async (err) => {
+    faviconupload.single("faviconimage")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
+        return res.status(400).json({ error: "No file uploaded." });
       }
 
       const faviconPicturePath = req.file.filename;
-  // Delete the old favicon file if it exists
-  if (oldfaviconPath) {
-    // Remove the old favicon file from the storage folder
-    fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
-      if (unlinkErr) {
-        console.error('Error deleting old favicon:', unlinkErr);
+      // Delete the old favicon file if it exists
+      if (oldfaviconPath) {
+        // Remove the old favicon file from the storage folder
+        fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old favicon:", unlinkErr);
+          }
+        });
       }
-    });
-  }
       const updatedCompany = await Company.findByIdAndUpdate(
         companyID,
         { fav_icon_path: faviconPicturePath },
@@ -1680,17 +1752,17 @@ exports.uploadfavicon = async (req, res) => {
       );
 
       if (!updatedCompany) {
-        return res.status(404).json({ error: 'Company not found.' });
+        return res.status(404).json({ error: "Company not found." });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'favicon uploaded successfully.',
+        message: "favicon uploaded successfully.",
         updatedCompany,
       });
     });
   } catch (error) {
-    console.error('Error updating favicon:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating favicon:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
