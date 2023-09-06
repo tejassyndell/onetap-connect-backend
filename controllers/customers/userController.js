@@ -143,7 +143,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     password,
     googleId,
   } = req.body.signupData;
-  console.log("goole", googleId);
+  console.log("google", googleId);
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
   const email = decodedData.email;
@@ -818,7 +818,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
-                <a href="${process.env.FRONTEND_URL}/sign-up" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
                 <a href="${process.env.FRONTEND_URL}/plan-selection" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
@@ -1431,4 +1431,97 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     success: true,
     message: "Invitaion Email sent Successfully",
   });
+});
+
+exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.body;
+  const currentDate = new Date();
+
+  // const data = await InvitedTeamMemberModel.findOne({
+  //   invitationToken: token,
+  //   invitationExpiry: { $gt: currentDate }, // Not expired
+  // });
+  const tokenExists = await InvitedTeamMemberModel.findOne({
+    invitationToken: token,
+  });
+
+  if (!tokenExists) {
+    res.status(404).json({
+      success: false,
+      message: 'Invitation does not exist.',
+    });
+  } else {
+     const data = await InvitedTeamMemberModel.findOne({
+    invitationToken: token,
+    invitationExpiry: { $gt: currentDate }, // Not expired
+  }).select('_id, email first_name last_name');
+    if (data) {
+      res.status(200).json({
+        success: true,
+        userData: data,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Token is expired.',
+      });
+    }
+  }
+});
+
+
+exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    let userdetails = ({email, first_name, last_name} = req.body.InvitedUserData);
+    const password = "Admin@123"
+    userdetails = {...userdetails, password : password}
+    
+    const user = await User.create(userdetails);
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error, 500)); 
+  }
+});
+
+exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token,  email:userEmail } = req.body.invitedUserData;
+  console.log(userEmail)
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const googleId = payload.sub;
+  console.log(payload)
+  const { name, email } = payload;
+
+  if(email != userEmail){
+    return next(new ErrorHandler("Email does not found in invitation", 404)); 
+  }
+  const parts = name.split(" ")
+  const first_name = parts[0]; 
+  const last_name = parts[1]; 
+  userData = {
+    email : email,
+    first_name : first_name,
+    last_name : last_name,
+    googleId : googleId,
+    isIndividual: false,
+  }
+  const existingUser = await User.findOne({ email: userData.email });
+
+  if (existingUser) {
+    return next(new ErrorHandler("User with the same email already exists", 500)); 
+  } 
+
+const newUser = await User.create(userData);
+ 
+ res.status(200).json({
+  success: true,
+  newUser
+});
+
 });
