@@ -16,6 +16,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
+const CompanyShareReferralModel = require("../../models/Customers/Company_Share_Referral_DataModel")
 const Cards = require("../../models/Customers/CardsModel.js");
 const generatePassword = require("../../utils/passwordGenerator.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
@@ -169,7 +170,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   if (!user) {
-     return next(new ErrorHandler("Something went wrong please try again.", 400));
+    return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -196,6 +197,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
   user.companyID = newCompany._id;
   user.isVerfied = true;
+  const companySettingSchema = await CompanyShareReferralModel.create({ companyID: newCompany._id });
   await user.save({ validateBeforeSave: true });
 
   // res.status(200).json({
@@ -203,7 +205,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   //   user
   // })
 
-  sendToken(req,user, 200, res);
+  sendToken(req, user, 200, res);
 });
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -309,7 +311,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User Not Found", 404));
   }
 
-  if(user.googleId === null){
+  if (user.googleId === null) {
     return next(new ErrorHandler("User signed up with Email Password , Please use Email and Password", 400));
 
   }
@@ -334,21 +336,21 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User does not found. ", 401));
   }
 
-    // Check if the user signed up with Google
-    if (user.googleId !== null) {
-      return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
-    }
+  // Check if the user signed up with Google
+  if (user.googleId !== null) {
+    return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
+  }
 
-    
-  
+
+
   const isPasswordMatched = await user.comparePassword(password);
 
   if (!isPasswordMatched) {
     console.log("2")
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-  
-  sendToken(req,user, 200, res);
+
+  sendToken(req, user, 200, res);
 });
 
 //logout
@@ -360,18 +362,18 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
     const middleTwoDigits = numberString.slice(Math.max(0, numberString.length - 3), -1);
     const lastTwoDigits = numberString.slice(-2);
     return `${firstTwoDigits}${middleTwoDigits}${lastTwoDigits}`;
-};
-const currentUserId = extractDigits(req.body.userID)
-const cookieName = `token_${currentUserId}`
+  };
+  const currentUserId = extractDigits(req.body.userID)
+  const cookieName = `token_${currentUserId}`
 
-res.cookie(cookieName, null, {
-  expires: new Date(Date.now()),
-  httpOnly: true,
-});
-res.cookie("active_account", null, {
-  expires: new Date(Date.now()),
-  httpOnly: true,
-});
+  res.cookie(cookieName, null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+  res.cookie("active_account", null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
   res.status(200).json({
     success: true,
     message: "Logged Out",
@@ -473,8 +475,8 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("User not found.", 404));
     }
 
-    if(user.googleId){
-      return next(new ErrorHandler("This email is associated with Gmail.",401))
+    if (user.googleId) {
+      return next(new ErrorHandler("This email is associated with Gmail.", 401))
     }
 
     // Generate or retrieve resetToken here
@@ -1320,8 +1322,8 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
         company_url_edit_permission: company_url_edit_permission,
       },
     );
-    
-  
+
+
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
@@ -1431,7 +1433,7 @@ exports.uploadProfilePicture = async (req, res) => {
             console.error('Error deleting old profile picture:', unlinkErr);
           }
         });
-        
+
         // Remove the old avatar path from the user document in the database
         await User.findByIdAndUpdate(id, { avatar: null });
       }
@@ -1583,15 +1585,15 @@ const logoupload = multer({
 
 // Define a function to handle profile picture upload
 exports.uploadLogo = async (req, res) => {
- 
+
 
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
 
-      // Check if the company already has a logo path
-      const company = await Company.findById(companyID);
-      const oldLogoPath = company.logopath;
+    // Check if the company already has a logo path
+    const company = await Company.findById(companyID);
+    const oldLogoPath = company.logopath;
 
     logoupload.single('logoimage')(req, res, async (err) => {
       if (err) {
@@ -1657,15 +1659,15 @@ const faviconupload = multer({
 
 // Define a function to handle profile picture upload
 exports.uploadfavicon = async (req, res) => {
- 
+
 
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
 
-         // Check if the company already has a favicon path
-         const company = await Company.findById(companyID);
-         const oldfaviconPath = company.fav_icon_path;
+    // Check if the company already has a favicon path
+    const company = await Company.findById(companyID);
+    const oldfaviconPath = company.fav_icon_path;
 
     faviconupload.single('faviconimage')(req, res, async (err) => {
       if (err) {
@@ -1677,15 +1679,15 @@ exports.uploadfavicon = async (req, res) => {
       }
 
       const faviconPicturePath = req.file.filename;
-  // Delete the old favicon file if it exists
-  if (oldfaviconPath) {
-    // Remove the old favicon file from the storage folder
-    fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
-      if (unlinkErr) {
-        console.error('Error deleting old favicon:', unlinkErr);
+      // Delete the old favicon file if it exists
+      if (oldfaviconPath) {
+        // Remove the old favicon file from the storage folder
+        fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error('Error deleting old favicon:', unlinkErr);
+          }
+        });
       }
-    });
-  }
       const updatedCompany = await Company.findByIdAndUpdate(
         companyID,
         { fav_icon_path: faviconPicturePath },
@@ -1707,3 +1709,40 @@ exports.uploadfavicon = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error.' });
   }
 };
+
+exports.getcompanies_share_referral_datas = catchAsyncErrors(async (req, res, next) => {
+
+  const { companyID } = req.user;
+  console.log(companyID)
+  const companies_share_referral_datas = await CompanyShareReferralModel.findOne({ companyID: companyID });
+  if (!companies_share_referral_datas) {
+    return next(new ErrorHandler("No data Found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    companies_share_referral_datas
+  })
+
+});
+
+
+exports.updatecompany_referral_data = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
+  const updatedCompanyReferralData = req.body;
+  console.log(companyID)
+  console.log(updatedCompanyReferralData)
+
+  const updatecompany = await CompanyShareReferralModel.findOne({companyID:companyID});
+
+  if (!updatecompany) {
+    return next(new ErrorHandler("company share details not found", 404));
+  }
+
+  updatecompany.set(updatedCompanyReferralData);
+  await updatecompany.save();
+
+  res.status(200).json({
+    updatedCompanyReferralData,
+  });
+});

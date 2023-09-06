@@ -165,11 +165,10 @@ const CompanySchema = new mongoose.Schema(
     default_connect_msg_permission: {
       type: Boolean,
       default: false,
-
-      company_url_edit_permission: {
-        type: Boolean,
-        default: true,
-      },
+    },
+    company_url_edit_permission: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }
