@@ -47,6 +47,21 @@ app.get('/api/v1/profile/img/:filename',(req,res) => {
   const filePath = path.join(__dirname, '/uploads/profileImages', filename);
   res.sendFile(filePath);
 })
+
+app.get('/api/v1/logo/img/:filename',(req,res) => {
+  const filename = req.params.filename;
+  console.log(filename)
+
+  const filePath = path.join(__dirname, '/uploads/logo', filename);
+  res.sendFile(filePath);
+})
+app.get('/api/v1/favicon/img/:filename',(req,res) => {
+  const filename = req.params.filename;
+  console.log(filename)
+
+  const filePath = path.join(__dirname, '/uploads/favicon', filename);
+  res.sendFile(filePath);
+})
 app.use(errorMiddleware) 
 connectDatabase()
 

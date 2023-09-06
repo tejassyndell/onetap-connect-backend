@@ -14,6 +14,7 @@ const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
 const multer = require("multer");
 const path = require("path");
+const sharp = require("sharp");
 const fs = require("fs");
 const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
 const Cards = require("../../models/Customers/CardsModel.js");
@@ -1379,7 +1380,7 @@ exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
 // multer image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/profileimages");
+    cb(null, "./uploads/profileImages");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -1389,6 +1390,40 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+const checkimgSize = (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
+    // Use sharp to get the dimensions of the uploaded Profile picture
+    sharp(req.file.path)
+      .metadata()
+      .then((metadata) => {
+        const { width, height } = metadata;
+
+        // Check if the dimensions are either 32x32 or 64x64
+        if (width <= 300 && height <= 300) {
+          // Valid size, continue with the next middleware
+          next();
+        } else {
+          // Invalid size, delete the uploaded file and return an error
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: "Profile picture size must be at most 300x300 pixels..",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking Profile picture size:", err);
+        return res.status(500).json({ error: "Internal server error." });
+      });
+  } catch (error) {
+    console.error("Error checking Profile picture size:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 // Define a function to handle profile picture upload
 exports.uploadProfilePicture = async (req, res) => {
   const { id } = req.params;
@@ -1399,15 +1434,16 @@ exports.uploadProfilePicture = async (req, res) => {
     const user = await User.findById(id);
     const oldAvatarPath = user.avatar;
 
-    upload.single('profilePicture')(req, res, async (err) => {
+    upload.single("profilePicture")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-      }
-
+      // if (!req.file) {
+      //   return res.status(400).json({ error: "No file uploaded." });
+      // }
+      
+      checkimgSize(req, res, async () => {
       const profilePicturePath = req.file.filename;
 
       // Delete the old profile picture if it exists
@@ -1415,10 +1451,10 @@ exports.uploadProfilePicture = async (req, res) => {
         // Remove the old profile picture file from the storage folder
         fs.unlink(`./uploads/profileimages/${oldAvatarPath}`, (unlinkErr) => {
           if (unlinkErr) {
-            console.error('Error deleting old profile picture:', unlinkErr);
+            console.error("Error deleting old profile picture:", unlinkErr);
           }
         });
-        
+
         // Remove the old avatar path from the user document in the database
         await User.findByIdAndUpdate(id, { avatar: null });
       }
@@ -1430,18 +1466,19 @@ exports.uploadProfilePicture = async (req, res) => {
       );
 
       if (!user) {
-        return res.status(404).json({ error: 'User not found.' });
+        return res.status(404).json({ error: "User not found." });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Profile picture uploaded successfully.',
+        message: "Profile picture uploaded successfully.",
         user,
       });
     });
+    });
   } catch (error) {
-    console.error('Error updating profile picture:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating profile picture:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
 //invite team member by CSV
@@ -1549,8 +1586,8 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     message: "Invitaion Email sent Successfully",
   });
 });
-//Logo  update API 
-// multer image upload 
+//Logo  update API
+// multer image upload
 const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/logo");
@@ -1562,68 +1599,100 @@ const logostorage = multer.diskStorage({
   },
 });
 
-
 const logoupload = multer({
   storage: logostorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit (adjust as needed)
 });
 
-// Define a function to handle profile picture upload
-exports.uploadLogo = async (req, res) => {
- 
+// Add this middleware after logoupload.single('logoimage')
+const checkLogoSize = (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
 
+    // Use sharp to get the dimensions of the uploaded logo
+    sharp(req.file.path)
+      .metadata()
+      .then((metadata) => {
+        const { width, height } = metadata;
+
+        // Check if the dimensions are either 32x32 or 64x64
+        if (width <= 300 && height <= 300) {
+          // Valid size, continue with the next middleware
+          next();
+        } else {
+          // Invalid size, delete the uploaded file and return an error
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: "Logo size must be at most 300x300 pixels..",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking logo size:", err);
+        return res.status(500).json({ error: "Internal server error." });
+      });
+  } catch (error) {
+    console.error("Error checking logo size:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+// Modify the route handler to include the checkLogoSize middleware
+exports.uploadLogo = async (req, res) => {
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
 
-      // Check if the company already has a logo path
-      const company = await Company.findById(companyID);
-      const oldLogoPath = company.logopath;
+    // Check if the company already has a logo path
+    const company = await Company.findById(companyID);
+    const oldLogoPath = company.logopath;
 
-    logoupload.single('logoimage')(req, res, async (err) => {
+    logoupload.single("logoimage")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-      }
+      // Add the checkLogoSize middleware here
+      checkLogoSize(req, res, async () => {
+        const logoPicturePath = req.file.filename;
 
-      const logoPicturePath = req.file.filename;
+        // Delete the old logo file if it exists
+        if (oldLogoPath) {
+          // Remove the old logo file from the storage folder
+          fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
+            if (unlinkErr) {
+              console.error("Error deleting old logo:", unlinkErr);
+            }
+          });
+        }
 
-      // Delete the old logo file if it exists
-      if (oldLogoPath) {
-        // Remove the old logo file from the storage folder
-        fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error('Error deleting old logo:', unlinkErr);
-          }
+        const updatedCompany = await Company.findByIdAndUpdate(
+          companyID,
+          { logopath: logoPicturePath },
+          { new: true }
+        );
+
+        if (!updatedCompany) {
+          return res.status(404).json({ error: "Company not found." });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Logo uploaded successfully.",
+          updatedCompany,
         });
-      }
-
-      const updatedCompany = await Company.findByIdAndUpdate(
-        companyID,
-        { logopath: logoPicturePath },
-        { new: true }
-      );
-
-      if (!updatedCompany) {
-        return res.status(404).json({ error: 'Company not found.' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Logo uploaded successfully.',
-        updatedCompany,
       });
     });
   } catch (error) {
-    console.error('Error updating Logo:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating Logo:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
+
 // --------------------------------------------------------------------------------------------------------------------------------------
-//favicon update API 
+//favicon update API
 // multer image upload
 const faviconstorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1636,6 +1705,43 @@ const faviconstorage = multer.diskStorage({
   },
 });
 
+// Add this middleware after logoupload.single('logoimage')
+const checkFaviconSize = (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
+
+    // Use sharp to get the dimensions of the uploaded logo
+    sharp(req.file.path)
+      .metadata()
+      .then((metadata) => {
+        const { width, height } = metadata;
+        // Check if the dimensions are either 32x32 or 64x64
+        if (
+          width >= 32 && width <= 64 &&
+      height >= 32 && height <= 64 &&
+      width === height
+        ) {
+          // Valid size, continue with the next middleware
+          next();
+        } else {
+          // Invalid size, delete the uploaded file and return an error
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: "Favicon size must be either 32x32 or 64x64 pixels.",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking logo size:", err);
+        return res.status(500).json({ error: "Internal server error." });
+      });
+  } catch (error) {
+    console.error("Error checking logo size:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
 
 const faviconupload = multer({
   storage: faviconstorage,
@@ -1644,35 +1750,35 @@ const faviconupload = multer({
 
 // Define a function to handle profile picture upload
 exports.uploadfavicon = async (req, res) => {
- 
-
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
 
-         // Check if the company already has a favicon path
-         const company = await Company.findById(companyID);
-         const oldfaviconPath = company.fav_icon_path;
+    // Check if the company already has a favicon path
+    const company = await Company.findById(companyID);
+    const oldfaviconPath = company.fav_icon_path;
 
-    faviconupload.single('faviconimage')(req, res, async (err) => {
+    faviconupload.single("faviconimage")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-      }
+      
+      
+      
+      // Add the checkLogoSize middleware here
+      checkFaviconSize(req, res, async () => {
+        const faviconPicturePath = req.file.filename;
 
-      const faviconPicturePath = req.file.filename;
-  // Delete the old favicon file if it exists
-  if (oldfaviconPath) {
-    // Remove the old favicon file from the storage folder
-    fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
-      if (unlinkErr) {
-        console.error('Error deleting old favicon:', unlinkErr);
+      // Delete the old favicon file if it exists
+      if (oldfaviconPath) {
+        // Remove the old favicon file from the storage folder
+        fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old favicon:", unlinkErr);
+          }
+        });
       }
-    });
-  }
       const updatedCompany = await Company.findByIdAndUpdate(
         companyID,
         { fav_icon_path: faviconPicturePath },
@@ -1680,17 +1786,18 @@ exports.uploadfavicon = async (req, res) => {
       );
 
       if (!updatedCompany) {
-        return res.status(404).json({ error: 'Company not found.' });
+        return res.status(404).json({ error: "Company not found." });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'favicon uploaded successfully.',
+        message: "favicon uploaded successfully.",
         updatedCompany,
       });
     });
+    });
   } catch (error) {
-    console.error('Error updating favicon:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating favicon:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
