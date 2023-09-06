@@ -1454,7 +1454,7 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
      const data = await InvitedTeamMemberModel.findOne({
     invitationToken: token,
     invitationExpiry: { $gt: currentDate }, // Not expired
-  }).select('_id, email first_name last_name');
+  }).select(' email first_name last_name');
     if (data) {
       res.status(200).json({
         success: true,
@@ -1473,11 +1473,18 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
 exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
     let userdetails = ({email, first_name, last_name} = req.body.InvitedUserData);
-    const password = "Admin@123"
-    userdetails = {...userdetails, password : password}
+    userdetails = {...userdetails, isIndividual: false, isPaidUser : true}
+
+    const existingUser = await User.findOne({ email: userdetails.email });
+
+    if (existingUser) {
+      return next(new ErrorHandler("User with the same email already exists", 500)); 
+    }
+  
     
     const user = await User.create(userdetails);
     res.status(200).json({
+      success: true,
       user,
     });
   } catch (error) {
