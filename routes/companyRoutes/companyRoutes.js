@@ -7,7 +7,7 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -66,6 +66,7 @@ router.post("/updatecompanyslug", updateCompanySlug);
 router.post('/check-availability', isAuthenticatedUser,checkcompanyurlslugavailiblity)
 router.post("/update-AutoRenewal", isAuthenticatedUser,updateAutoRenewal);
 router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
+router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddress)
 
 
 

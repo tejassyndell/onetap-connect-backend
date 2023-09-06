@@ -1879,3 +1879,47 @@ exports.uploadfavicon = async (req, res) => {
     return res.status(500).json({ error: "Internal server error." });
   }
 };
+
+
+// Add Shipping Address
+exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
+  const {
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  } = req.body;
+
+  const { id } = req.user; 
+  console.log(id)
+
+  const user = await User.findById(id);
+
+  if (!user) {
+    return next(new ErrorHandler('User not found', 404));
+  }
+  const shippingAddressData = {
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  };
+  // Add the shipping address to the user's shipping_addresses array
+  user.shipping_address.push(shippingAddressData);
+  await user.save();
+  res.status(201).json({
+    success: true,
+    message: 'Shipping address added successfully',
+    shippingAddressData,
+  });
+});
