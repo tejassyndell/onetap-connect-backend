@@ -32,6 +32,7 @@ const CompanySchema = new mongoose.Schema(
       },
     ],
     global_email: { type: String },
+    timezone: { type: String, default: "" },
     keywords: { type: String },
     contact: {
       type: Number,
@@ -68,6 +69,7 @@ const CompanySchema = new mongoose.Schema(
         icon: { type: String, default: null },
         name: { type: String, default: null },
         link: { type: String, default: null },
+        permission: { type: Boolean, default: false },
       },
     ],
     booking_link: { type: String, default: null },
@@ -85,11 +87,17 @@ const CompanySchema = new mongoose.Schema(
     company_video: { type: String, default: null },
     custom_fields_data: [
       {
-        data: { type: String, default: null },
+        value: { type: String, default: null },
         permission: { type: Boolean, default: false },
       },
     ],
-    other_links: [{ type: String, default: null }],
+    other_links: [
+      {
+        name: { type: String, default: null },
+        link: { type: String, default: null },
+        permission: { type: Boolean, default: false },
+      },
+    ],
     custom_link: { type: String, default: null },
     license: { type: String, default: null },
     booking_link_permission: {
@@ -104,6 +112,10 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    logo_alt: { type: String, default: null },
+    logopath: { type: String, default: "" },
+    fav_icon: { type: String, default: null },
+    fav_icon_path: { type: String, default: "" },
     website_url_permission: {
       type: Boolean,
       default: false,
@@ -144,9 +156,55 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    default_crm_link: { type: String, default: null },
+    default_crm_link_permission: {
+      type: Boolean,
+      default: false,
+    },
+    default_connect_msg: { type: String, default: null },
+    default_connect_msg_permission: {
+      type: Boolean,
+      default: false,
+    },
     company_url_edit_permission: {
       type: Boolean,
       default: true,
+    },
+    share_by_text: {
+      type: String,
+      default:
+        "Hi this is {user_name} at {company_name}. Please find below the link to my business card. ",
+    },
+    share_by_email: {
+      type: String,
+      default: `Hi! This is {user_name} at {company_name}. Please find below the link to my Digital Business Card on which you'll be able to learn more about me, my company and the services we provide.\nHave a great day!`,
+    },
+    share_by_socialmedia: {
+      type: String,
+      default:
+        "Hi! This is {user_name} at {company_name}. Please find below the link to my Digital Business Card on which you'll be able to learn more about me, my company and the services we provide. \nHave a great day!",
+    },
+    reffer_name: {
+      type: String,
+      default: "",
+    },
+    refer_by_text: {
+      type: String,
+      default:
+        "I thought you may be interested in {user_name} OneTapConnect card. Click the link below to learn about his company {company_name} and services. ",
+    },
+    refer_by_email: {
+      type: String,
+      default: `Hi! {referrer_name} is inviting you to see {user_name} Digital Business Card. Click the link below to learn more about his company {company_name} and services.\n{card URL}\nHave a great day!\nThe OneTapConnect team`,
+    },
+    refer_by_socialmedia: {
+      type: String,
+      default:
+        "I thought you may be interested in {user_name} OneTapConnect card. Click the link below to learn about his company {company_name} and services. ",
+    },
+    connect_button_behaviour: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

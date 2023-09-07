@@ -43,6 +43,9 @@ const userSchema = new mongoose.Schema(
     },
     shipping_address: [
       {
+        first_name:{ type: String, default: null },
+        last_name:{ type: String, default: null },
+        company_name:{ type: String, default: null },
         line1: { type: String, default: null },
         line2: { type: String, default: null },
         city: { type: String, default: null },
@@ -90,6 +93,26 @@ const userSchema = new mongoose.Schema(
     },
     role: { type: String, default: "member" },
     team: { type: String , default:'' },
+    user_address_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_apartment_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_city_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_state_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_postal_code_permission: {
+      type: Boolean,
+      default: false,
+    },
     companyID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "company",
