@@ -7,7 +7,7 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, deleteInvitedUser} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -34,6 +34,8 @@ router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
 router.get("/fetchCardDetails/:id", isAuthenticatedUser, fetchCardDetails);
 router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
 router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
+router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
+
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
 router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
