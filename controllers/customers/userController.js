@@ -14,6 +14,7 @@ const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
 const multer = require("multer");
 const path = require("path");
+const sharp = require("sharp");
 const fs = require("fs");
 const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
 const CompanyShareReferralModel = require("../../models/Customers/Company_Share_Referral_DataModel")
@@ -170,7 +171,9 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   if (!user) {
-    return next(new ErrorHandler("Something went wrong please try again.", 400));
+    return next(
+      new ErrorHandler("Something went wrong please try again.", 400)
+    );
   }
 
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
@@ -312,8 +315,12 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (user.googleId === null) {
-    return next(new ErrorHandler("User signed up with Email Password , Please use Email and Password", 400));
-
+    return next(
+      new ErrorHandler(
+        "User signed up with Email Password , Please use Email and Password",
+        400
+      )
+    );
   }
 
   // res.send(payload)
@@ -338,15 +345,15 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
 
   // Check if the user signed up with Google
   if (user.googleId !== null) {
-    return next(new ErrorHandler("User signed up with Google. Use Google login.", 400));
+    return next(
+      new ErrorHandler("User signed up with Google. Use Google login.", 400)
+    );
   }
-
-
 
   const isPasswordMatched = await user.comparePassword(password);
 
   if (!isPasswordMatched) {
-    console.log("2")
+    console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
 
@@ -476,7 +483,9 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     }
 
     if (user.googleId) {
-      return next(new ErrorHandler("This email is associated with Gmail.", 401))
+      return next(
+        new ErrorHandler("This email is associated with Gmail.", 401)
+      );
     }
 
     // Generate or retrieve resetToken here
@@ -716,7 +725,6 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 // invite team member
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData } = req.body;
@@ -861,13 +869,12 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 //invite team member by CSV
 
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
   const { companyID, id } = req.user;
-  console.log(CSVMemberData)
+  console.log(CSVMemberData);
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -969,23 +976,30 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
 });
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
-  const { nameOnCard, cardNumber, expirationDate, CVV, status } = req.body;
+  const { formData } = req.body;
   const { id } = req.user;
+
   const cardData = {
-    nameOnCard,
-    cardNumber,
-    expirationDate,
-    CVV,
-    status,
+    nameOnCard: formData.cardName,
+    cardNumber: formData.cardNumber,
+    cardExpiryMonth: formData.cardExpiry.slice(0, 2),
+    cardExpiryYear: formData.cardExpiry.slice(3),
+    CVV: formData.cardCVV,
+    brand: formData.cardType,
+    status: formData.isPrimary ? 'primary' : 'active',
   };
+
+
   const card = await Cards.create(cardData);
+
 
   card.userID = id;
 
   card.save();
 
   res.status(201).json({
-    card,
+    success: true,
+    message: "Card Added successfully",
   });
 });
 
@@ -1003,6 +1017,69 @@ exports.showCardDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({
     success: true,
     cards,
+  });
+});
+//fetch card details
+
+exports.fetchCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  const cards = await Cards.findById(id);
+
+  console.log(cards)
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    cards,
+  });
+});
+
+//delete card details
+exports.deleteCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  console.log(id, "weff");
+
+  const deletedCard = await Cards.findByIdAndDelete(id);
+
+  if (!deletedCard) {
+    return next(new ErrorHandler("No card details found for this id", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Card deleted successfully",
+  });
+});
+
+exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
+  const { formData } = req.body;
+  const { id } = req.params
+
+  const cardData = {
+    nameOnCard: formData.cardName,
+    cardNumber: formData.cardNumber,
+    cardExpiryMonth: formData.cardExpiry.slice(0, 2),
+    cardExpiryYear: formData.cardExpiry.slice(3),
+    CVV: formData.cardCVV,
+    brand: formData.cardType,
+    status: formData.isPrimary ? 'primary' : 'active',
+  };
+
+  const card = await Cards.findByIdAndUpdate(id, cardData);
+
+
+
+
+  await card.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Card Updated successfully",
   });
 });
 
@@ -1311,18 +1388,14 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
 exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   const { companyId, companyurlslug, company_url_edit_permission } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
-  console.log(companyurlslug)
-  console.log(companyId)
-  console.log(company_url_edit_permission)
+  console.log(companyurlslug);
+  console.log(companyId);
+  console.log(company_url_edit_permission);
   try {
-    const updatedCompany = await Company.findByIdAndUpdate(
-      companyId,
-      {
-        companyurlslug: companyurlslug,
-        company_url_edit_permission: company_url_edit_permission,
-      },
-    );
-
+    const updatedCompany = await Company.findByIdAndUpdate(companyId, {
+      companyurlslug: companyurlslug,
+      company_url_edit_permission: company_url_edit_permission,
+    });
 
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
@@ -1338,12 +1411,18 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 //checkout handler
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  const { userData, planData, cardInfo, shipping_method } = req.body;
+  const { userData, planData, cardDetails, shipping_method } = req.body;
 
   const cardData = {
-    cardNumber: cardInfo.cardNumber,
-    brand: cardInfo.brand,
+    cardNumber: cardDetails.cardNumber,
+    brand: cardDetails.brand,
+    nameOnCard: cardDetails.cardName,
+    cardExpiryMonth: cardDetails.cardExpiryMonth,
+    cardExpiryYear: cardDetails.cardExpiryYear,
+    // CVV: cardDetails.cardCVV
   };
+
+  console.log(cardData);
 
   const user = await User.findById(id);
   if (!user) {
@@ -1394,7 +1473,7 @@ exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
 // multer image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/profileimages");
+    cb(null, "./uploads/profileImages");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -1404,6 +1483,40 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+const checkimgSize = (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
+    // Use sharp to get the dimensions of the uploaded Profile picture
+    sharp(req.file.path)
+      .metadata()
+      .then((metadata) => {
+        const { width, height } = metadata;
+
+        // Check if the dimensions are either 32x32 or 64x64
+        if (width <= 300 && height <= 300) {
+          // Valid size, continue with the next middleware
+          next();
+        } else {
+          // Invalid size, delete the uploaded file and return an error
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: "Profile picture size must be at most 300x300 pixels..",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking Profile picture size:", err);
+        return res.status(500).json({ error: "Internal server error." });
+      });
+  } catch (error) {
+    console.error("Error checking Profile picture size:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 // Define a function to handle profile picture upload
 exports.uploadProfilePicture = async (req, res) => {
   const { id } = req.params;
@@ -1414,49 +1527,51 @@ exports.uploadProfilePicture = async (req, res) => {
     const user = await User.findById(id);
     const oldAvatarPath = user.avatar;
 
-    upload.single('profilePicture')(req, res, async (err) => {
+    upload.single("profilePicture")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-      }
+      // if (!req.file) {
+      //   return res.status(400).json({ error: "No file uploaded." });
+      // }
 
-      const profilePicturePath = req.file.filename;
+      checkimgSize(req, res, async () => {
+        const profilePicturePath = req.file.filename;
 
-      // Delete the old profile picture if it exists
-      if (oldAvatarPath) {
-        // Remove the old profile picture file from the storage folder
-        fs.unlink(`./uploads/profileimages/${oldAvatarPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error('Error deleting old profile picture:', unlinkErr);
-          }
+        // Delete the old profile picture if it exists
+        if (oldAvatarPath) {
+          // Remove the old profile picture file from the storage folder
+          fs.unlink(`./uploads/profileimages/${oldAvatarPath}`, (unlinkErr) => {
+            if (unlinkErr) {
+              console.error("Error deleting old profile picture:", unlinkErr);
+            }
+          });
+
+          // Remove the old avatar path from the user document in the database
+          await User.findByIdAndUpdate(id, { avatar: null });
+        }
+
+        const user = await User.findByIdAndUpdate(
+          id,
+          { avatar: profilePicturePath }, // Update the 'avatar' field
+          { new: true }
+        );
+
+        if (!user) {
+          return res.status(404).json({ error: "User not found." });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Profile picture uploaded successfully.",
+          user,
         });
-
-        // Remove the old avatar path from the user document in the database
-        await User.findByIdAndUpdate(id, { avatar: null });
-      }
-
-      const user = await User.findByIdAndUpdate(
-        id,
-        { avatar: profilePicturePath }, // Update the 'avatar' field
-        { new: true }
-      );
-
-      if (!user) {
-        return res.status(404).json({ error: 'User not found.' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Profile picture uploaded successfully.',
-        user,
       });
     });
   } catch (error) {
-    console.error('Error updating profile picture:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating profile picture:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
 //invite team member by CSV
@@ -1464,7 +1579,7 @@ exports.uploadProfilePicture = async (req, res) => {
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
   const { companyID, id } = req.user;
-  console.log(CSVMemberData)
+  console.log(CSVMemberData);
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -1564,8 +1679,8 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     message: "Invitaion Email sent Successfully",
   });
 });
-//Logo  update API 
-// multer image upload 
+//Logo  update API
+// multer image upload
 const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/logo");
@@ -1577,16 +1692,48 @@ const logostorage = multer.diskStorage({
   },
 });
 
-
 const logoupload = multer({
   storage: logostorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit (adjust as needed)
 });
 
-// Define a function to handle profile picture upload
+// Add this middleware after logoupload.single('logoimage')
+const checkLogoSize = (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
+
+    // Use sharp to get the dimensions of the uploaded logo
+    sharp(req.file.path)
+      .metadata()
+      .then((metadata) => {
+        const { width, height } = metadata;
+
+        // Check if the dimensions are either 32x32 or 64x64
+        if (width <= 300 && height <= 300) {
+          // Valid size, continue with the next middleware
+          next();
+        } else {
+          // Invalid size, delete the uploaded file and return an error
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: "Logo size must be at most 300x300 pixels..",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking logo size:", err);
+        return res.status(500).json({ error: "Internal server error." });
+      });
+  } catch (error) {
+    console.error("Error checking logo size:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+// Modify the route handler to include the checkLogoSize middleware
 exports.uploadLogo = async (req, res) => {
-
-
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
@@ -1595,50 +1742,50 @@ exports.uploadLogo = async (req, res) => {
     const company = await Company.findById(companyID);
     const oldLogoPath = company.logopath;
 
-    logoupload.single('logoimage')(req, res, async (err) => {
+    logoupload.single("logoimage")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-      }
+      // Add the checkLogoSize middleware here
+      checkLogoSize(req, res, async () => {
+        const logoPicturePath = req.file.filename;
 
-      const logoPicturePath = req.file.filename;
+        // Delete the old logo file if it exists
+        if (oldLogoPath) {
+          // Remove the old logo file from the storage folder
+          fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
+            if (unlinkErr) {
+              console.error("Error deleting old logo:", unlinkErr);
+            }
+          });
+        }
 
-      // Delete the old logo file if it exists
-      if (oldLogoPath) {
-        // Remove the old logo file from the storage folder
-        fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error('Error deleting old logo:', unlinkErr);
-          }
+        const updatedCompany = await Company.findByIdAndUpdate(
+          companyID,
+          { logopath: logoPicturePath },
+          { new: true }
+        );
+
+        if (!updatedCompany) {
+          return res.status(404).json({ error: "Company not found." });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Logo uploaded successfully.",
+          updatedCompany,
         });
-      }
-
-      const updatedCompany = await Company.findByIdAndUpdate(
-        companyID,
-        { logopath: logoPicturePath },
-        { new: true }
-      );
-
-      if (!updatedCompany) {
-        return res.status(404).json({ error: 'Company not found.' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Logo uploaded successfully.',
-        updatedCompany,
       });
     });
   } catch (error) {
-    console.error('Error updating Logo:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating Logo:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
+
 // --------------------------------------------------------------------------------------------------------------------------------------
-//favicon update API 
+//favicon update API
 // multer image upload
 const faviconstorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1651,6 +1798,43 @@ const faviconstorage = multer.diskStorage({
   },
 });
 
+// Add this middleware after logoupload.single('logoimage')
+const checkFaviconSize = (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
+
+    // Use sharp to get the dimensions of the uploaded logo
+    sharp(req.file.path)
+      .metadata()
+      .then((metadata) => {
+        const { width, height } = metadata;
+        // Check if the dimensions are either 32x32 or 64x64
+        if (
+          width >= 32 && width <= 64 &&
+          height >= 32 && height <= 64 &&
+          width === height
+        ) {
+          // Valid size, continue with the next middleware
+          next();
+        } else {
+          // Invalid size, delete the uploaded file and return an error
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({
+            error: "Favicon size must be either 32x32 or 64x64 pixels.",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking logo size:", err);
+        return res.status(500).json({ error: "Internal server error." });
+      });
+  } catch (error) {
+    console.error("Error checking logo size:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
 
 const faviconupload = multer({
   storage: faviconstorage,
@@ -1659,8 +1843,6 @@ const faviconupload = multer({
 
 // Define a function to handle profile picture upload
 exports.uploadfavicon = async (req, res) => {
-
-
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
@@ -1669,44 +1851,47 @@ exports.uploadfavicon = async (req, res) => {
     const company = await Company.findById(companyID);
     const oldfaviconPath = company.fav_icon_path;
 
-    faviconupload.single('faviconimage')(req, res, async (err) => {
+    faviconupload.single("faviconimage")(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ error: 'File upload failed.' });
+        return res.status(400).json({ error: "File upload failed." });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
-      }
 
-      const faviconPicturePath = req.file.filename;
-      // Delete the old favicon file if it exists
-      if (oldfaviconPath) {
-        // Remove the old favicon file from the storage folder
-        fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error('Error deleting old favicon:', unlinkErr);
-          }
+
+
+      // Add the checkLogoSize middleware here
+      checkFaviconSize(req, res, async () => {
+        const faviconPicturePath = req.file.filename;
+
+        // Delete the old favicon file if it exists
+        if (oldfaviconPath) {
+          // Remove the old favicon file from the storage folder
+          fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
+            if (unlinkErr) {
+              console.error("Error deleting old favicon:", unlinkErr);
+            }
+          });
+        }
+        const updatedCompany = await Company.findByIdAndUpdate(
+          companyID,
+          { fav_icon_path: faviconPicturePath },
+          { new: true }
+        );
+
+        if (!updatedCompany) {
+          return res.status(404).json({ error: "Company not found." });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "favicon uploaded successfully.",
+          updatedCompany,
         });
-      }
-      const updatedCompany = await Company.findByIdAndUpdate(
-        companyID,
-        { fav_icon_path: faviconPicturePath },
-        { new: true }
-      );
-
-      if (!updatedCompany) {
-        return res.status(404).json({ error: 'Company not found.' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'favicon uploaded successfully.',
-        updatedCompany,
       });
     });
   } catch (error) {
-    console.error('Error updating favicon:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    console.error("Error updating favicon:", error);
+    return res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -1733,7 +1918,7 @@ exports.updatecompany_referral_data = catchAsyncErrors(async (req, res, next) =>
   console.log(companyID)
   console.log(updatedCompanyReferralData)
 
-  const updatecompany = await CompanyShareReferralModel.findOne({companyID:companyID});
+  const updatecompany = await CompanyShareReferralModel.findOne({ companyID: companyID });
 
   if (!updatecompany) {
     return next(new ErrorHandler("company share details not found", 404));
@@ -1745,4 +1930,143 @@ exports.updatecompany_referral_data = catchAsyncErrors(async (req, res, next) =>
   res.status(200).json({
     updatedCompanyReferralData,
   });
-});
+
+  // Add Shipping Address
+  exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
+    const {
+      first_name,
+      last_name,
+      company_name,
+      line1,
+      line2,
+      city,
+      state,
+      country,
+      postal_code,
+    } = req.body;
+
+    const { id } = req.user;
+    console.log(id)
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return next(new ErrorHandler('User not found', 404));
+    }
+    const shippingAddressData = {
+      first_name,
+      last_name,
+      company_name,
+      line1,
+      line2,
+      city,
+      state,
+      country,
+      postal_code,
+    };
+    // Add the shipping address to the user's shipping_addresses array
+    user.shipping_address.push(shippingAddressData);
+    await user.save();
+    res.status(201).json({
+      success: true,
+      message: 'Shipping address added successfully',
+      shippingAddressData,
+    });
+  });
+
+  exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
+    const { token } = req.body;
+    const currentDate = new Date();
+
+    // const data = await InvitedTeamMemberModel.findOne({
+    //   invitationToken: token,
+    //   invitationExpiry: { $gt: currentDate }, // Not expired
+    // });
+    const tokenExists = await InvitedTeamMemberModel.findOne({
+      invitationToken: token,
+    });
+
+    if (!tokenExists) {
+      res.status(404).json({
+        success: false,
+        message: 'Invitation does not exist.',
+      });
+    } else {
+      const data = await InvitedTeamMemberModel.findOne({
+        invitationToken: token,
+        invitationExpiry: { $gt: currentDate }, // Not expired
+      }).select('_id email first_name last_name companyId');
+      if (data) {
+        res.status(200).json({
+          success: true,
+          userData: data,
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Token is expired.',
+        });
+      }
+    }
+  });
+
+
+  exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
+    try {
+      let userdetails = ({ email, first_name, last_name, companyId } = req.body.InvitedUserData);
+
+
+      userdetails = { ...userdetails, isIndividual: false, isPaidUser: true, companyID: userdetails.companyId }
+
+      const user = await User.create(userdetails);
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error, 500));
+    }
+  });
+
+  exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const { token, email: userEmail } = req.body.invitedUserData;
+    console.log(userEmail)
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload.sub;
+    console.log(payload)
+    const { name, email } = payload;
+
+    if (email != userEmail) {
+      return next(new ErrorHandler("Email does not found in invitation", 404));
+    }
+    const parts = name.split(" ")
+    const first_name = parts[0];
+    const last_name = parts[1];
+    userData = {
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      googleId: googleId,
+      isIndividual: false,
+      isIndividual: false,
+      isPaidUser: true
+    }
+    const existingUser = await User.findOne({ email: userData.email });
+
+    if (existingUser) {
+      return next(new ErrorHandler("User with the same email already exists", 500));
+    }
+
+    const newUser = await User.create(userData);
+
+    res.status(200).json({
+      success: true,
+      newUser
+    });
+
+  });

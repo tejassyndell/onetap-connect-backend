@@ -5,8 +5,9 @@ const { login,
      forgotPassword, 
      resetPassword, getCompanyDetails, getUsers,uploadLogo, uploadfavicon, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug, updateAutoRenewal, inviteTeamMemberByCSV,  uploadProfilePicture,
      addTeamMemberManually,
-     getcompanies_share_referral_datas,
-     updatecompany_referral_data} = require('../../controllers/customers/userController.js');
+     deleteCardDetails,
+     fetchCardDetails,
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -28,7 +29,10 @@ router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
+router.post("/updateCardDetails/:id", isAuthenticatedUser, updateCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
+router.get("/fetchCardDetails/:id", isAuthenticatedUser, fetchCardDetails);
+router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
 router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
@@ -64,6 +68,12 @@ router.post("/update-AutoRenewal", isAuthenticatedUser,updateAutoRenewal);
 router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
 router.get('/company_share_referreldata', isAuthenticatedUser, getcompanies_share_referral_datas)
 router.post("/updatecompany_referral_data", isAuthenticatedUser,updatecompany_referral_data);
+router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddress)
+router.post('/invited/user', invitedUser)
+router.post('/invited/register-user', registerInvitedUser)
+router.post('/invited/google-sign-up', invitedUserGoogleSignup)
+
+
 
 
 module.exports = router;

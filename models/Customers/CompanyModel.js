@@ -170,6 +170,42 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    share_by_text: {
+      type: String,
+      default:
+        "Hi this is {user_name} at {company_name}. Please find below the link to my business card. ",
+    },
+    share_by_email: {
+      type: String,
+      default: `Hi! This is {user_name} at {company_name}. Please find below the link to my Digital Business Card on which you'll be able to learn more about me, my company and the services we provide.\nHave a great day!`,
+    },
+    share_by_socialmedia: {
+      type: String,
+      default:
+        "Hi! This is {user_name} at {company_name}. Please find below the link to my Digital Business Card on which you'll be able to learn more about me, my company and the services we provide. \nHave a great day!",
+    },
+    reffer_name: {
+      type: String,
+      default: "",
+    },
+    refer_by_text: {
+      type: String,
+      default:
+        "I thought you may be interested in {user_name} OneTapConnect card. Click the link below to learn about his company {company_name} and services. ",
+    },
+    refer_by_email: {
+      type: String,
+      default: `Hi! {referrer_name} is inviting you to see {user_name} Digital Business Card. Click the link below to learn more about his company {company_name} and services.\n{card URL}\nHave a great day!\nThe OneTapConnect team`,
+    },
+    refer_by_socialmedia: {
+      type: String,
+      default:
+        "I thought you may be interested in {user_name} OneTapConnect card. Click the link below to learn about his company {company_name} and services. ",
+    },
+    connect_button_behaviour: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
