@@ -59,7 +59,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const message = {
     from: process.env.NODMAILER_EMAIL,
     to: email,
-    subject: `Creating new account`,
+    subject: `Verify your email address`,
     //   text: `Your Verification code is ${code}`,
     html: `
     <!DOCTYPE html>
@@ -659,6 +659,31 @@ exports.getinvitedUsers = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+exports.deleteInvitedUser = catchAsyncErrors(async (req, res, next) => {
+  // const { companyID } = req.body;
+
+  const { invitedUserID } = req.params; // Assuming the invited user's ID is passed as a URL parameter.
+  console.log(invitedUserID)
+
+  try {
+    // Find and delete the invited user based on companyID and invitedUserID
+    const deletedInvitedUser = await InvitedTeamMemberModel.findOneAndDelete({
+     
+      _id: invitedUserID,
+    });
+
+    if (!deletedInvitedUser) {
+      return next(new ErrorHandler("Invited user not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Invited user deleted successfully",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
 // get single team members
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
@@ -825,7 +850,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
-                <a href="${process.env.FRONTEND_URL}/sign-up" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
                 <a href="${process.env.FRONTEND_URL}/plan-selection" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
@@ -1814,8 +1839,7 @@ const checkFaviconSize = (req, res, next) => {
         // Check if the dimensions are either 32x32 or 64x64
         if (
           width >= 32 && width <= 64 &&
-          height >= 32 && height <= 64 &&
-          width === height
+      height >= 32 && height <= 64
         ) {
           // Valid size, continue with the next middleware
           next();
@@ -1823,7 +1847,7 @@ const checkFaviconSize = (req, res, next) => {
           // Invalid size, delete the uploaded file and return an error
           fs.unlinkSync(req.file.path);
           return res.status(400).json({
-            error: "Favicon size must be either 32x32 or 64x64 pixels.",
+            error: "Favicon size must be between 32x32 and 64x64 pixels.",
           });
         }
       })
@@ -2015,12 +2039,20 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    let userdetails = ({ email, first_name, last_name, companyId } = req.body.InvitedUserData);
+    const {_id} = req.body.InvitedUserData;
+    let userdetails = ({email, first_name, last_name, companyId } = req.body.InvitedUserData);
 
 
     userdetails = { ...userdetails, isIndividual: false, isPaidUser: true, companyID: userdetails.companyId }
 
     const user = await User.create(userdetails);
+  const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
+  if(!deleteInvitedUser){
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+    });
+  }
     res.status(200).json({
       success: true,
       user,
@@ -2031,8 +2063,11 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
+
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  const { token, email: userEmail } = req.body.invitedUserData;
+  const {invitedUserData} = req.body;
+  const { token,  userData } = invitedUserData;
+  const { _id,  companyId, email: userEmail  } = userData;
   console.log(userEmail)
   const ticket = await client.verifyIdToken({
     idToken: token,
@@ -2050,10 +2085,11 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const first_name = parts[0];
   const last_name = parts[1];
   userData = {
-    email: email,
-    first_name: first_name,
-    last_name: last_name,
-    googleId: googleId,
+    email : email,
+    first_name : first_name,
+    last_name : last_name,
+    googleId : googleId,
+    companyID : companyId,
     isIndividual: false,
     isIndividual: false,
     isPaidUser: true
@@ -2064,7 +2100,19 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User with the same email already exists", 500));
   }
 
-  const newUser = await User.create(userData);
+const newUser = await User.create(userData);
+const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
+  if(!deleteInvitedUser){
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+    });
+  }
+ 
+ res.status(200).json({
+  success: true,
+  newUser
+});
 
   res.status(200).json({
     success: true,
