@@ -58,7 +58,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const message = {
     from: process.env.NODMAILER_EMAIL,
     to: email,
-    subject: `Creating new account`,
+    subject: `Verify your email address`,
     //   text: `Your Verification code is ${code}`,
     html: `
     <!DOCTYPE html>
@@ -69,7 +69,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   <meta name="viewport" content="initial-scale=1, width=device-width" />
 </head>
 
-<body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif; background-color: #f2f2f2;">
+<body style="margin: 0;  line-height: normal; font-family: 'Assistant', sans-serif; background-color: #f2f2f2;">
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
@@ -91,13 +91,13 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
         </div>
         <div style="margin-top: 25px;">
             <div style="font-weight: bold; text-align: center;">Technical issue?</div>
-            <div style="text-align: center;">
+            <div style="text-align: center; margin-top: 15px;">
                 <span>In case you're facing any technical issue, please contact our support team </span>
                 <span style="color: #2572e6;"><a href="https://support.onetapconnect.com/">here.</a></span>
             </div>
         </div>
     </div>
-    <a href="https://www.OneTapConnect.com" style="text-align: center; font-size: 12px; color: #e65925; margin-top: 15px; text-decoration: none;margin-left: 38%;">OneTapConnect.com</a>
+    <a href="https://www.OneTapConnect.com" style="text-align: center; font-size: 12px; color: #e65925; margin-top: 30px; text-decoration: none;margin-left: 40%;">OneTapConnect.com</a>
 </div>
 
 </body>
