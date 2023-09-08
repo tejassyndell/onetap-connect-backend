@@ -1387,7 +1387,7 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 );
 
 exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
-  const { companyId, companyurlslug, company_url_edit_permission } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
+  const { companyId, companyurlslug, company_url_edit_permission, user_profile_edit_permission } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
   console.log(companyurlslug);
   console.log(companyId);
   console.log(company_url_edit_permission);
@@ -1395,6 +1395,7 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
       companyurlslug: companyurlslug,
       company_url_edit_permission: company_url_edit_permission,
+      user_profile_edit_permission: user_profile_edit_permission,
     });
 
     if (!updatedCompany) {
@@ -1930,143 +1931,143 @@ exports.updatecompany_referral_data = catchAsyncErrors(async (req, res, next) =>
   res.status(200).json({
     updatedCompanyReferralData,
   });
+});
 
-  // Add Shipping Address
-  exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
-    const {
-      first_name,
-      last_name,
-      company_name,
-      line1,
-      line2,
-      city,
-      state,
-      country,
-      postal_code,
-    } = req.body;
+// Add Shipping Address
+exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
+  const {
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  } = req.body;
 
-    const { id } = req.user;
-    console.log(id)
+  const { id } = req.user;
+  console.log(id)
 
-    const user = await User.findById(id);
+  const user = await User.findById(id);
 
-    if (!user) {
-      return next(new ErrorHandler('User not found', 404));
-    }
-    const shippingAddressData = {
-      first_name,
-      last_name,
-      company_name,
-      line1,
-      line2,
-      city,
-      state,
-      country,
-      postal_code,
-    };
-    // Add the shipping address to the user's shipping_addresses array
-    user.shipping_address.push(shippingAddressData);
-    await user.save();
-    res.status(201).json({
-      success: true,
-      message: 'Shipping address added successfully',
-      shippingAddressData,
-    });
+  if (!user) {
+    return next(new ErrorHandler('User not found', 404));
+  }
+  const shippingAddressData = {
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  };
+  // Add the shipping address to the user's shipping_addresses array
+  user.shipping_address.push(shippingAddressData);
+  await user.save();
+  res.status(201).json({
+    success: true,
+    message: 'Shipping address added successfully',
+    shippingAddressData,
+  });
+});
+
+exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.body;
+  const currentDate = new Date();
+
+  // const data = await InvitedTeamMemberModel.findOne({
+  //   invitationToken: token,
+  //   invitationExpiry: { $gt: currentDate }, // Not expired
+  // });
+  const tokenExists = await InvitedTeamMemberModel.findOne({
+    invitationToken: token,
   });
 
-  exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
-    const { token } = req.body;
-    const currentDate = new Date();
-
-    // const data = await InvitedTeamMemberModel.findOne({
-    //   invitationToken: token,
-    //   invitationExpiry: { $gt: currentDate }, // Not expired
-    // });
-    const tokenExists = await InvitedTeamMemberModel.findOne({
+  if (!tokenExists) {
+    res.status(404).json({
+      success: false,
+      message: 'Invitation does not exist.',
+    });
+  } else {
+    const data = await InvitedTeamMemberModel.findOne({
       invitationToken: token,
-    });
-
-    if (!tokenExists) {
-      res.status(404).json({
-        success: false,
-        message: 'Invitation does not exist.',
-      });
-    } else {
-      const data = await InvitedTeamMemberModel.findOne({
-        invitationToken: token,
-        invitationExpiry: { $gt: currentDate }, // Not expired
-      }).select('_id email first_name last_name companyId');
-      if (data) {
-        res.status(200).json({
-          success: true,
-          userData: data,
-        });
-      } else {
-        res.status(400).json({
-          success: false,
-          message: 'Token is expired.',
-        });
-      }
-    }
-  });
-
-
-  exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
-    try {
-      let userdetails = ({ email, first_name, last_name, companyId } = req.body.InvitedUserData);
-
-
-      userdetails = { ...userdetails, isIndividual: false, isPaidUser: true, companyID: userdetails.companyId }
-
-      const user = await User.create(userdetails);
+      invitationExpiry: { $gt: currentDate }, // Not expired
+    }).select('_id email first_name last_name companyId');
+    if (data) {
       res.status(200).json({
         success: true,
-        user,
+        userData: data,
       });
-    } catch (error) {
-      return next(new ErrorHandler(error, 500));
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Token is expired.',
+      });
     }
-  });
+  }
+});
 
-  exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    const { token, email: userEmail } = req.body.invitedUserData;
-    console.log(userEmail)
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    const googleId = payload.sub;
-    console.log(payload)
-    const { name, email } = payload;
 
-    if (email != userEmail) {
-      return next(new ErrorHandler("Email does not found in invitation", 404));
-    }
-    const parts = name.split(" ")
-    const first_name = parts[0];
-    const last_name = parts[1];
-    userData = {
-      email: email,
-      first_name: first_name,
-      last_name: last_name,
-      googleId: googleId,
-      isIndividual: false,
-      isIndividual: false,
-      isPaidUser: true
-    }
-    const existingUser = await User.findOne({ email: userData.email });
+exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    let userdetails = ({ email, first_name, last_name, companyId } = req.body.InvitedUserData);
 
-    if (existingUser) {
-      return next(new ErrorHandler("User with the same email already exists", 500));
-    }
 
-    const newUser = await User.create(userData);
+    userdetails = { ...userdetails, isIndividual: false, isPaidUser: true, companyID: userdetails.companyId }
 
+    const user = await User.create(userdetails);
     res.status(200).json({
       success: true,
-      newUser
+      user,
     });
+  } catch (error) {
+    return next(new ErrorHandler(error, 500));
+  }
+});
 
+exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token, email: userEmail } = req.body.invitedUserData;
+  console.log(userEmail)
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
   });
+  const payload = ticket.getPayload();
+  const googleId = payload.sub;
+  console.log(payload)
+  const { name, email } = payload;
+
+  if (email != userEmail) {
+    return next(new ErrorHandler("Email does not found in invitation", 404));
+  }
+  const parts = name.split(" ")
+  const first_name = parts[0];
+  const last_name = parts[1];
+  userData = {
+    email: email,
+    first_name: first_name,
+    last_name: last_name,
+    googleId: googleId,
+    isIndividual: false,
+    isIndividual: false,
+    isPaidUser: true
+  }
+  const existingUser = await User.findOne({ email: userData.email });
+
+  if (existingUser) {
+    return next(new ErrorHandler("User with the same email already exists", 500));
+  }
+
+  const newUser = await User.create(userData);
+
+  res.status(200).json({
+    success: true,
+    newUser
+  });
+});

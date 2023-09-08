@@ -206,6 +206,10 @@ const CompanySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    user_profile_edit_permission: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
