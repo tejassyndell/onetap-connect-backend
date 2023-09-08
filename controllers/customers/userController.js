@@ -363,17 +363,17 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
 //logout
 exports.logout = catchAsyncErrors(async (req, res, next) => {
 
-  const extractDigits = (number) => {
-    const numberString = number.toString();
-    const firstTwoDigits = numberString.slice(0, 2);
-    const middleTwoDigits = numberString.slice(Math.max(0, numberString.length - 3), -1);
-    const lastTwoDigits = numberString.slice(-2);
-    return `${firstTwoDigits}${middleTwoDigits}${lastTwoDigits}`;
-  };
-  const currentUserId = extractDigits(req.body.userID)
-  const cookieName = `token_${currentUserId}`
+  // const extractDigits = (number) => {
+  //   const numberString = number.toString();
+  //   const firstTwoDigits = numberString.slice(0, 2);
+  //   const middleTwoDigits = numberString.slice(Math.max(0, numberString.length - 3), -1);
+  //   const lastTwoDigits = numberString.slice(-2);
+  //   return `${firstTwoDigits}${middleTwoDigits}${lastTwoDigits}`;
+  // };
+  // const currentUserId = extractDigits(req.body.userID)
+  // const cookieName = `token_${currentUserId}`
 
-  res.cookie(cookieName, null, {
+  res.cookie('token', null, {
     expires: new Date(Date.now()),
     httpOnly: true,
   });
@@ -381,6 +381,8 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
     expires: new Date(Date.now()),
     httpOnly: true,
   });
+
+
   res.status(200).json({
     success: true,
     message: "Logged Out",
