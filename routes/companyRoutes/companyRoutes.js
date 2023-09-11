@@ -7,7 +7,7 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -34,6 +34,8 @@ router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
 router.get("/fetchCardDetails/:id", isAuthenticatedUser, fetchCardDetails);
 router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
 router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
+router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
+
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
 router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
@@ -66,6 +68,8 @@ router.post("/updatecompanyslug", updateCompanySlug);
 router.post('/check-availability', isAuthenticatedUser,checkcompanyurlslugavailiblity)
 router.post("/update-AutoRenewal", isAuthenticatedUser,updateAutoRenewal);
 router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
+router.get('/company_share_referreldata', isAuthenticatedUser, getcompanies_share_referral_datas)
+router.post("/updatecompany_referral_data", isAuthenticatedUser,updatecompany_referral_data);
 router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddress)
 router.post('/invited/user', invitedUser)
 router.post('/invited/register-user', registerInvitedUser)
