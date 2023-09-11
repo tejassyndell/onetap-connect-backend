@@ -1,4 +1,5 @@
 const sendToken = (user, statusCode, res) => {
+  console.log(user)
     const token = user.getJWTToken();
   
     //options for cookies

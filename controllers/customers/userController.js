@@ -20,6 +20,8 @@ const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMember
 const CompanyShareReferralModel = require("../../models/Customers/Company_Share_Referral_DataModel")
 const Cards = require("../../models/Customers/CardsModel.js");
 const generatePassword = require("../../utils/passwordGenerator.js");
+const billingAddress = require("../../models/Customers/BillingAddressModal.js")
+const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
 // const logo = require('../../uploads/logo/logo_black.svg')
 
 dotenv.config();
@@ -208,7 +210,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   //   user
   // })
 
-  sendToken(req, user, 200, res);
+  sendToken(user, 200, res);
 });
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -357,7 +359,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
 
-  sendToken(req, user, 200, res);
+  sendToken(user, 200, res);
 });
 
 //logout
@@ -1973,14 +1975,14 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
     postal_code,
   } = req.body;
 
-  const { id } = req.user;
-  console.log(id)
+  const { id, companyID } = req.user;
 
   const user = await User.findById(id);
 
   if (!user) {
     return next(new ErrorHandler('User not found', 404));
   }
+
   const shippingAddressData = {
     first_name,
     last_name,
@@ -1992,14 +1994,137 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
     country,
     postal_code,
   };
-  // Add the shipping address to the user's shipping_addresses array
-  user.shipping_address.push(shippingAddressData);
-  await user.save();
-  res.status(201).json({
-    success: true,
-    message: 'Shipping address added successfully',
-    shippingAddressData,
-  });
+
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      companyId: companyID,
+      shipping_address: [shippingAddressData],
+    });
+  } else {
+    shippingAddressFind.shipping_address.push(shippingAddressData);
+  }
+
+  try {
+    await shippingAddressFind.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Shipping address added successfully',
+      shippingAddressData,
+    });
+  } catch (error) {
+    return next(new ErrorHandler('Error saving shipping address', 500));
+  }
+});
+
+
+exports.getAllShippingAddress = catchAsyncErrors(async (req,res,next)=> {
+  const { companyID, id } = req.user;
+// console.log(companyID,id, "id....")
+// console.log(req.user)
+  try {
+    const shippingAddresses = await shippingAddress.find({ userId: id });
+    // console.log(shippingAddresses, "...")
+
+    res.status(200).json({
+      success: true,
+      shippingAddresses,
+    });
+  } catch (err) {
+    return next(new ErrorHandler('Unable to fetch shipping addresses', 500));
+  }
+})
+
+exports.removeShippingAddress = catchAsyncErrors(async(req,res, next)=> {
+  const { id } = req.user;
+  const { addressId } = req.params;
+  console.log(addressId, " address id")
+
+  try {
+    const userShippingAddress = await shippingAddress.findOne({ userId: id });
+    console.log(userShippingAddress, "userShippingAddress")
+
+    if (!userShippingAddress) {
+      return next(new ErrorHandler('User shipping address not found', 404));
+    }
+
+    const { shipping_address } = userShippingAddress;
+    console.log(shipping_address, "shipping address")
+    // Find the index of the shipping address to remove
+    const addressIndex = shipping_address.findIndex(address => address._id == addressId);
+    console.log(addressIndex, "address indexx")
+
+    if (addressIndex === -1) {
+      return next(new ErrorHandler('Shipping address not found', 404));
+    }
+
+    // Remove the shipping address from the array
+    shipping_address.splice(addressIndex, 1);
+
+    // Save the updated document
+    await userShippingAddress.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Shipping address removed successfully',
+    });
+  } catch (err) {
+    return next(new ErrorHandler('Error removing shipping address', 500));
+  }
+})
+exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
+  const { editAddressId } = req.params; // Get the address ID from the request URL
+  const { first_name, last_name, company_name, line1, line2, city, state, country, postal_code } = req.body;
+
+  const { id } = req.user;
+
+  try {
+    const userShippingAddress = await shippingAddress.findOne({ userId: id });
+    console.log(userShippingAddress, "userShippingAddress")
+
+    if (!userShippingAddress) {
+      return next(new ErrorHandler('User shipping address not found', 404));
+    }
+
+    const { shipping_address } = userShippingAddress;
+    console.log(shipping_address, "shipping address")
+
+    // Find the index of the shipping address to edit
+    const addressIndex = shipping_address.findIndex(address => address._id == addressId);
+    console.log(addressIndex, "address index")
+
+    if (addressIndex === -1) {
+      return next(new ErrorHandler('Shipping address not found', 404));
+    }
+
+    // Update the shipping address data
+    shipping_address[addressIndex] = {
+      _id: addressId,
+      first_name,
+      last_name,
+      company_name,
+      line1,
+      line2,
+      city,
+      state,
+      country,
+      postal_code,
+    };
+
+    // Save the updated document
+    await userShippingAddress.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Shipping address updated successfully',
+      updatedShippingAddress: shipping_address[addressIndex],
+    });
+  } catch (err) {
+    return next(new ErrorHandler('Error updating shipping address', 500));
+  }
 });
 
 exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
