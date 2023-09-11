@@ -855,7 +855,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
-                <a href="${process.env.FRONTEND_URL}/plan-selection" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+                <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
         </div>
           <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
@@ -895,6 +895,38 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     message: "Invitaion Email sent Successfully",
   });
 });
+
+exports.rejectInvitation = catchAsyncErrors(async (req, res, next) => {
+  const { invitationToken } = req.params;
+
+  // Find the invitation by token
+  const invitation = await InvitedTeamMemberModel.findOne({ invitationToken });
+
+  if (!invitation) {
+    return next(new ErrorHandler("Invitation not found", 404));
+  }
+
+  // Update the status to "Declined" in the database
+  invitation.status = "Declined";
+  await invitation.save();
+// Retrieve the associated company
+const companyId = invitation.companyId;
+const company = await Company.findOne({ _id: companyId });
+
+if (!company) {
+  return next(new ErrorHandler("Company not found", 404));
+}
+
+// Now you have the company name
+const companyName = company.company_name;
+
+// Redirect or send a response for successful rejection, including the company name
+// res.redirect("/rejected"); // You can customize this
+res.status(200).json({ message: "Invitation declined", companyName });
+  // Redirect or send a response for successful rejection
+  // res.redirect("/rejected"); // You can customize this
+});
+
 
 //invite team member by CSV
 
@@ -1499,7 +1531,7 @@ exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
 });
 
 // multer image upload
-const storage = multer.diskStorage({
+const profilestorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/profileImages");
   },
@@ -1510,7 +1542,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage: profilestorage });
 
 const checkimgSize = (req, res, next) => {
   try {
@@ -1550,27 +1582,26 @@ exports.uploadProfilePicture = async (req, res) => {
   const { id } = req.params;
   try {
     // Use async/await for better error handling and readability
-    const userId = req.user.id;
+    // const userId = req.user.id;
     // Check if the user already has an avatar path
-    const user = await User.findById(id);
-    const oldAvatarPath = user.avatar;
+    const removeuser = await User.findById(id);
+    const oldAvatarPath = removeuser.avatar;
 
     upload.single("profilePicture")(req, res, async (err) => {
       if (err) {
         return res.status(400).json({ error: "File upload failed." });
       }
 
-      // if (!req.file) {
-      //   return res.status(400).json({ error: "No file uploaded." });
-      // }
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded." });
+      }
 
-      checkimgSize(req, res, async () => {
         const profilePicturePath = req.file.filename;
 
         // Delete the old profile picture if it exists
         if (oldAvatarPath) {
           // Remove the old profile picture file from the storage folder
-          fs.unlink(`./uploads/profileimages/${oldAvatarPath}`, (unlinkErr) => {
+          fs.unlink(`./uploads/profileImages/${oldAvatarPath}`, (unlinkErr) => {
             if (unlinkErr) {
               console.error("Error deleting old profile picture:", unlinkErr);
             }
@@ -1596,7 +1627,6 @@ exports.uploadProfilePicture = async (req, res) => {
           user,
         });
       });
-    });
   } catch (error) {
     console.error("Error updating profile picture:", error);
     return res.status(500).json({ error: "Internal server error." });
@@ -1765,9 +1795,10 @@ exports.uploadLogo = async (req, res) => {
   try {
     // Use async/await for better error handling and readability
     const { companyID } = req.user;
-
+    // console.log("object", req.user)
     // Check if the company already has a logo path
     const company = await Company.findById(companyID);
+    console.log(company)
     const oldLogoPath = company.logopath;
 
     logoupload.single("logoimage")(req, res, async (err) => {
@@ -2020,20 +2051,30 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
       message: 'Invitation does not exist.',
     });
   } else {
-    const data = await InvitedTeamMemberModel.findOne({
-      invitationToken: token,
-      invitationExpiry: { $gt: currentDate }, // Not expired
-    }).select('_id email first_name last_name companyId');
-    if (data) {
-      res.status(200).json({
-        success: true,
-        userData: data,
-      });
-    } else {
+    // Check the status field
+    if (tokenExists.status === 'Declined') {
       res.status(400).json({
         success: false,
-        message: 'Token is expired.',
+        message: 'Invalid invitation.',
       });
+    } else {
+      // Check if the invitation is not expired
+      const data = await InvitedTeamMemberModel.findOne({
+        invitationToken: token,
+        invitationExpiry: { $gt: currentDate }, // Not expired
+      }).select('_id email first_name last_name companyId');
+      
+      if (data) {
+        res.status(200).json({
+          success: true,
+          userData: data,
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Token is expired.',
+        });
+      }
     }
   }
 });
@@ -2041,7 +2082,14 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const {_id} = req.body.InvitedUserData;
+    const {_id,status} = req.body.InvitedUserData;
+    if (status === 'Declined') {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid invitation.',
+      });
+      return; // Stop execution if the invitation is declined.
+    }
     let userdetails = ({email, first_name, last_name, companyId } = req.body.InvitedUserData);
 
 
@@ -2069,8 +2117,16 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   const {invitedUserData} = req.body;
   const { token,  userData } = invitedUserData;
-  const { _id,  companyId, email: userEmail  } = userData;
+  const { _id,  companyId, email: userEmail, status  } = userData;
   console.log(userEmail)
+   // Check the status field
+   if (status === 'Declined') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid invitation.',
+    });
+  }
+
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID,

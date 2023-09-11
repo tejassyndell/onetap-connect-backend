@@ -7,7 +7,7 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, rejectInvitation} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -74,6 +74,7 @@ router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddr
 router.post('/invited/user', invitedUser)
 router.post('/invited/register-user', registerInvitedUser)
 router.post('/invited/google-sign-up', invitedUserGoogleSignup)
+router.post('/reject-invitation/:invitationToken', rejectInvitation)
 
 
 
