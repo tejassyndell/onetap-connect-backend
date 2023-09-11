@@ -91,7 +91,7 @@ export const CreateUser = catchAsyncErrors(async (req, res, next) => {
 
   const user = findUserResult[0];
 
-  sendToken(req, user, 201, res);
+  sendToken(user, 201, res);
 });
 
 //login user
@@ -108,7 +108,7 @@ export const login = catchAsyncErrors(async (req, res, next) => {
   const isPasswordMatched = await bcrypt.compare(password, user.password);
   // console.log("hello ", isPasswordMatched);
   if (isPasswordMatched === true) {
-    sendToken(req,user, 200, res);
+    sendToken(user, 200, res);
   } else {
     return next(new ErrorHandler("Email or Password is incorrect", 400));
   }
@@ -118,7 +118,7 @@ export const login = catchAsyncErrors(async (req, res, next) => {
 
 export const logout = (req, res) => {
   try {
-    res.cookie("token_64977e", null, {
+    res.cookie("token", null, {
       expires: new Date(Date.now()),
       httpOnly: true,
     });
