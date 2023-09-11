@@ -670,7 +670,7 @@ exports.deleteInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
     // Find and delete the invited user based on companyID and invitedUserID
     const deletedInvitedUser = await InvitedTeamMemberModel.findOneAndDelete({
-     
+
       _id: invitedUserID,
     });
 
@@ -1841,7 +1841,7 @@ const checkFaviconSize = (req, res, next) => {
         // Check if the dimensions are either 32x32 or 64x64
         if (
           width >= 32 && width <= 64 &&
-      height >= 32 && height <= 64
+          height >= 32 && height <= 64
         ) {
           // Valid size, continue with the next middleware
           next();
@@ -2041,20 +2041,20 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const {_id} = req.body.InvitedUserData;
-    let userdetails = ({email, first_name, last_name, companyId } = req.body.InvitedUserData);
+    const { _id } = req.body.InvitedUserData;
+    let userdetails = ({ email, first_name, last_name, companyId } = req.body.InvitedUserData);
 
 
     userdetails = { ...userdetails, isIndividual: false, isPaidUser: true, companyID: userdetails.companyId }
 
     const user = await User.create(userdetails);
-  const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
-  if(!deleteInvitedUser){
-    res.status(500).json({
-      success: false,
-      message: 'Internal Server Error',
-    });
-  }
+    const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
+    if (!deleteInvitedUser) {
+      res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
     res.status(200).json({
       success: true,
       user,
@@ -2067,9 +2067,9 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
 exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
 
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  const {invitedUserData} = req.body;
-  const { token,  userData } = invitedUserData;
-  const { _id,  companyId, email: userEmail  } = userData;
+  const { invitedUserData } = req.body;
+  const { token, userData } = invitedUserData;
+  const { _id, companyId, email: userEmail } = userData;
   console.log(userEmail)
   const ticket = await client.verifyIdToken({
     idToken: token,
@@ -2087,11 +2087,11 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const first_name = parts[0];
   const last_name = parts[1];
   userData = {
-    email : email,
-    first_name : first_name,
-    last_name : last_name,
-    googleId : googleId,
-    companyID : companyId,
+    email: email,
+    first_name: first_name,
+    last_name: last_name,
+    googleId: googleId,
+    companyID: companyId,
     isIndividual: false,
     isIndividual: false,
     isPaidUser: true
@@ -2102,22 +2102,116 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User with the same email already exists", 500));
   }
 
-const newUser = await User.create(userData);
-const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
-  if(!deleteInvitedUser){
+  const newUser = await User.create(userData);
+  const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
+  if (!deleteInvitedUser) {
     res.status(500).json({
       success: false,
       message: 'Internal Server Error',
     });
   }
- 
- res.status(200).json({
-  success: true,
-  newUser
-});
 
   res.status(200).json({
     success: true,
     newUser
   });
+
+  res.status(200).json({
+    success: true,
+    newUser
+  });
+});
+
+
+exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
+  const { userid } = req.body;
+  const { companyID } = req.user;
+
+
+  console.log(userid)
+  for (const id of userid) {
+    const user = await InvitedTeamMemberModel.findById(id);
+    if (!user) {
+      console.log(`User with ID ${id} not found`);
+      continue; // Continue to the next iteration if user is not found
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const company = await Company.findById(companyID);
+    let invitationToken = crypto.randomBytes(20).toString("hex");
+  
+      const currentDate = new Date();
+  
+      // Calculate the expiry date by adding 10 days
+      const expiryDate = new Date(currentDate);
+      expiryDate.setDate(currentDate.getDate() + 10);
+  
+    const message = {
+      from: "manish.syndell@gmail.com",
+      to: user.email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+  
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+          
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Hi ${user.first_name}<br/>
+          You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+            </div>
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
+                <a href="${process.env.FRONTEND_URL}/plan-selection" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+            </div>
+        </div>
+          <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
+          <h5>Technical issue?</h5>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+  
+  
+  `,
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+    console.log(user);
+  }
+
+  res.status(200).json({ message: 'Email Sent' });
+  
 });
