@@ -38,9 +38,8 @@ router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
 
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
-router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
-router.post("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
+router.post("/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
 router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 router.post("/user/rename/team", isAuthenticatedUser, renameTeam)
