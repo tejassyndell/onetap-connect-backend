@@ -1,8 +1,9 @@
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
-const User = require("../models/Customers/UserModel");
-const Company = require('../models/Customers/CompanyModel');
+const User = require("../models/NewSchemas/UserModel");
+// const User = require("../models/Customers/UserModel");
+const Company = require("../models/Customers/CompanyModel");
 
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.cookies;
@@ -13,13 +14,9 @@ exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
 
-
-  
-
   req.user = await User.findById(decodedData.id);
 
   // console.log("User",req.user)s
-
 
   next();
 });

@@ -9,8 +9,10 @@ const crypto = require("crypto");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
-const User = require("../../models/Customers/UserModel.js");
-const Company = require("../../models/Customers/CompanyModel.js");
+// const User = require("../../models/Customers/UserModel.js");
+const User = require("../../models/NewSchemas/UserModel.js")
+// const Company = require("../../models/Customers/CompanyModel.js");
+const Company = require("../../models/NewSchemas/Company_informationModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
 const multer = require("multer");
 const path = require("path");
@@ -599,7 +601,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
-
+console.log(req.user)
   const company = await Company.findById(companyID)
     .populate("primary_account")
     .populate("primary_manager")

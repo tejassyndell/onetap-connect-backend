@@ -22,9 +22,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [8, "Minimum 8 character"],
       select: false,
-      default :null,
+      default: null,
     },
-    contact: { type: number, default: null },
+    contact: { type: Number, default: null },
     address: {
       line1: { type: String, default: null },
       line2: { type: String, default: null },
@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
       country: { type: String, default: null },
       postal_code: { type: String, default: null },
     },
-    avatar: { type: String, default: '' },
+    avatar: { type: String, default: "" },
     designation: [{ type: String }],
     isVerified: {
       type: Boolean,
@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     role: { type: String, default: "member" },
-    googleId: { type: String, default:null },
+    googleId: { type: String, default: null },
     companyID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "company",

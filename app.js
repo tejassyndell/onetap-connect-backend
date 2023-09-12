@@ -31,13 +31,12 @@ app.use(
   })
 );
 
-
 // app.get('/profile/:filename',(req,res) => {
 //   const filename = req.params.filename;
 //   const filePath = path.join(__dirname, '/uploads/profileImages', filename);
 //   res.sendFile(filePath);
 // })
-app.get('/api/v1/profile/img/:filename',(req,res) => {
+app.get("/api/v1/profile/img/:filename", (req, res) => {
   const filename = req.params.filename;
   console.log(filename);
 
