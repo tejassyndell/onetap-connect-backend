@@ -9,8 +9,10 @@ const crypto = require("crypto");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
-const User = require("../../models/Customers/UserModel.js");
-const Company = require("../../models/Customers/CompanyModel.js");
+// const User = require("../../models/Customers/UserModel.js");
+const User = require("../../models/NewSchemas/UserModel.js");
+// const Company = require("../../models/Customers/CompanyModel.js");
+const Company = require("../../models/NewSchemas/Company_informationModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
 const multer = require("multer");
 const path = require("path");
@@ -20,8 +22,8 @@ const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMember
 const CompanyShareReferralModel = require("../../models/Customers/Company_Share_Referral_DataModel");
 const Cards = require("../../models/Customers/CardsModel.js");
 const generatePassword = require("../../utils/passwordGenerator.js");
-const billingAddress = require("../../models/Customers/BillingAddressModal.js")
-const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
+const billingAddress = require("../../models/Customers/BillingAddressModal.js");
+const shippingAddress = require("../../models/Customers/ShippingAddressModal.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
 
 dotenv.config();
@@ -379,6 +381,7 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.user);
   const { id } = req.user;
 
   // checking if user has given password and email both
@@ -598,6 +601,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.user);
   const { companyID } = req.user;
 
   const company = await Company.findById(companyID)
@@ -896,24 +900,23 @@ exports.rejectInvitation = catchAsyncErrors(async (req, res, next) => {
   // Update the status to "Declined" in the database
   invitation.status = "Declined";
   await invitation.save();
-// Retrieve the associated company
-const companyId = invitation.companyId;
-const company = await Company.findOne({ _id: companyId });
+  // Retrieve the associated company
+  const companyId = invitation.companyId;
+  const company = await Company.findOne({ _id: companyId });
 
-if (!company) {
-  return next(new ErrorHandler("Company not found", 404));
-}
+  if (!company) {
+    return next(new ErrorHandler("Company not found", 404));
+  }
 
-// Now you have the company name
-const companyName = company.company_name;
+  // Now you have the company name
+  const companyName = company.company_name;
 
-// Redirect or send a response for successful rejection, including the company name
-// res.redirect("/rejected"); // You can customize this
-res.status(200).json({ message: "Invitation declined", companyName });
+  // Redirect or send a response for successful rejection, including the company name
+  // res.redirect("/rejected"); // You can customize this
+  res.status(200).json({ message: "Invitation declined", companyName });
   // Redirect or send a response for successful rejection
   // res.redirect("/rejected"); // You can customize this
 });
-
 
 //invite team member by CSV
 
@@ -1140,7 +1143,7 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
   const updateBilling = await User.findByIdAndUpdate(id, BillingAddressData);
 
   const updateCompany = await Company.findByIdAndUpdate(companyID, {
-    "company_name": company_name,
+    company_name: company_name,
   });
 
   await updateBilling.save();
@@ -1577,37 +1580,37 @@ exports.uploadProfilePicture = async (req, res) => {
         return res.status(400).json({ error: "No file uploaded." });
       }
 
-        const profilePicturePath = req.file.filename;
+      const profilePicturePath = req.file.filename;
 
-        // Delete the old profile picture if it exists
-        if (oldAvatarPath) {
-          // Remove the old profile picture file from the storage folder
-          fs.unlink(`./uploads/profileImages/${oldAvatarPath}`, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error("Error deleting old profile picture:", unlinkErr);
-            }
-          });
-
-          // Remove the old avatar path from the user document in the database
-          await User.findByIdAndUpdate(id, { avatar: null });
-        }
-
-        const user = await User.findByIdAndUpdate(
-          id,
-          { avatar: profilePicturePath }, // Update the 'avatar' field
-          { new: true }
-        );
-
-        if (!user) {
-          return res.status(404).json({ error: "User not found." });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Profile picture uploaded successfully.",
-          user,
+      // Delete the old profile picture if it exists
+      if (oldAvatarPath) {
+        // Remove the old profile picture file from the storage folder
+        fs.unlink(`./uploads/profileImages/${oldAvatarPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old profile picture:", unlinkErr);
+          }
         });
+
+        // Remove the old avatar path from the user document in the database
+        await User.findByIdAndUpdate(id, { avatar: null });
+      }
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { avatar: profilePicturePath }, // Update the 'avatar' field
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Profile picture uploaded successfully.",
+        user,
       });
+    });
   } catch (error) {
     console.error("Error updating profile picture:", error);
     return res.status(500).json({ error: "Internal server error." });
@@ -1675,7 +1678,7 @@ exports.uploadLogo = async (req, res) => {
     // console.log("object", req.user)
     // Check if the company already has a logo path
     const company = await Company.findById(companyID);
-    console.log(company)
+    console.log(company);
     const oldLogoPath = company.logopath;
 
     logoupload.single("logoimage")(req, res, async (err) => {
@@ -1916,19 +1919,18 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Shipping address added successfully',
+      message: "Shipping address added successfully",
       shippingAddressData,
     });
   } catch (error) {
-    return next(new ErrorHandler('Error saving shipping address', 500));
+    return next(new ErrorHandler("Error saving shipping address", 500));
   }
 });
 
-
-exports.getAllShippingAddress = catchAsyncErrors(async (req,res,next)=> {
+exports.getAllShippingAddress = catchAsyncErrors(async (req, res, next) => {
   const { companyID, id } = req.user;
-// console.log(companyID,id, "id....")
-// console.log(req.user)
+  // console.log(companyID,id, "id....")
+  // console.log(req.user)
   try {
     const shippingAddresses = await shippingAddress.find({ userId: id });
     // console.log(shippingAddresses, "...")
@@ -1938,31 +1940,33 @@ exports.getAllShippingAddress = catchAsyncErrors(async (req,res,next)=> {
       shippingAddresses,
     });
   } catch (err) {
-    return next(new ErrorHandler('Unable to fetch shipping addresses', 500));
+    return next(new ErrorHandler("Unable to fetch shipping addresses", 500));
   }
-})
+});
 
-exports.removeShippingAddress = catchAsyncErrors(async(req,res, next)=> {
+exports.removeShippingAddress = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
   const { addressId } = req.params;
-  console.log(addressId, " address id")
+  console.log(addressId, " address id");
 
   try {
     const userShippingAddress = await shippingAddress.findOne({ userId: id });
-    console.log(userShippingAddress, "userShippingAddress")
+    console.log(userShippingAddress, "userShippingAddress");
 
     if (!userShippingAddress) {
-      return next(new ErrorHandler('User shipping address not found', 404));
+      return next(new ErrorHandler("User shipping address not found", 404));
     }
 
     const { shipping_address } = userShippingAddress;
-    console.log(shipping_address, "shipping address")
+    console.log(shipping_address, "shipping address");
     // Find the index of the shipping address to remove
-    const addressIndex = shipping_address.findIndex(address => address._id == addressId);
-    console.log(addressIndex, "address indexx")
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == addressId
+    );
+    console.log(addressIndex, "address indexx");
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Shipping address not found', 404));
+      return next(new ErrorHandler("Shipping address not found", 404));
     }
 
     // Remove the shipping address from the array
@@ -1973,35 +1977,47 @@ exports.removeShippingAddress = catchAsyncErrors(async(req,res, next)=> {
 
     res.status(200).json({
       success: true,
-      message: 'Shipping address removed successfully',
+      message: "Shipping address removed successfully",
     });
   } catch (err) {
-    return next(new ErrorHandler('Error removing shipping address', 500));
+    return next(new ErrorHandler("Error removing shipping address", 500));
   }
-})
+});
 exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
   const { editAddressId } = req.params; // Get the address ID from the request URL
-  const { first_name, last_name, company_name, line1, line2, city, state, country, postal_code } = req.body;
+  const {
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  } = req.body;
 
   const { id } = req.user;
 
   try {
     const userShippingAddress = await shippingAddress.findOne({ userId: id });
-    console.log(userShippingAddress, "userShippingAddress")
+    console.log(userShippingAddress, "userShippingAddress");
 
     if (!userShippingAddress) {
-      return next(new ErrorHandler('User shipping address not found', 404));
+      return next(new ErrorHandler("User shipping address not found", 404));
     }
 
     const { shipping_address } = userShippingAddress;
-    console.log(shipping_address, "shipping address")
+    console.log(shipping_address, "shipping address");
 
     // Find the index of the shipping address to edit
-    const addressIndex = shipping_address.findIndex(address => address._id == addressId);
-    console.log(addressIndex, "address index")
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == addressId
+    );
+    console.log(addressIndex, "address index");
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Shipping address not found', 404));
+      return next(new ErrorHandler("Shipping address not found", 404));
     }
 
     // Update the shipping address data
@@ -2023,11 +2039,11 @@ exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Shipping address updated successfully',
+      message: "Shipping address updated successfully",
       updatedShippingAddress: shipping_address[addressIndex],
     });
   } catch (err) {
-    return next(new ErrorHandler('Error updating shipping address', 500));
+    return next(new ErrorHandler("Error updating shipping address", 500));
   }
 });
 
@@ -2050,18 +2066,18 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
     });
   } else {
     // Check the status field
-    if (tokenExists.status === 'Declined') {
+    if (tokenExists.status === "Declined") {
       res.status(400).json({
         success: false,
-        message: 'Invalid invitation.',
+        message: "Invalid invitation.",
       });
     } else {
       // Check if the invitation is not expired
       const data = await InvitedTeamMemberModel.findOne({
         invitationToken: token,
         invitationExpiry: { $gt: currentDate }, // Not expired
-      }).select('_id email first_name last_name companyId');
-      
+      }).select("_id email first_name last_name companyId");
+
       if (data) {
         res.status(200).json({
           success: true,
@@ -2070,7 +2086,7 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
       } else {
         res.status(400).json({
           success: false,
-          message: 'Token is expired.',
+          message: "Token is expired.",
         });
       }
     }
@@ -2079,15 +2095,16 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const {_id,status} = req.body.InvitedUserData;
-    if (status === 'Declined') {
+    const { _id, status } = req.body.InvitedUserData;
+    if (status === "Declined") {
       res.status(400).json({
         success: false,
-        message: 'Invalid invitation.',
+        message: "Invalid invitation.",
       });
       return; // Stop execution if the invitation is declined.
     }
-    let userdetails = ({email, first_name, last_name, companyId } = req.body.InvitedUserData);
+    let userdetails = ({ email, first_name, last_name, companyId } =
+      req.body.InvitedUserData);
 
     userdetails = {
       ...userdetails,
@@ -2097,11 +2114,13 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
     };
 
     const user = await User.create(userdetails);
-    const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
+    const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(
+      _id
+    );
     if (!deleteInvitedUser) {
       res.status(500).json({
         success: false,
-        message: 'Internal Server Error',
+        message: "Internal Server Error",
       });
     }
     res.status(200).json({
@@ -2115,15 +2134,15 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  const {invitedUserData} = req.body;
-  const { token,  userData } = invitedUserData;
-  const { _id,  companyId, email: userEmail, status  } = userData;
-  console.log(userEmail)
-   // Check the status field
-   if (status === 'Declined') {
+  const { invitedUserData } = req.body;
+  const { token, userData } = invitedUserData;
+  const { _id, companyId, email: userEmail, status } = userData;
+  console.log(userEmail);
+  // Check the status field
+  if (status === "Declined") {
     return res.status(400).json({
       success: false,
-      message: 'Invalid invitation.',
+      message: "Invalid invitation.",
     });
   }
 
@@ -2180,13 +2199,11 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
   const { userid } = req.body;
   const { companyID } = req.user;
 
-
-  console.log(userid)
+  console.log(userid);
   for (const id of userid) {
     const user = await InvitedTeamMemberModel.findById(id);
     if (!user) {
@@ -2204,18 +2221,18 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     });
     const company = await Company.findById(companyID);
     let invitationToken = crypto.randomBytes(20).toString("hex");
-  
-      const currentDate = new Date();
-  
-      // Calculate the expiry date by adding 10 days
-      const expiryDate = new Date(currentDate);
-      expiryDate.setDate(currentDate.getDate() + 10);
-  
+
+    const currentDate = new Date();
+
+    // Calculate the expiry date by adding 10 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 10);
+
     const message = {
       from: "manish.syndell@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
-  
+
       html: `
   <!DOCTYPE html>
   <html>
@@ -2270,6 +2287,5 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     console.log(user);
   }
 
-  res.status(200).json({ message: 'Email Sent' });
-  
+  res.status(200).json({ message: "Email Sent" });
 });
