@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isPaidUser: { type: Boolean, default: false },
     role: { type: String, default: "member" },
     googleId: { type: String, default: null },
     companyID: {
@@ -51,6 +52,11 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
+    shipping_method: [{
+      type: { type: String },
+      price: { type: Number }
+    }],
+
     resetPasswordToken: String,
     resetPasswordExpiry: Date,
   },

@@ -7,11 +7,6 @@ const billingAddressSchema = new mongoose.Schema({
         ref: 'user',
         required: true,
     },
-    companyId: {
-        type: mongoose.Types.ObjectId,
-        ref: 'company',
-        required: true,
-      },
       billing_address: {
         line1: { type: String, default: null },
         line2: { type: String, default: null },

@@ -78,7 +78,7 @@ router.post('/reject-invitation/:invitationToken', rejectInvitation)
 // router.get("/user/shippingAddresses",isAuthenticatedUser, getAllShippingAddress)
 router.get("/user/all/shippingAddresses", isAuthenticatedUser, getAllShippingAddress)
 router.delete("/user/shippingAddress/remove/:addressId", isAuthenticatedUser, removeShippingAddress)
-router.put("/user/shippingAddress/edit/:editAddressId", isAuthenticatedUser, editShippingAddress)
+router.post("/shippingAddress/edit/:editAddressId",isAuthenticatedUser, editShippingAddress)
 
 
 

@@ -214,4 +214,4 @@ const CompanySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("tempname-companies_information", CompanySchema);
+module.exports = mongoose.model("temp_companies_information", CompanySchema);
