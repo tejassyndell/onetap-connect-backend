@@ -1683,8 +1683,6 @@ exports.uploadLogo = async (req, res) => {
         return res.status(400).json({ error: "File upload failed." });
       }
 
-      // Add the checkLogoSize middleware here
-      checkLogoSize(req, res, async () => {
         const logoPicturePath = req.file.filename;
 
         // Delete the old logo file if it exists
@@ -1712,7 +1710,7 @@ exports.uploadLogo = async (req, res) => {
           message: "Logo uploaded successfully.",
           updatedCompany,
         });
-      });
+   
     });
   } catch (error) {
     console.error("Error updating Logo:", error);
@@ -1787,9 +1785,6 @@ exports.uploadfavicon = async (req, res) => {
       if (err) {
         return res.status(400).json({ error: "File upload failed." });
       }
-
-      // Add the checkLogoSize middleware here
-      checkFaviconSize(req, res, async () => {
         const faviconPicturePath = req.file.filename;
 
         // Delete the old favicon file if it exists
@@ -1816,7 +1811,7 @@ exports.uploadfavicon = async (req, res) => {
           message: "favicon uploaded successfully.",
           updatedCompany,
         });
-      });
+      
     });
   } catch (error) {
     console.error("Error updating favicon:", error);
