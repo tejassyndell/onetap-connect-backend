@@ -7,7 +7,7 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -38,9 +38,8 @@ router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
 
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
-router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
-router.post("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
+router.post("/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
 router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 router.post("/user/rename/team", isAuthenticatedUser, renameTeam)
@@ -74,6 +73,12 @@ router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddr
 router.post('/invited/user', invitedUser)
 router.post('/invited/register-user', registerInvitedUser)
 router.post('/invited/google-sign-up', invitedUserGoogleSignup)
+router.post('/reinviteuser', isAuthenticatedUser, resendemailinvitation);
+router.post('/reject-invitation/:invitationToken', rejectInvitation)
+// router.get("/user/shippingAddresses",isAuthenticatedUser, getAllShippingAddress)
+router.get("/user/all/shippingAddresses", isAuthenticatedUser, getAllShippingAddress)
+router.delete("/user/shippingAddress/remove/:addressId", isAuthenticatedUser, removeShippingAddress)
+router.put("/user/shippingAddress/edit/:editAddressId", isAuthenticatedUser, editShippingAddress)
 
 
 
