@@ -9,8 +9,10 @@ const crypto = require("crypto");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
-const User = require("../../models/Customers/UserModel.js");
-const Company = require("../../models/Customers/CompanyModel.js");
+// const User = require("../../models/Customers/UserModel.js");
+const User = require("../../models/NewSchemas/UserModel.js");
+// const Company = require("../../models/Customers/CompanyModel.js");
+const Company = require("../../models/NewSchemas/Company_informationModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
 const multer = require("multer");
 const path = require("path");
@@ -18,10 +20,13 @@ const sharp = require("sharp");
 const fs = require("fs");
 const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
 const CompanyShareReferralModel = require("../../models/Customers/Company_Share_Referral_DataModel");
-const Cards = require("../../models/Customers/CardsModel.js");
+// const Cards = require("../../models/Customers/CardsModel.js");
+const Cards = require("../../models/NewSchemas/CardModel.js");
 const generatePassword = require("../../utils/passwordGenerator.js");
-const billingAddress = require("../../models/Customers/BillingAddressModal.js")
-const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
+const billingAddress = require("../../models/NewSchemas/user_billing_addressModel.js")
+// const billingAddress = require("../../models/Customers/BillingAddressModal.js")
+const shippingAddress = require("../../models/NewSchemas/user_shipping_addressesModel.js")
+// const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
 // const logo = require('../../uploads/logo/logo_black.svg')
 
 dotenv.config();
@@ -1450,10 +1455,75 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 });
 
 //checkout handler
+// exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
+//   const { id, companyID } = req.user;
+//   const { userData, billingdata, shippingData ,planData, cardDetails, shipping_method } = req.body;
+// console.log(billingdata, " billingdata")
+//   const cardData = {
+//     cardNumber: cardDetails.cardNumber,
+//     brand: cardDetails.brand,
+//     nameOnCard: cardDetails.cardName,
+//     cardExpiryMonth: cardDetails.cardExpiryMonth,
+//     cardExpiryYear: cardDetails.cardExpiryYear,
+//     // CVV: cardDetails.cardCVV
+//   };
+
+//   console.log(cardData);
+
+//   const user = await User.findById(id);
+//   if (!user) {
+//     return next(new ErrorHandler("User not found", 404));
+//   }
+//   const billingAddressFind = new billingAddress({
+//     userId: user._id,
+//     billing_address: billingdata,
+//   });
+
+//   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+//   if (!shippingAddressFind) {
+//     shippingAddressFind = new shippingAddress({
+//       userId: user._id,
+//       shipping_address: [shippingData],
+//     });
+//   } else {
+//     shippingAddressFind.shipping_address.push(shippingData);
+//   }
+//   const card = await Cards.create(cardData);
+//   card.userID = id;
+
+//   user.isPaidUser = true;
+//   user.first_name = userData.first_name;
+//   user.first_last = userData.first_last;
+//   user.address = billingdata;
+//   // user.billing_address = userData.billing_address;
+//   // user.shipping_address = userData.shipping_address;
+//   user.subscription_details = planData;
+//   user.subscription_details.auto_renewal = true;
+//   user.shipping_method = shipping_method;
+
+//   const company = await Company.findById(companyID);
+//   company.address = billingdata;
+//   console.log(company.address, "company address");
+
+//   await user.save();
+//   await card.save();
+//   await company.save();
+//   await billingAddressFind.save();
+//   await shippingAddressFind.save();
+
+
+//   res.status(200).json({
+//     success: true,
+//     billingdata
+//   });
+// });
+
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  const { userData, planData, cardDetails, shipping_method } = req.body;
-
+  console.log(id,companyID, "id")
+  const { userData, company_name ,billingdata, shippingData, shipping_method, cardDetails } = req.body;
+console.log(billingdata, " billingdata")
   const cardData = {
     cardNumber: cardDetails.cardNumber,
     brand: cardDetails.brand,
@@ -1462,36 +1532,59 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     cardExpiryYear: cardDetails.cardExpiryYear,
     // CVV: cardDetails.cardCVV
   };
-
   console.log(cardData);
 
   const user = await User.findById(id);
+  console.log(user, "user")
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
+  const billingAddressFind = new billingAddress({
+    userId: user._id,
+    billing_address: billingdata,
+  });
 
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      shipping_address: [shippingData],
+    });
+  } else {
+    shippingAddressFind.shipping_address.push(shippingData);
+  }
   const card = await Cards.create(cardData);
+  console.log(card, "card")
   card.userID = id;
 
   user.isPaidUser = true;
   user.first_name = userData.first_name;
-  user.first_last = userData.first_last;
-  user.address = userData.billing_address;
-  user.billing_address = userData.billing_address;
-  user.shipping_address = userData.shipping_address;
-  user.subscription_details = planData;
-  user.subscription_details.auto_renewal = true;
+  user.last_name = userData.last_name;
+  user.contact = userData.contact;
+  user.email = userData.email;
+  user.address = billingdata;
+  // user.billing_address = userData.billing_address;
+  // user.shipping_address = userData.shipping_address;
+  // user.subscription_details = planData;
+  // user.subscription_details.auto_renewal = true;
   user.shipping_method = shipping_method;
 
   const company = await Company.findById(companyID);
-  company.address = userData.billing_address;
+  company.address = billingdata;
+  company.company_name = company_name;
+  console.log(company.address, "company address");
 
   await user.save();
   await card.save();
   await company.save();
+  await billingAddressFind.save();
+  await shippingAddressFind.save();
+
 
   res.status(200).json({
     success: true,
+    billingdata
   });
 });
 
@@ -1879,7 +1972,7 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
     postal_code,
   } = req.body;
 
-  const { id, companyID } = req.user;
+  const { id } = req.user;
 
   const user = await User.findById(id);
 
@@ -1904,7 +1997,6 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
   if (!shippingAddressFind) {
     shippingAddressFind = new shippingAddress({
       userId: user._id,
-      companyId: companyID,
       shipping_address: [shippingAddressData],
     });
   } else {
@@ -1979,25 +2071,42 @@ exports.removeShippingAddress = catchAsyncErrors(async(req,res, next)=> {
     return next(new ErrorHandler('Error removing shipping address', 500));
   }
 })
+
 exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
-  const { editAddressId } = req.params; // Get the address ID from the request URL
+  // console.log("edit called")
+  // alert("alert")
+  const { editAddressId } = req.params;
+  console.log(editAddressId, "id") // Get the address ID from the request URL
   const { first_name, last_name, company_name, line1, line2, city, state, country, postal_code } = req.body;
 
   const { id } = req.user;
+  const shippingAddressData = {
+    _id: editAddressId,
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  };
+  console.log(shippingAddressData, "shippingAddressData")
 
   try {
     const userShippingAddress = await shippingAddress.findOne({ userId: id });
-    console.log(userShippingAddress, "userShippingAddress")
+    // console.log(userShippingAddress, "userShippingAddress")
 
     if (!userShippingAddress) {
       return next(new ErrorHandler('User shipping address not found', 404));
     }
 
     const { shipping_address } = userShippingAddress;
-    console.log(shipping_address, "shipping address")
+    // console.log(shipping_address, "shipping address")
 
     // Find the index of the shipping address to edit
-    const addressIndex = shipping_address.findIndex(address => address._id == addressId);
+    const addressIndex = shipping_address.findIndex(address => address._id == editAddressId);
     console.log(addressIndex, "address index")
 
     if (addressIndex === -1) {
@@ -2005,18 +2114,9 @@ exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
     }
 
     // Update the shipping address data
-    shipping_address[addressIndex] = {
-      _id: addressId,
-      first_name,
-      last_name,
-      company_name,
-      line1,
-      line2,
-      city,
-      state,
-      country,
-      postal_code,
-    };
+    shipping_address[addressIndex] =  shippingAddressData
+    
+    console.log(shipping_address, "Shipping")
 
     // Save the updated document
     await userShippingAddress.save();

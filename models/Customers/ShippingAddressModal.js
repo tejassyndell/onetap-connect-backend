@@ -7,11 +7,6 @@ const shippingAddressSchema = new mongoose.Schema({
         ref: 'user',
         required: true,
     },
-    companyId: {
-        type: mongoose.Types.ObjectId,
-        ref: 'company',
-        required: true,
-      },
       shipping_address: [
         {
           first_name:{ type: String, default: null },
