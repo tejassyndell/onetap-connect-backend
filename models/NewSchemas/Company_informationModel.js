@@ -9,7 +9,7 @@ const Company_information = new mongoose.Schema(
         contact: { type: Number, default: null },
         fax_number: {
             type: Number,
-            required: [true, "Please Enter The Company fax Number"],
+            // required: [true, "Please Enter The Company fax Number"],
         },
         address: {
             line1: { type: String, default: null },
@@ -21,13 +21,13 @@ const Company_information = new mongoose.Schema(
         },
         global_email: {
             type: String,
-            required: [true, "Please Enter The Company email"],
+            // required: [true, "Please Enter The Company email"],
         },
         industry: { type: String },
         keywords: [{ type: String }],
         website_url: {
             type: String,
-            required: [true, "Please Enter The Company URL"],
+            // required: [true, "Please Enter The Company URL"],
         },
         about: {
             type: String,
