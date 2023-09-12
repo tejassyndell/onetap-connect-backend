@@ -66,7 +66,7 @@ connectDatabase()
 app.use('/api/v1',companyRoutes)
 app.use('/api/v1',SuperAdminRoutes)
 app.use('/api/v1',paymentRoutes)
-app.use('/api/v1',AccountRoutes)
+// app.use('/api/v1',AccountRoutes)
 
 
 // app.use((req, res, next) => {
