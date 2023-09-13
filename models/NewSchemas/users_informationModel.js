@@ -90,18 +90,23 @@ const users_information = new mongoose.Schema(
                 permission: { type: Boolean, default: false },
             },
         ],
+        shipping_method: [{
+            type: { type: String },
+            price: { type: Number }
+          }],
+      
         subscription_details: {
             // subscription: {
             //   type: mongoose.Schema.Types.ObjectId,
             //   ref: "Subscription",
             // },
-            addones: [{ service: { type: String }, price: { type: Number } }],
-            userCount: { type : String},
+            addones: [{type: mongoose.Schema.Types.ObjectId}],
+            userCount: { type : Number},
             total_amount: { type: Number },
             // payment_status: { type: String },
             billing_cycle: { type: String },
             plan: { type: String },
-            total_user: { type: Number },
+            total_user: { baseUser:{type: Number} , additionalUser:{ type: Number} },
             recurring_amount: { type: Number },
             renewal_date: { type: Date },
             auto_renewal: { type: Boolean, default: true },
