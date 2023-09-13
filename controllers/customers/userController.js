@@ -1425,6 +1425,33 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+exports.updatecompany_referral_data = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyID } = req.user;
+    const companyShareReferData = req.body;
+    console.log(companyID);
+    console.log(companyShareReferData);
+
+    const updatecompany = await CompanyShareReferralModel.findOneAndUpdate(
+      { companyID: companyID }, // Query to find the document to update
+      companyShareReferData.companyDetails, // New data to replace the existing document
+      { new: true } // Optionally, set 'new' to true to return the updated document
+    );
+
+    if (!updatecompany) {
+      return next(new ErrorHandler("company share details not found", 404));
+    }
+
+    // updatecompany.set(companyShareReferData);
+    // await updatecompany.save();
+
+    res.status(200).json({
+      // updatedCompanyReferralData,
+      updatecompany,
+    });
+  }
+);
+
 exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
   async (req, res, next) => {
     const { companyurlslug } = req.body;
@@ -1545,8 +1572,16 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  const { userData, company_name, billingdata, shippingData, shipping_method, planData, cardDetails } = req.body;
-  
+  const {
+    userData,
+    company_name,
+    billingdata,
+    shippingData,
+    shipping_method,
+    planData,
+    cardDetails,
+  } = req.body;
+
   const cardData = {
     cardNumber: cardDetails.cardNumber,
     brand: cardDetails.brand,
@@ -1593,10 +1628,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
-      subscription_details: planData
+      subscription_details: planData,
     });
     userInformation.subscription_details = planData;
-    console.log(userInformation, "userInformation")
+    console.log(userInformation, "userInformation");
   } else {
     userInformation.subscription_details = planData;
   }
@@ -1627,7 +1662,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     billingdata,
   });
 });
-
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
@@ -1955,43 +1989,20 @@ exports.uploadfavicon = async (req, res) => {
   }
 };
 
-exports.getcompanies_share_referral_datas = catchAsyncErrors(
+exports.getcompanies_share_referral_data = catchAsyncErrors(
   async (req, res, next) => {
     const { companyID } = req.user;
     console.log(companyID);
-    const companies_share_referral_datas =
-      await CompanyShareReferralModel.findOne({ companyID: companyID });
-    if (!companies_share_referral_datas) {
+    const companyShareReferData = await CompanyShareReferralModel.findOne({
+      companyID: companyID,
+    });
+    if (!companyShareReferData) {
       return next(new ErrorHandler("No data Found", 404));
     }
 
     res.status(200).json({
       success: true,
-      companies_share_referral_datas,
-    });
-  }
-);
-
-exports.updatecompany_referral_data = catchAsyncErrors(
-  async (req, res, next) => {
-    const { companyID } = req.user;
-    const updatedCompanyReferralData = req.body;
-    console.log(companyID);
-    console.log(updatedCompanyReferralData);
-
-    const updatecompany = await CompanyShareReferralModel.findOne({
-      companyID: companyID,
-    });
-
-    if (!updatecompany) {
-      return next(new ErrorHandler("company share details not found", 404));
-    }
-
-    updatecompany.set(updatedCompanyReferralData);
-    await updatecompany.save();
-
-    res.status(200).json({
-      updatedCompanyReferralData,
+      companyShareReferData,
     });
   }
 );
@@ -2170,6 +2181,8 @@ exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
 
     // Update the shipping address data
     shipping_address[addressIndex] = shippingAddressData;
+
+    console.log(shipping_address, "Shipping");
 
     // Save the updated document
     await userShippingAddress.save();
