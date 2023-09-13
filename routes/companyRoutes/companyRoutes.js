@@ -7,7 +7,7 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation, fetchBillingAddress, getUserInformation} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -23,6 +23,7 @@ router.put("/reset/password/:token", resetPassword);
 router.post("/register/new", registerUser);
 router.get("/company/profile", isAuthenticatedUser, getCompanyDetails);
 router.get("/users", isAuthenticatedUser, getUsers);
+router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
 router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
@@ -40,6 +41,7 @@ router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
 
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
 router.post("/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
+router.get("/fetchbillingAddress",isAuthenticatedUser,fetchBillingAddress);
 router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 router.post("/user/rename/team", isAuthenticatedUser, renameTeam)
