@@ -52,11 +52,7 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    shipping_method: [{
-      type: { type: String },
-      price: { type: Number }
-    }],
-
+    
     resetPasswordToken: String,
     resetPasswordExpiry: Date,
   },

@@ -9,6 +9,7 @@ const user_shipping_addresses = new mongoose.Schema(
         },
           shipping_address: [
             {
+              address_name:{type: String, default: "Default"}, 
               first_name:{ type: String, default: null },
               last_name:{ type: String, default: null },
               company_name:{ type: String, default: null },
