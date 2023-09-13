@@ -44,32 +44,28 @@ const Company_information = new mongoose.Schema(
       default: null,
     },
     timeZone: { type: String, default: "" },
-    booking_links: [
-      {
-        value: { type: String, default: null },
-        permission: { type: Boolean, default: false },
-      },
-    ],
+    booking_link: { type: String, default: null },
     other_links: [
-      {
-        title: { type: String, default: null },
-        value: { type: String, default: null },
-        permission: { type: Boolean, default: false },
-      },
+        {
+            name: { type: String, default: null },
+            link: { type: String, default: null },
+            permission: { type: Boolean, default: false },
+        },
     ],
     custom_fields: [
-      {
-        title: { type: String, default: null },
-        value: { type: String, default: null },
-        permission: { type: Boolean, default: false },
-      },
+        {
+            name: { type: String, default: null },
+            value: { type: String, default: null },
+            permission: { type: Boolean, default: false },
+        },
     ],
     socialLinks: [
-      {
-        title: { type: String, default: null },
-        value: { type: String, default: null },
-        permission: { type: Boolean, default: false },
-      },
+        {
+            icon: { type: String, default: null },
+            name: { type: String, default: null },
+            link: { type: String, default: null },
+            permission: { type: Boolean, default: false },
+        },
     ],
     primary_account: {
       type: mongoose.Schema.ObjectId,
@@ -94,6 +90,69 @@ const Company_information = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    company_logo_name: { type: String, default: null },
+    logo_alt: { type: String, default: null },
+    logopath: { type: String, default: "" },
+    fav_icon: { type: String, default: null },
+    fav_icon_path: { type: String, default: "" },
+    additional_colors: [
+        {
+          name: { type: String, default: null },
+          code: { type: String, default: null },
+        },
+      ],
+    company_name_permission: {
+        type: Boolean,
+        default: false,
+      },
+    website_url_permission: {
+        type: Boolean,
+        default: false,
+      },
+      global_email_address_permission: {
+        type: Boolean,
+        default: false,
+      },
+      primary_office_number_permission: {
+        type: Boolean,
+        default: false,
+      },
+      fax_number_permission: {
+        type: Boolean,
+        default: false,
+      },
+      primary_activities_permission: {
+        type: Boolean,
+        default: false,
+      },
+      booking_link_permission: {
+        type: Boolean,
+        default: false,
+      },
+      make_private_permission: {
+        type: Boolean,
+        default: false,
+      },
+      company_line1_address_permission: {
+        type: Boolean,
+        default: false,
+      },
+      company_line2_apartment_permission: {
+        type: Boolean,
+        default: false,
+      },
+      company_city_permission: {
+        type: Boolean,
+        default: false,
+      },
+      company_state_permission: {
+        type: Boolean,
+        default: false,
+      },
+      company_postal_code_permission: {
+        type: Boolean,
+        default: false,
+      },
   },
   { timestamps: true }
 );
