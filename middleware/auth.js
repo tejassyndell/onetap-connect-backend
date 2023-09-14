@@ -7,7 +7,9 @@ const User = require("../models/NewSchemas/UserModel");
 const company = require("../models/NewSchemas/Company_informationModel");
 
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.cookies);
   const { token } = req.cookies;
+
 
   if (!token) {
     return next(new ErrorHandler("Please Login to Access this resource", 401));

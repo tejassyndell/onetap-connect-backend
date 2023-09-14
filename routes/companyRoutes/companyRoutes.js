@@ -34,15 +34,16 @@ router.post("/updateCardDetails/:id", isAuthenticatedUser, updateCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
 router.get("/fetchCardDetails/:id", isAuthenticatedUser, fetchCardDetails);
 router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
-router.post("/invite/user", isAuthenticatedUser, inviteTeamMember);
-router.delete("/invited-users/:invitedUserID", deleteInvitedUser);
+router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
+router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
+router.post('/user/teamdata', isAuthenticatedUser, getTeam);
 
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
 router.post("/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
 router.get("/fetchbillingAddress",isAuthenticatedUser,fetchBillingAddress);
-router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
+router.post("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 router.post("/user/rename/team", isAuthenticatedUser, renameTeam)
 router.post("/user/delete/team", isAuthenticatedUser, deleteTeam)

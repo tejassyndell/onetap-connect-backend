@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     first_name: {
       type: String,
     },
+    team: { type: mongoose.Schema.Types.ObjectId },
     last_name: {
       type: String,
     },
