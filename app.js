@@ -58,13 +58,13 @@ app.get("/api/v1/favicon/img/:filename", (req, res) => {
   const filePath = path.join(__dirname, "/uploads/favicon", filename);
   res.sendFile(filePath);
 });
-app.use(errorMiddleware);
 connectDatabase();
 
 app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
 app.use("/api/v1", paymentRoutes);
 // app.use('/api/v1',AccountRoutes)
+app.use(errorMiddleware);
 
 // app.use((req, res, next) => {
 //   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
