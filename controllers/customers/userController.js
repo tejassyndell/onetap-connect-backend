@@ -29,6 +29,8 @@ const billingAddress = require("../../models/NewSchemas/user_billing_addressMode
 const shippingAddress = require("../../models/NewSchemas/user_shipping_addressesModel.js");
 // const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
 // const logo = require('../../uploads/logo/logo_black.svg')
+const TeamDetails = require("../../models/NewSchemas/Team_SchemaModel.js");
+const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 
 dotenv.config();
 
@@ -921,109 +923,44 @@ exports.rejectInvitation = catchAsyncErrors(async (req, res, next) => {
 });
 
 //invite team member by CSV
-
 exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData } = req.body;
-  const { companyID, id } = req.user;
+  const { companyID } = req.user;
   console.log(CSVMemberData);
+  console.log(companyID);
 
-  // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
     return next(new ErrorHandler("No user data provided", 400));
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "Gmail",
-    port: 587,
-    auth: {
-      user: process.env.NODMAILER_EMAIL,
-      pass: process.env.NODEMAILER_PASS,
-    },
-  });
-
   const company = await Company.findById(companyID);
-  const userInfo = await User.findById(id);
 
   for (const userData of CSVMemberData) {
     const password = generatePassword();
-    const { email, firstName, lastName, team } = userData;
-    console.log(userData);
+    const { email, first_name, last_name, team } = userData;
+    console.log("Email:", email);
+    console.log("First Name:", first_name);
+    console.log("Last Name:", last_name);
+    console.log("Team:", team);
 
-    if (!email || !firstName || !lastName || !team) {
+    if (!first_name || !last_name || !team || !email) {
       return next(new ErrorHandler("Please fill out all user details", 400));
     }
 
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      return next(new ErrorHandler("Please enter a valid email", 400));
-    }
-
-    const message = {
-      from: "mailto:manish.syndell@gmail.com",
-      to: email,
-      subject: `${company.company_name} Invited you to join OneTapConnect`,
-
-      html: `
-    <!DOCTYPE html>
-    <html>
-    
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
-    </head>
-    
-    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
-    
-        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-            <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
-            
-            </div>
-            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-           
-            <p>Dear ${firstName}<br/><br/>
-            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
-            To get started, simply click on the link below to Login your account:<br/><br/>
-            <a href="${process.env.FRONTEND_URL}/login">Click here to Login</a><br/><br/>
-            Your temporary password is: ${password}<br/><br/>
-            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
-            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
-            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
-            Best regards,<br/>
-            ${userInfo.first_name} ${userInfo.last_name}<br/>
-            ${company.company_name}
-        </div>
-    
-    </body>
-    
-    </html>
-    
-    
-  `,
-    };
-
-    transporter.sendMail(message, (err, info) => {
-      if (err) {
-        console.log(`Error sending email to ${email}: ${err}`);
-      } else {
-        console.log(`Email sent to ${email}: ${info.response}`);
-      }
-    });
-
     await User.create({
-      email: email,
-      first_name: firstName,
-      last_name: lastName,
+      email: email, // This line is removed to prevent email storage
+      first_name: first_name,
+      last_name: last_name,
       team: team,
       companyID: companyID,
       password: password,
     });
+    console.log(User);
   }
 
   res.status(201).json({
     success: true,
-    message: "Invitaion Email sent Successfully",
+    message: "Invitation Email sent Successfully",
   });
 });
 //add card details
@@ -2471,3 +2408,14 @@ exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
     firstuserInfo,
   });
 });
+
+
+exports.getTeam = catchAsyncErrors(async (req, res, next) => {
+  const company_id = req.user.companyID
+  // console.log(company_id, "sadadas")
+
+
+  const team = await Team_SchemaModel.find({ companyID: company_id })
+  // console.log(team ,"teamname")
+  res.status(200).json({ message: "Users updated successfully", team });
+})
