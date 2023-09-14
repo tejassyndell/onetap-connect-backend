@@ -33,6 +33,26 @@ const userSchema = new mongoose.Schema(
       country: { type: String, default: null },
       postal_code: { type: String, default: null },
     },
+    user_line1_address_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_line2_apartment_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_city_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_state_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_postal_code_permission: {
+      type: Boolean,
+      default: false,
+    },
     avatar: { type: String, default: "" },
     designation: [{ type: String }],
     isVerified: {

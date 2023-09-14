@@ -60,11 +60,11 @@ const users_information = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        about: {
+        aboutUser: {
             type: String,
             default: null
         },
-        videoAboutUrl: {
+        useraboutvideo: {
             type: String,
             default: null
         },
@@ -85,8 +85,9 @@ const users_information = new mongoose.Schema(
         ],
         socialLinks: [
             {
-                title: { type: String, default: null },
-                value: { type: String, default: null },
+                icon: { type: String, default: null },
+                name: { type: String, default: null },
+                link: { type: String, default: null },
                 permission: { type: Boolean, default: false },
             },
         ],
