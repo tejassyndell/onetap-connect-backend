@@ -106,7 +106,12 @@ const users_information = new mongoose.Schema(
             // payment_status: { type: String },
             billing_cycle: { type: String },
             plan: { type: String },
-            total_user: { baseUser:{type: Number} , additionalUser:{ type: Number} },
+            total_user: [
+                {
+                  baseUser: { type: Number },
+                  additionalUser: { type: Number }
+                }
+              ],
             recurring_amount: { type: Number },
             renewal_date: { type: Date },
             auto_renewal: { type: Boolean, default: true },
