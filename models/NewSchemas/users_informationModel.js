@@ -10,7 +10,7 @@ const users_information = new mongoose.Schema(
         team: { type: mongoose.Schema.Types.ObjectId },
         company_name: {
             type: String,
-            required: [true, "Please Enter Your Company Name"],
+            // required: [true, "Please Enter Your Company Name"],
         },
         company_name_permission: {
             type: Boolean,
@@ -18,7 +18,7 @@ const users_information = new mongoose.Schema(
         },
         website_url: {
             type: String,
-            required: [true, "Please Enter The Company URL"],
+            // required: [true, "Please Enter The Company URL"],
         },
         website_url_permission: {
             type: Boolean,
@@ -26,23 +26,23 @@ const users_information = new mongoose.Schema(
         },
         global_email: {
             type: String,
-            required: [true, "Please Enter The Company email"],
+            // required: [true, "Please Enter The Company email"],
         },
         global_email_permission: {
             type: Boolean,
             default: false,
         },
         primary_office_num: {
-            type: number,
-            required: [true, "Please Enter The Company Number"],
+            type: Number,
+            // required: [true, "Please Enter The Company Number"],
         },
         primary_office_num_permission: {
             type: Boolean,
             default: false,
         },
         fax_number: {
-            type: number,
-            required: [true, "Please Enter The Company fax Number"],
+            type: Number,
+            // required: [true, "Please Enter The Company fax Number"],
         },
         fax_number_permission: {
             type: Boolean,
@@ -70,7 +70,7 @@ const users_information = new mongoose.Schema(
         },
         business_email: {
             type: String,
-            required: [true, "Please Enter The Company business email"],
+            // required: [true, "Please Enter The Company business email"],
         },
         booking_links: {
             type: String,

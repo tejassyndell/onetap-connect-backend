@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     first_name: {
       type: String,
     },
+    team: { type: mongoose.Schema.Types.ObjectId },
     last_name: {
       type: String,
     },
@@ -24,7 +25,7 @@ const userSchema = new mongoose.Schema(
       select: false,
       default :null,
     },
-    contact: { type: number, default: null },
+    contact: { type: Number, default: null },
     address: {
       line1: { type: String, default: null },
       line2: { type: String, default: null },

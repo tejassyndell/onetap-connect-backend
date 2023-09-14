@@ -9,8 +9,11 @@ const crypto = require("crypto");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
-const User = require("../../models/Customers/UserModel.js");
-const Company = require("../../models/Customers/CompanyModel.js");
+// const User = require("../../models/Customers/UserModel.js");
+const User = require("../../models/NewSchemas/UserModel.js");
+const Company = require("../../models/NewSchemas/Company_informationModel.js")
+const Team = require("../../models/NewSchemas/Team_SchemaModel.js")
+// const Company = require("../../models/Customers/CompanyModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
 const multer = require("multer");
 const path = require("path");
@@ -18,10 +21,12 @@ const sharp = require("sharp");
 const fs = require("fs");
 const InvitedTeamMemberModel = require("../../models/Customers/InvitedTeamMemberModel.js");
 const CompanyShareReferralModel = require("../../models/Customers/Company_Share_Referral_DataModel");
+const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const Cards = require("../../models/Customers/CardsModel.js");
 const generatePassword = require("../../utils/passwordGenerator.js");
 const billingAddress = require("../../models/Customers/BillingAddressModal.js")
-const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
+const shippingAddress = require("../../models/Customers/ShippingAddressModal.js");
+const users_informationModel = require("../../models/NewSchemas/users_informationModel.js");
 // const logo = require('../../uploads/logo/logo_black.svg')
 
 dotenv.config();
@@ -379,6 +384,7 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
+  console.log(req)
   const { id } = req.user;
 
   // checking if user has given password and email both
@@ -598,12 +604,13 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
+  console.log(req)
   const { companyID } = req.user;
 
   const company = await Company.findById(companyID)
-    .populate("primary_account")
-    .populate("primary_manager")
-    .populate("primary_billing");
+  .populate("primary_account")
+  .populate("primary_manager")
+  .populate("primary_billing");
   if (!company) {
     return next(new ErrorHandler("No company details Found", 404));
   }
@@ -615,7 +622,9 @@ exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
 
 // get all team members
 exports.getUsers = catchAsyncErrors(async (req, res, next) => {
+
   const { companyID } = req.user;
+  console.log(companyID);
   const users = await User.find({ companyID });
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
@@ -1153,8 +1162,53 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
 });
 
 // for Create new Team and update User Team
+// exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
+//   console.log("called");
+//   const { user_id, team } = req.body;
+
+//   try {
+//     // Update the document by _id
+//     const updatedTeam = await User.findOneAndUpdate(
+//       { _id: user_id },
+//       { team: team },
+//       { new: true }
+//     );
+
+//     if (updatedTeam) {
+//       res.status(200).json({ message: "User updated successfully", team: updatedTeam });
+//     } else {
+//       res.status(404).json({ message: "User not found with the given _id" });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// });
+// exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
+//   console.log("called");
+//   const { user_id, team } = req.body;
+
+//   try {
+//     // Update the documents by _ids
+//     const updatedTeams = await User.updateMany(
+//       { _id: { $in: user_id } }, // Use $in to match multiple _ids
+//       { $set: { team: team } }, // Use $set to update the 'team' field
+//       { new: true }
+//     );
+
+//     if (updatedTeams.nModified > 0) {
+//       res.status(200).json({ message: "Users updated successfully", teams: updatedTeams });
+//     } else {
+//       res.status(404).json({ message: "No users found with the given _ids" });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// });
+
 exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
-  const { selectedUsers, teamName } = req.body;
+  const { selectedUsers, team } = req.body;
 
   // Loop through the array of selected user IDs
   for (const userId of selectedUsers) {
@@ -1167,33 +1221,69 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
     }
 
     // Update the user's team with the new team name
-    user.team = teamName;
+    user.team = team;
     await user.save(); // Save the changes to the user
   }
 
   res.status(200).json({ message: "Users updated successfully" });
 });
 
+//get team name
+
+exports.getTeam = catchAsyncErrors(async (req , res , next )=>{
+const company_id = req.user.companyID
+// console.log(company_id, "sadadas")
+
+
+const team = await Team.find({companyID : company_id})
+// console.log(team ,"teamname")
+  res.status(200).json({ message: "Users updated successfully",team  });
+})
+
 // Create new Team
 exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
+  console.log("team")
+  // console.log(req.user,"wdsafeg")
   const companyID = req.user.companyID;
+  const userID = req.user._id;
   console.log(companyID);
-  const { teamName } = req.body;
-
-  const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
-
-  if (!company) {
-    return res.status(404).json({ message: "Company not found" });
+  const { team_name } = req.body;
+  console.log(team_name);
+  const teamData = {
+    team_name : team_name,
+    companyID : companyID
   }
 
-  if (company.teams.includes(teamName)) {
-    return res.status(400).json({ message: "This team already exists" });
+  const team = await Team.create(teamData)
+  const latestTeamId = team._id;
+  console.log(userID);
+  const Newteam = await UserInformation.findOneAndUpdate(
+    { user_id: userID },
+    { $set: { team: latestTeamId } }
+  );  
+  
+  console.log("Updated User Informationhg", team);
+  
+
+  if(!team){
+    return res.status(404).json({ message: "Team not created" });
   }
 
-  company.teams.push(teamName);
-  await company.save();
+  // const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
+  // const company = await team.findOne() // Replace with proper query
 
-  res.status(201).json({ message: "Team created successfully", company });
+  // if (!company) {
+  //   return res.status(404).json({ message: "Company not found" });
+  // }
+
+  // if (company.teams?.includes(team_name)) {
+  //   return res.status(400).json({ message: "This team already exists" });
+  // }
+
+  // company.team?.push(team_name);
+  // await company.save();
+
+  res.status(201).json({ message: "Team created successfully", team});
 });
 
 // Remove Team from Users
@@ -1209,7 +1299,7 @@ exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
         .json({ message: `User not found with ID: ${userId}` });
     }
 
-    user.team = ""; // Remove the team association
+    user.team = null; // Remove the team association
     await user.save();
   }
 
@@ -1217,82 +1307,142 @@ exports.removeTeamFromUsers = catchAsyncErrors(async (req, res, next) => {
 });
 
 // rename teams name
+// exports.renameTeam = catchAsyncErrors(async (req, res, next) => {
+//   const companyID = req.user.companyID; // Assuming you have this value available
+//   const { oldTeamName, newTeamName } = req.body;
+
+//   // Find the company
+//   const company = await Company.findById(companyID);
+//   if (!company) {
+//     return res.status(404).json({ message: "Company not found" });
+//   }
+
+//   // Find the team index in the company's teams array
+//   const teamIndex = company.teams.findIndex(
+//     (team) =>
+//       team.localeCompare(oldTeamName, undefined, { sensitivity: "base" }) === 0
+//   );
+
+//   if (teamIndex === -1) {
+//     return res.status(400).json({ message: "Team not found in company" });
+//   }
+
+//   const isExistingTeam = company.teams.some(
+//     (team) =>
+//       team.localeCompare(newTeamName, undefined, { sensitivity: "base" }) === 0
+//   );
+
+//   if (isExistingTeam) {
+//     return res.status(400).json({ message: "New team name already exists" });
+//   }
+
+//   // Update team name in company's teams array
+//   const oldTeam = company.teams[teamIndex];
+//   company.teams[teamIndex] = newTeamName;
+//   await company.save();
+
+//   // Update user's team name
+//   const usersToUpdate = await User.find({ team: oldTeam }); // Find users belonging to the old team
+//   for (const user of usersToUpdate) {
+//     user.team = newTeamName;
+//     await user.save();
+//   }
+
+//   res.status(200).json({ message: "Team renamed successfully", company });
+// });
 exports.renameTeam = catchAsyncErrors(async (req, res, next) => {
-  const companyID = req.user.companyID; // Assuming you have this value available
-  const { oldTeamName, newTeamName } = req.body;
+  const { teamId, newTeamName } = req.body; // Assuming you have the team's unique ID and the new team name available
 
-  // Find the company
-  const company = await Company.findById(companyID);
-  if (!company) {
-    return res.status(404).json({ message: "Company not found" });
+  try {
+    // Find the team by its ID
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Check if the new team name already exists
+    const isExistingTeam = await Team.exists({
+      _id: { $ne: teamId }, // Exclude the current team from the check
+      name: newTeamName,
+    });
+
+    if (isExistingTeam) {
+      return res.status(400).json({ message: "New team name already exists" });
+    }
+
+    // Update the team name
+    team.team_name = newTeamName;
+    await team.save();
+
+    // Update user's team name
+    // const usersToUpdate = await User.find({ team: teamId }); // Find users belonging to the old team
+    // for (const user of usersToUpdate) {
+    //   user.team = newTeamName;
+    //   await user.save();
+    // }
+
+    res.status(200).json({ message: "Team renamed successfully", team });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-
-  // Find the team index in the company's teams array
-  const teamIndex = company.teams.findIndex(
-    (team) =>
-      team.localeCompare(oldTeamName, undefined, { sensitivity: "base" }) === 0
-  );
-
-  if (teamIndex === -1) {
-    return res.status(400).json({ message: "Team not found in company" });
-  }
-
-  const isExistingTeam = company.teams.some(
-    (team) =>
-      team.localeCompare(newTeamName, undefined, { sensitivity: "base" }) === 0
-  );
-
-  if (isExistingTeam) {
-    return res.status(400).json({ message: "New team name already exists" });
-  }
-
-  // Update team name in company's teams array
-  const oldTeam = company.teams[teamIndex];
-  company.teams[teamIndex] = newTeamName;
-  await company.save();
-
-  // Update user's team name
-  const usersToUpdate = await User.find({ team: oldTeam }); // Find users belonging to the old team
-  for (const user of usersToUpdate) {
-    user.team = newTeamName;
-    await user.save();
-  }
-
-  res.status(200).json({ message: "Team renamed successfully", company });
 });
 
+
 // delete team
+// exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
+//   const companyID = req.user.companyID; // Assuming you have this value available
+//   const { teamname } = req.body;
+
+//   // Find the company
+//   const company = await Company.findById(companyID);
+//   if (!company) {
+//     return res.status(404).json({ message: "Company not found" });
+//   }
+
+//   // Find the team index in the company's teams array
+//   const teamIndex = company.teams.indexOf(teamname);
+//   if (teamIndex === -1) {
+//     return res.status(400).json({ message: "Team not found in company" });
+//   }
+
+//   // Remove team from the company's teams array
+//   const deletedTeam = company.teams.splice(teamIndex, 1)[0];
+//   await company.save();
+
+//   // Find users belonging to the deleted team
+//   const usersToDelete = await User.find({ team: deletedTeam });
+
+//   // Remove the team association from the users
+//   for (const user of usersToDelete) {
+//     user.team = "";
+//     await user.save();
+//   }
+
+//   res.status(200).json({ message: "Team deleted successfully", company });
+// });
 exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
-  const companyID = req.user.companyID; // Assuming you have this value available
-  const { teamname } = req.body;
+  const { teamId } = req.body; // Assuming you have the team's unique ID available
 
-  // Find the company
-  const company = await Company.findById(companyID);
-  if (!company) {
-    return res.status(404).json({ message: "Company not found" });
+  // Find and delete the team by its ID
+  const deletedTeam = await Team.findByIdAndDelete(teamId);
+
+  if (!deletedTeam) {
+    return res.status(404).json({ message: "Team not found" });
   }
-
-  // Find the team index in the company's teams array
-  const teamIndex = company.teams.indexOf(teamname);
-  if (teamIndex === -1) {
-    return res.status(400).json({ message: "Team not found in company" });
-  }
-
-  // Remove team from the company's teams array
-  const deletedTeam = company.teams.splice(teamIndex, 1)[0];
-  await company.save();
 
   // Find users belonging to the deleted team
-  const usersToDelete = await User.find({ team: deletedTeam });
+  const usersToDelete = await User.find({ team: deletedTeam._id });
 
   // Remove the team association from the users
   for (const user of usersToDelete) {
-    user.team = "";
+    user.team = null ; // You can set it to an empty string or null if needed
     await user.save();
   }
 
-  res.status(200).json({ message: "Team deleted successfully", company });
+  res.status(200).json({ message: "Team deleted successfully" });
 });
+
 
 // exports.checkslugavailiblity = catchAsyncErrors(async (req,res,next)=> {
 //   const { slug } = req.body;

@@ -6,10 +6,10 @@ const Team_Schema = new mongoose.Schema(
         companyID: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'company',
-            required: true,
+            // required: true,
         },
     },
     { timestamps: true }
 );
 
-module.exports = mongoose.model("Team_Schema", Team_Schema);
+module.exports = mongoose.model("team", Team_Schema);
