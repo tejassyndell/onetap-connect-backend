@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 // const User = require("../../models/Customers/UserModel.js");
 const User = require("../../models/NewSchemas/UserModel.js");
+const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 // const Company = require("../../models/Customers/CompanyModel.js");
 const Company = require("../../models/NewSchemas/Company_informationModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
@@ -23,9 +24,9 @@ const CompanyShareReferralModel = require("../../models/Customers/Company_Share_
 // const Cards = require("../../models/Customers/CardsModel.js");
 const Cards = require("../../models/NewSchemas/CardModel.js");
 const generatePassword = require("../../utils/passwordGenerator.js");
-const billingAddress = require("../../models/NewSchemas/user_billing_addressModel.js")
+const billingAddress = require("../../models/NewSchemas/user_billing_addressModel.js");
 // const billingAddress = require("../../models/Customers/BillingAddressModal.js")
-const shippingAddress = require("../../models/NewSchemas/user_shipping_addressesModel.js")
+const shippingAddress = require("../../models/NewSchemas/user_shipping_addressesModel.js");
 // const shippingAddress = require("../../models/Customers/ShippingAddressModal.js")
 // const logo = require('../../uploads/logo/logo_black.svg')
 
@@ -604,7 +605,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
-console.log(req.user)
+  console.log(req.user);
   const company = await Company.findById(companyID)
     .populate("primary_account")
     .populate("primary_manager")
@@ -901,24 +902,23 @@ exports.rejectInvitation = catchAsyncErrors(async (req, res, next) => {
   // Update the status to "Declined" in the database
   invitation.status = "Declined";
   await invitation.save();
-// Retrieve the associated company
-const companyId = invitation.companyId;
-const company = await Company.findOne({ _id: companyId });
+  // Retrieve the associated company
+  const companyId = invitation.companyId;
+  const company = await Company.findOne({ _id: companyId });
 
-if (!company) {
-  return next(new ErrorHandler("Company not found", 404));
-}
+  if (!company) {
+    return next(new ErrorHandler("Company not found", 404));
+  }
 
-// Now you have the company name
-const companyName = company.company_name;
+  // Now you have the company name
+  const companyName = company.company_name;
 
-// Redirect or send a response for successful rejection, including the company name
-// res.redirect("/rejected"); // You can customize this
-res.status(200).json({ message: "Invitation declined", companyName });
+  // Redirect or send a response for successful rejection, including the company name
+  // res.redirect("/rejected"); // You can customize this
+  res.status(200).json({ message: "Invitation declined", companyName });
   // Redirect or send a response for successful rejection
   // res.redirect("/rejected"); // You can customize this
 });
-
 
 //invite team member by CSV
 
@@ -1076,8 +1076,6 @@ exports.fetchCardDetails = catchAsyncErrors(async (req, res, next) => {
 
   const cards = await Cards.findById(id);
 
-  console.log(cards);
-
   if (!cards) {
     return next(new ErrorHandler("No card details found", 404));
   }
@@ -1130,30 +1128,57 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
   });
 });
 
+//fetch billing address
+exports.fetchBillingAddress = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.user;
+
+  const billingData = await billingAddress.find({ userId: id });
+
+  if (!billingData || billingData.length === 0) {
+    return next(new ErrorHandler("No Billing details found", 404));
+  }
+
+  const firstBillingAddress = billingData[0];
+
+  res.status(201).json({
+    success: true,
+    billingData: firstBillingAddress,
+  });
+});
+
 //update billing address
 
 exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
   const { firstName, lastName, company_name, billing_address } = req.body;
 
-  const BillingAddressData = {
+  const userData = {
     first_name: firstName,
     last_name: lastName,
+  };
+
+  const BillingAddressData = {
     billing_address: billing_address,
   };
 
-  const updateBilling = await User.findByIdAndUpdate(id, BillingAddressData);
+  const updateUser = await User.findByIdAndUpdate(id, userData);
+  const updateBilling = await billingAddress.findOneAndUpdate(
+    { userId: id },
+    BillingAddressData,
+    { new: true }
+  );
 
   const updateCompany = await Company.findByIdAndUpdate(companyID, {
-    "company_name": company_name,
+    company_name: company_name,
   });
 
+  await updateUser.save();
   await updateBilling.save();
   await updateCompany.save();
 
   res.status(201).json({
     success: true,
-    message: "User Billing Address and Company Name Updated Successfully",
+    message: "Data Updated Successfully",
   });
 });
 
@@ -1400,6 +1425,33 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+exports.updatecompany_referral_data = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyID } = req.user;
+    const companyShareReferData = req.body;
+    console.log(companyID);
+    console.log(companyShareReferData);
+
+    const updatecompany = await CompanyShareReferralModel.findOneAndUpdate(
+      { companyID: companyID }, // Query to find the document to update
+      companyShareReferData.companyDetails, // New data to replace the existing document
+      { new: true } // Optionally, set 'new' to true to return the updated document
+    );
+
+    if (!updatecompany) {
+      return next(new ErrorHandler("company share details not found", 404));
+    }
+
+    // updatecompany.set(companyShareReferData);
+    // await updatecompany.save();
+
+    res.status(200).json({
+      // updatedCompanyReferralData,
+      updatecompany,
+    });
+  }
+);
+
 exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
   async (req, res, next) => {
     const { companyurlslug } = req.body;
@@ -1512,7 +1564,6 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 //   await billingAddressFind.save();
 //   await shippingAddressFind.save();
 
-
 //   res.status(200).json({
 //     success: true,
 //     billingdata
@@ -1521,9 +1572,16 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  console.log(id,companyID, "id")
-  const { userData, company_name ,billingdata, shippingData, shipping_method, cardDetails } = req.body;
-console.log(billingdata, " billingdata")
+  const {
+    userData,
+    company_name,
+    billingdata,
+    shippingData,
+    shipping_method,
+    planData,
+    cardDetails,
+  } = req.body;
+
   const cardData = {
     cardNumber: cardDetails.cardNumber,
     brand: cardDetails.brand,
@@ -1532,17 +1590,23 @@ console.log(billingdata, " billingdata")
     cardExpiryYear: cardDetails.cardExpiryYear,
     // CVV: cardDetails.cardCVV
   };
-  console.log(cardData);
 
   const user = await User.findById(id);
-  console.log(user, "user")
+  // console.log(user, "user");
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
-  const billingAddressFind = new billingAddress({
-    userId: user._id,
-    billing_address: billingdata,
-  });
+
+  let billingAddressFind = await billingAddress.findOne({ userId: user._id });
+
+  if (!billingAddressFind) {
+    billingAddressFind = new billingAddress({
+      userId: user._id,
+      billing_address: billingdata,
+    });
+  } else {
+    billingAddressFind.billing_address = billingdata;
+  }
 
   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
 
@@ -1554,21 +1618,32 @@ console.log(billingdata, " billingdata")
   } else {
     shippingAddressFind.shipping_address.push(shippingData);
   }
-  const card = await Cards.create(cardData);
-  console.log(card, "card")
-  card.userID = id;
 
+  const card = await Cards.create(cardData);
+  console.log(card, "card");
+  card.userID = user._id;
+
+  let userInformation = await UserInformation.findOne({ user_id: user._id });
+
+  if (!userInformation) {
+    userInformation = new UserInformation({
+      user_id: user._id,
+      subscription_details: planData,
+    });
+    userInformation.subscription_details = planData;
+    console.log(userInformation, "userInformation");
+  } else {
+    userInformation.subscription_details = planData;
+  }
+  shippingAddressFind.shipping_address.address_name = "Default";
+  userInformation.subscription_details.auto_renewal = true;
+  userInformation.shipping_method = shipping_method;
   user.isPaidUser = true;
   user.first_name = userData.first_name;
   user.last_name = userData.last_name;
   user.contact = userData.contact;
   user.email = userData.email;
   user.address = billingdata;
-  // user.billing_address = userData.billing_address;
-  // user.shipping_address = userData.shipping_address;
-  // user.subscription_details = planData;
-  // user.subscription_details.auto_renewal = true;
-  user.shipping_method = shipping_method;
 
   const company = await Company.findById(companyID);
   company.address = billingdata;
@@ -1580,24 +1655,28 @@ console.log(billingdata, " billingdata")
   await company.save();
   await billingAddressFind.save();
   await shippingAddressFind.save();
-
+  await userInformation.save();
 
   res.status(200).json({
     success: true,
-    billingdata
+    billingdata,
   });
 });
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
-  const user = await User.findById(id);
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
+
+  const userInfo = await UserInformation.find({ user_id: id });
+
+  if (!userInfo || userInfo.length === 0) {
+    return next(new ErrorHandler("User Information Not Found", 404));
   }
 
-  user.subscription_details.auto_renewal = false;
+  const firstuserInfo = userInfo[0];
 
-  await user.save();
+  firstuserInfo.subscription_details.auto_renewal = false;
+
+  await firstuserInfo.save();
 
   res.status(200).json({
     success: true,
@@ -1670,37 +1749,37 @@ exports.uploadProfilePicture = async (req, res) => {
         return res.status(400).json({ error: "No file uploaded." });
       }
 
-        const profilePicturePath = req.file.filename;
+      const profilePicturePath = req.file.filename;
 
-        // Delete the old profile picture if it exists
-        if (oldAvatarPath) {
-          // Remove the old profile picture file from the storage folder
-          fs.unlink(`./uploads/profileImages/${oldAvatarPath}`, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error("Error deleting old profile picture:", unlinkErr);
-            }
-          });
-
-          // Remove the old avatar path from the user document in the database
-          await User.findByIdAndUpdate(id, { avatar: null });
-        }
-
-        const user = await User.findByIdAndUpdate(
-          id,
-          { avatar: profilePicturePath }, // Update the 'avatar' field
-          { new: true }
-        );
-
-        if (!user) {
-          return res.status(404).json({ error: "User not found." });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Profile picture uploaded successfully.",
-          user,
+      // Delete the old profile picture if it exists
+      if (oldAvatarPath) {
+        // Remove the old profile picture file from the storage folder
+        fs.unlink(`./uploads/profileImages/${oldAvatarPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old profile picture:", unlinkErr);
+          }
         });
+
+        // Remove the old avatar path from the user document in the database
+        await User.findByIdAndUpdate(id, { avatar: null });
+      }
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { avatar: profilePicturePath }, // Update the 'avatar' field
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Profile picture uploaded successfully.",
+        user,
       });
+    });
   } catch (error) {
     console.error("Error updating profile picture:", error);
     return res.status(500).json({ error: "Internal server error." });
@@ -1768,7 +1847,7 @@ exports.uploadLogo = async (req, res) => {
     // console.log("object", req.user)
     // Check if the company already has a logo path
     const company = await Company.findById(companyID);
-    console.log(company)
+    console.log(company);
     const oldLogoPath = company.logopath;
 
     logoupload.single("logoimage")(req, res, async (err) => {
@@ -1776,34 +1855,33 @@ exports.uploadLogo = async (req, res) => {
         return res.status(400).json({ error: "File upload failed." });
       }
 
-        const logoPicturePath = req.file.filename;
+      const logoPicturePath = req.file.filename;
 
-        // Delete the old logo file if it exists
-        if (oldLogoPath) {
-          // Remove the old logo file from the storage folder
-          fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error("Error deleting old logo:", unlinkErr);
-            }
-          });
-        }
-
-        const updatedCompany = await Company.findByIdAndUpdate(
-          companyID,
-          { logopath: logoPicturePath },
-          { new: true }
-        );
-
-        if (!updatedCompany) {
-          return res.status(404).json({ error: "Company not found." });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Logo uploaded successfully.",
-          updatedCompany,
+      // Delete the old logo file if it exists
+      if (oldLogoPath) {
+        // Remove the old logo file from the storage folder
+        fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old logo:", unlinkErr);
+          }
         });
-   
+      }
+
+      const updatedCompany = await Company.findByIdAndUpdate(
+        companyID,
+        { logopath: logoPicturePath },
+        { new: true }
+      );
+
+      if (!updatedCompany) {
+        return res.status(404).json({ error: "Company not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Logo uploaded successfully.",
+        updatedCompany,
+      });
     });
   } catch (error) {
     console.error("Error updating Logo:", error);
@@ -1878,33 +1956,32 @@ exports.uploadfavicon = async (req, res) => {
       if (err) {
         return res.status(400).json({ error: "File upload failed." });
       }
-        const faviconPicturePath = req.file.filename;
+      const faviconPicturePath = req.file.filename;
 
-        // Delete the old favicon file if it exists
-        if (oldfaviconPath) {
-          // Remove the old favicon file from the storage folder
-          fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error("Error deleting old favicon:", unlinkErr);
-            }
-          });
-        }
-        const updatedCompany = await Company.findByIdAndUpdate(
-          companyID,
-          { fav_icon_path: faviconPicturePath },
-          { new: true }
-        );
-
-        if (!updatedCompany) {
-          return res.status(404).json({ error: "Company not found." });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "favicon uploaded successfully.",
-          updatedCompany,
+      // Delete the old favicon file if it exists
+      if (oldfaviconPath) {
+        // Remove the old favicon file from the storage folder
+        fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old favicon:", unlinkErr);
+          }
         });
-      
+      }
+      const updatedCompany = await Company.findByIdAndUpdate(
+        companyID,
+        { fav_icon_path: faviconPicturePath },
+        { new: true }
+      );
+
+      if (!updatedCompany) {
+        return res.status(404).json({ error: "Company not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "favicon uploaded successfully.",
+        updatedCompany,
+      });
     });
   } catch (error) {
     console.error("Error updating favicon:", error);
@@ -1912,43 +1989,20 @@ exports.uploadfavicon = async (req, res) => {
   }
 };
 
-exports.getcompanies_share_referral_datas = catchAsyncErrors(
+exports.getcompanies_share_referral_data = catchAsyncErrors(
   async (req, res, next) => {
     const { companyID } = req.user;
     console.log(companyID);
-    const companies_share_referral_datas =
-      await CompanyShareReferralModel.findOne({ companyID: companyID });
-    if (!companies_share_referral_datas) {
+    const companyShareReferData = await CompanyShareReferralModel.findOne({
+      companyID: companyID,
+    });
+    if (!companyShareReferData) {
       return next(new ErrorHandler("No data Found", 404));
     }
 
     res.status(200).json({
       success: true,
-      companies_share_referral_datas,
-    });
-  }
-);
-
-exports.updatecompany_referral_data = catchAsyncErrors(
-  async (req, res, next) => {
-    const { companyID } = req.user;
-    const updatedCompanyReferralData = req.body;
-    console.log(companyID);
-    console.log(updatedCompanyReferralData);
-
-    const updatecompany = await CompanyShareReferralModel.findOne({
-      companyID: companyID,
-    });
-
-    if (!updatecompany) {
-      return next(new ErrorHandler("company share details not found", 404));
-    }
-
-    updatecompany.set(updatedCompanyReferralData);
-    await updatecompany.save();
-
-    res.status(200).json({
-      updatedCompanyReferralData,
+      companyShareReferData,
     });
   }
 );
@@ -1956,6 +2010,7 @@ exports.updatecompany_referral_data = catchAsyncErrors(
 // Add Shipping Address
 exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
   const {
+    address_name,
     first_name,
     last_name,
     company_name,
@@ -1976,6 +2031,7 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
   }
 
   const shippingAddressData = {
+    address_name,
     first_name,
     last_name,
     company_name,
@@ -2003,19 +2059,18 @@ exports.createShippingAddress = catchAsyncErrors(async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Shipping address added successfully',
+      message: "Shipping address added successfully",
       shippingAddressData,
     });
   } catch (error) {
-    return next(new ErrorHandler('Error saving shipping address', 500));
+    return next(new ErrorHandler("Error saving shipping address", 500));
   }
 });
 
-
-exports.getAllShippingAddress = catchAsyncErrors(async (req,res,next)=> {
+exports.getAllShippingAddress = catchAsyncErrors(async (req, res, next) => {
   const { companyID, id } = req.user;
-// console.log(companyID,id, "id....")
-// console.log(req.user)
+  // console.log(companyID,id, "id....")
+  // console.log(req.user)
   try {
     const shippingAddresses = await shippingAddress.find({ userId: id });
     // console.log(shippingAddresses, "...")
@@ -2025,31 +2080,33 @@ exports.getAllShippingAddress = catchAsyncErrors(async (req,res,next)=> {
       shippingAddresses,
     });
   } catch (err) {
-    return next(new ErrorHandler('Unable to fetch shipping addresses', 500));
+    return next(new ErrorHandler("Unable to fetch shipping addresses", 500));
   }
-})
+});
 
-exports.removeShippingAddress = catchAsyncErrors(async(req,res, next)=> {
+exports.removeShippingAddress = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
   const { addressId } = req.params;
-  console.log(addressId, " address id")
+  console.log(addressId, " address id");
 
   try {
     const userShippingAddress = await shippingAddress.findOne({ userId: id });
-    console.log(userShippingAddress, "userShippingAddress")
+    console.log(userShippingAddress, "userShippingAddress");
 
     if (!userShippingAddress) {
-      return next(new ErrorHandler('User shipping address not found', 404));
+      return next(new ErrorHandler("User shipping address not found", 404));
     }
 
     const { shipping_address } = userShippingAddress;
-    console.log(shipping_address, "shipping address")
+    console.log(shipping_address, "shipping address");
     // Find the index of the shipping address to remove
-    const addressIndex = shipping_address.findIndex(address => address._id == addressId);
-    console.log(addressIndex, "address indexx")
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == addressId
+    );
+    console.log(addressIndex, "address indexx");
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Shipping address not found', 404));
+      return next(new ErrorHandler("Shipping address not found", 404));
     }
 
     // Remove the shipping address from the array
@@ -2060,23 +2117,35 @@ exports.removeShippingAddress = catchAsyncErrors(async(req,res, next)=> {
 
     res.status(200).json({
       success: true,
-      message: 'Shipping address removed successfully',
+      message: "Shipping address removed successfully",
     });
   } catch (err) {
-    return next(new ErrorHandler('Error removing shipping address', 500));
+    return next(new ErrorHandler("Error removing shipping address", 500));
   }
-})
+});
 
 exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
   // console.log("edit called")
   // alert("alert")
   const { editAddressId } = req.params;
-  console.log(editAddressId, "id") // Get the address ID from the request URL
-  const { first_name, last_name, company_name, line1, line2, city, state, country, postal_code } = req.body;
+  console.log(editAddressId, "id"); // Get the address ID from the request URL
+  const {
+    address_name,
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  } = req.body;
 
   const { id } = req.user;
   const shippingAddressData = {
     _id: editAddressId,
+    address_name,
     first_name,
     last_name,
     company_name,
@@ -2087,42 +2156,44 @@ exports.editShippingAddress = catchAsyncErrors(async (req, res, next) => {
     country,
     postal_code,
   };
-  console.log(shippingAddressData, "shippingAddressData")
+  console.log(shippingAddressData, "shippingAddressData");
 
   try {
     const userShippingAddress = await shippingAddress.findOne({ userId: id });
     // console.log(userShippingAddress, "userShippingAddress")
 
     if (!userShippingAddress) {
-      return next(new ErrorHandler('User shipping address not found', 404));
+      return next(new ErrorHandler("User shipping address not found", 404));
     }
 
     const { shipping_address } = userShippingAddress;
     // console.log(shipping_address, "shipping address")
 
     // Find the index of the shipping address to edit
-    const addressIndex = shipping_address.findIndex(address => address._id == editAddressId);
-    console.log(addressIndex, "address index")
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == editAddressId
+    );
+    console.log(addressIndex, "address index");
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Shipping address not found', 404));
+      return next(new ErrorHandler("Shipping address not found", 404));
     }
 
     // Update the shipping address data
-    shipping_address[addressIndex] =  shippingAddressData
-    
-    console.log(shipping_address, "Shipping")
+    shipping_address[addressIndex] = shippingAddressData;
+
+    console.log(shipping_address, "Shipping");
 
     // Save the updated document
     await userShippingAddress.save();
 
     res.status(200).json({
       success: true,
-      message: 'Shipping address updated successfully',
+      message: "Shipping address updated successfully",
       updatedShippingAddress: shipping_address[addressIndex],
     });
   } catch (err) {
-    return next(new ErrorHandler('Error updating shipping address', 500));
+    return next(new ErrorHandler("Error updating shipping address", 500));
   }
 });
 
@@ -2145,18 +2216,18 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
     });
   } else {
     // Check the status field
-    if (tokenExists.status === 'Declined') {
+    if (tokenExists.status === "Declined") {
       res.status(400).json({
         success: false,
-        message: 'Invalid invitation.',
+        message: "Invalid invitation.",
       });
     } else {
       // Check if the invitation is not expired
       const data = await InvitedTeamMemberModel.findOne({
         invitationToken: token,
         invitationExpiry: { $gt: currentDate }, // Not expired
-      }).select('_id email first_name last_name companyId');
-      
+      }).select("_id email first_name last_name companyId");
+
       if (data) {
         res.status(200).json({
           success: true,
@@ -2165,7 +2236,7 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
       } else {
         res.status(400).json({
           success: false,
-          message: 'Token is expired.',
+          message: "Token is expired.",
         });
       }
     }
@@ -2174,15 +2245,16 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const {_id,status} = req.body.InvitedUserData;
-    if (status === 'Declined') {
+    const { _id, status } = req.body.InvitedUserData;
+    if (status === "Declined") {
       res.status(400).json({
         success: false,
-        message: 'Invalid invitation.',
+        message: "Invalid invitation.",
       });
       return; // Stop execution if the invitation is declined.
     }
-    let userdetails = ({email, first_name, last_name, companyId } = req.body.InvitedUserData);
+    let userdetails = ({ email, first_name, last_name, companyId } =
+      req.body.InvitedUserData);
 
     userdetails = {
       ...userdetails,
@@ -2192,11 +2264,13 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
     };
 
     const user = await User.create(userdetails);
-    const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
+    const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(
+      _id
+    );
     if (!deleteInvitedUser) {
       res.status(500).json({
         success: false,
-        message: 'Internal Server Error',
+        message: "Internal Server Error",
       });
     }
     res.status(200).json({
@@ -2210,15 +2284,15 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  const {invitedUserData} = req.body;
-  const { token,  userData } = invitedUserData;
-  const { _id,  companyId, email: userEmail, status  } = userData;
-  console.log(userEmail)
-   // Check the status field
-   if (status === 'Declined') {
+  const { invitedUserData } = req.body;
+  const { token, userData } = invitedUserData;
+  const { _id, companyId, email: userEmail, status } = userData;
+  console.log(userEmail);
+  // Check the status field
+  if (status === "Declined") {
     return res.status(400).json({
       success: false,
-      message: 'Invalid invitation.',
+      message: "Invalid invitation.",
     });
   }
 
@@ -2275,13 +2349,11 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
   const { userid } = req.body;
   const { companyID } = req.user;
 
-
-  console.log(userid)
+  console.log(userid);
   for (const id of userid) {
     const user = await InvitedTeamMemberModel.findById(id);
     if (!user) {
@@ -2299,18 +2371,18 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     });
     const company = await Company.findById(companyID);
     let invitationToken = crypto.randomBytes(20).toString("hex");
-  
-      const currentDate = new Date();
-  
-      // Calculate the expiry date by adding 10 days
-      const expiryDate = new Date(currentDate);
-      expiryDate.setDate(currentDate.getDate() + 10);
-  
+
+    const currentDate = new Date();
+
+    // Calculate the expiry date by adding 10 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 10);
+
     const message = {
       from: "manish.syndell@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
-  
+
       html: `
   <!DOCTYPE html>
   <html>
@@ -2365,6 +2437,23 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     console.log(user);
   }
 
-  res.status(200).json({ message: 'Email Sent' });
-  
+  res.status(200).json({ message: "Email Sent" });
+});
+
+//get profile user
+exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.user;
+
+  const userInfo = await UserInformation.find({ user_id: id });
+
+  if (!userInfo || userInfo.length === 0) {
+    return next(new ErrorHandler("User Information Not Found", 401));
+  }
+
+  const firstuserInfo = userInfo[0];
+
+  res.status(200).json({
+    success: true,
+    firstuserInfo,
+  });
 });
