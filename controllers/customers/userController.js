@@ -1452,12 +1452,23 @@ exports.updatecompany_referral_data = catchAsyncErrors(
   }
 );
 
+
 exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
   async (req, res, next) => {
     const { companyurlslug } = req.body;
 
-    console.log(companyurlslug);
-    const existingcompanyurlslug = await Company.findOne({ companyurlslug });
+//     console.log(companyurlslug);
+// console.log(req.user.companyID);
+console.log("check is hit");
+    // Assuming you have access to the current company's ID
+    const currentCompanyId = req.user.companyID; // Modify this line based on how you store the current company's ID in your application
+
+    // Check for existing URL slugs that are not the current company's
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug,
+    });
+
     if (existingcompanyurlslug) {
       return res
         .status(400)
@@ -1466,8 +1477,10 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
     // Check case-sensitive duplicates
     const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
       companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
     });
+
     if (caseSensitivecompanyurlslug) {
       return res
         .status(400)
@@ -1485,9 +1498,10 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
     company_url_edit_permission,
     user_profile_edit_permission,
   } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
-  console.log(companyurlslug);
-  console.log(companyId);
-  console.log(company_url_edit_permission);
+  // console.log(companyurlslug);
+  // console.log(companyId);
+  // console.log(company_url_edit_permission);
+  console.log("update is hit");
   try {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
       companyurlslug: companyurlslug,
