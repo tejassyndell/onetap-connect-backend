@@ -2703,14 +2703,14 @@ exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-exports.getTeam = catchAsyncErrors(async (req, res, next) => {
-  const company_id = req.user.companyID;
-  // console.log(company_id, "sadadas")
+// exports.getTeam = catchAsyncErrors(async (req, res, next) => {
+//   const company_id = req.user.companyID;
+//   // console.log(company_id, "sadadas")
 
-  const team = await Team_SchemaModel.find({ companyID: company_id });
-  // console.log(team ,"teamname")
-  res.status(200).json({ message: "Users updated successfully", team });
-});
+//   const team = await Team_SchemaModel.find({ companyID: company_id });
+//   // console.log(team ,"teamname")
+//   res.status(200).json({ message: "Users updated successfully", team });
+// });
 
 // exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
 //   const { userId, userRole } = req.body;
