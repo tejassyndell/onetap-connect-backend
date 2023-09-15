@@ -12,41 +12,21 @@ const users_information = new mongoose.Schema(
             type: String,
             // required: [true, "Please Enter Your Company Name"],
         },
-        company_name_permission: {
-            type: Boolean,
-            default: true,
-        },
         website_url: {
             type: String,
             // required: [true, "Please Enter The Company URL"],
-        },
-        website_url_permission: {
-            type: Boolean,
-            default: false,
         },
         global_email: {
             type: String,
             // required: [true, "Please Enter The Company email"],
         },
-        global_email_permission: {
-            type: Boolean,
-            default: false,
-        },
         primary_office_num: {
             type: Number,
             // required: [true, "Please Enter The Company Number"],
         },
-        primary_office_num_permission: {
-            type: Boolean,
-            default: false,
-        },
         fax_number: {
             type: Number,
             // required: [true, "Please Enter The Company fax Number"],
-        },
-        fax_number_permission: {
-            type: Boolean,
-            default: false,
         },
         address: {
             line1: { type: String, default: null },
@@ -55,10 +35,6 @@ const users_information = new mongoose.Schema(
             state: { type: String, default: null },
             country: { type: String, default: null },
             postal_code: { type: String, default: null },
-        },
-        address_permission: {
-            type: Boolean,
-            default: false,
         },
         aboutUser: {
             type: String,
@@ -76,26 +52,30 @@ const users_information = new mongoose.Schema(
             type: String,
             default: null
         },
+        keywords: [{ type: String }],
+        social_media: [
+            {
+              name: { type: String, default: null },
+              link: { type: String, default: null },
+            },
+          ],
         other_links: [
             {
-                title: { type: String, default: null },
-                value: { type: String, default: null },
-                permission: { type: Boolean, default: false },
+              name: { type: String, default: null },
+              link: { type: String, default: null },
             },
-        ],
-        socialLinks: [
+          ],
+        custom_fields: [
             {
-                icon: { type: String, default: null },
                 name: { type: String, default: null },
-                link: { type: String, default: null },
-                permission: { type: Boolean, default: false },
+                value: { type: String, default: null },
+                
             },
         ],
         shipping_method: [{
             type: { type: String },
             price: { type: Number }
           }],
-      
         subscription_details: {
             // subscription: {
             //   type: mongoose.Schema.Types.ObjectId,

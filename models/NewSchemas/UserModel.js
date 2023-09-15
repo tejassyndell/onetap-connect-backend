@@ -64,6 +64,18 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    userurlslug: {
+      type: String,
+      default: function () {
+        const firstName = this.first_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        const lastName = this.last_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        return `${firstName}${lastName}`;
+      },
+    },
     isPaidUser: { type: Boolean, default: false },
     role: { type: String, default: "member" },
     googleId: { type: String, default: null },
