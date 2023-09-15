@@ -37,6 +37,26 @@ const userSchema = new mongoose.Schema(
         return `${firstName}${lastName}`;
       },
     },
+    user_line1_address_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_line2_apartment_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_city_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_state_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_postal_code_permission: {
+      type: Boolean,
+      default: false,
+    },
     contact: { type: Number, default: null },
     address: {
       line1: { type: String, default: null },
@@ -57,6 +77,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    keywords: { type: String, default: null },
     isPaidUser: { type: Boolean, default: false },
     role: { type: String, default: "superadmin" },
     googleId: { type: String, default: null },
