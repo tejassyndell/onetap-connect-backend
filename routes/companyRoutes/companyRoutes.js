@@ -1,13 +1,69 @@
-const express = require('express');
-const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.js");
-const { login,
-     registerUser,
-     forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers,uploadLogo, uploadfavicon, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug, updateAutoRenewal, inviteTeamMemberByCSV,  uploadProfilePicture,
-     addTeamMemberManually,
-     deleteCardDetails,
-     fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation, fetchBillingAddress, getUserInformation, getcompanies_share_referral_data, getTeam} = require('../../controllers/customers/userController.js');
+const express = require("express");
+const {
+  isAuthenticatedUser,
+  authorizeRoles,
+} = require("../../middleware/auth.js");
+const {
+  login,
+  registerUser,
+  forgotPassword,
+  resetPassword,
+  getCompanyDetails,
+  getUsers,
+  uploadLogo,
+  uploadfavicon,
+  getUserDetails,
+  getProfile,
+  logout,
+  updateTeam,
+  updateStatus,
+  updateUserDetails,
+  inviteTeamMember,
+  getinvitedUsers,
+  signUP1,
+  signUP2,
+  addCardDetails,
+  showCardDetails,
+  updateBillingAddress,
+  createNewTeam,
+  updateTeamName,
+  checkslugavailiblity,
+  updateCompanyDetails,
+  removeTeamFromUsers,
+  updateCompanyDetailsInfo,
+  checkoutHandler,
+  googleSignUP,
+  googleLogin,
+  renameTeam,
+  deleteTeam,
+  checkcompanyurlslugavailiblity,
+  updateCompanySlug,
+  updateAutoRenewal,
+  inviteTeamMemberByCSV,
+  uploadProfilePicture,
+  addTeamMemberManually,
+  deleteCardDetails,
+  fetchCardDetails,
+  updateCardDetails,
+  createShippingAddress,
+  invitedUserGoogleSignup,
+  registerInvitedUser,
+  invitedUser,
+  getcompanies_share_referral_datas,
+  updatecompany_referral_data,
+  deleteInvitedUser,
+  getAllShippingAddress,
+  removeShippingAddress,
+  editShippingAddress,
+  resendemailinvitation,
+  rejectInvitation,
+  fetchBillingAddress,
+  getUserInformation,
+  getcompanies_share_referral_data,
+  getTeam,
+  updateUserRole,
+  removeUserRole,
+} = require("../../controllers/customers/userController.js");
 
 const router = express.Router();
 
@@ -26,6 +82,7 @@ router.get("/users", isAuthenticatedUser, getUsers);
 router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
+
 router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
@@ -34,19 +91,23 @@ router.post("/updateCardDetails/:id", isAuthenticatedUser, updateCardDetails);
 router.get("/showCardDetails", isAuthenticatedUser, showCardDetails);
 router.get("/fetchCardDetails/:id", isAuthenticatedUser, fetchCardDetails);
 router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
-router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
-router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
-router.post('/user/teamdata', isAuthenticatedUser, getTeam);
+router.post("/invite/user", isAuthenticatedUser, inviteTeamMember);
+router.delete("/invited-users/:invitedUserID", deleteInvitedUser);
+router.post("/user/teamdata", isAuthenticatedUser, getTeam);
 
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
-router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
-router.post("/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
-router.get("/fetchbillingAddress",isAuthenticatedUser,fetchBillingAddress);
-router.post("/user/update/users/team",isAuthenticatedUser, updateTeamName);
-router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
-router.post("/user/rename/team", isAuthenticatedUser, renameTeam)
-router.post("/user/delete/team", isAuthenticatedUser, deleteTeam)
+router.get("/invitedusers", isAuthenticatedUser, getinvitedUsers);
+router.post(
+  "/update/billingAddress",
+  isAuthenticatedUser,
+  updateBillingAddress
+);
+router.get("/fetchbillingAddress", isAuthenticatedUser, fetchBillingAddress);
+router.post("/user/update/users/team", isAuthenticatedUser, updateTeamName);
+router.post("/user/create/team", isAuthenticatedUser, createNewTeam);
+router.post("/user/rename/team", isAuthenticatedUser, renameTeam);
+router.post("/user/delete/team", isAuthenticatedUser, deleteTeam);
 router.post(
   "/update/billingAddress",
   isAuthenticatedUser,
@@ -117,6 +178,8 @@ router.post(
   isAuthenticatedUser,
   editShippingAddress
 );
-router.post('/user/teamdata', isAuthenticatedUser, getTeam);
+router.post("/user/teamdata", isAuthenticatedUser, getTeam);
+router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
+// router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
 
 module.exports = router;
