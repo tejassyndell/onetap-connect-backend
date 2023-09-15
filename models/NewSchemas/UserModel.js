@@ -66,6 +66,26 @@ const userSchema = new mongoose.Schema(
       country: { type: String, default: null },
       postal_code: { type: String, default: null },
     },
+    user_line1_address_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_line2_apartment_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_city_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_state_permission: {
+      type: Boolean,
+      default: false,
+    },
+    user_postal_code_permission: {
+      type: Boolean,
+      default: false,
+    },
     avatar: { type: String, default: "" },
     designation: [{ type: String }],
     isVerified: {
@@ -78,6 +98,18 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     keywords: { type: String, default: null },
+    userurlslug: {
+      type: String,
+      default: function () {
+        const firstName = this.first_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        const lastName = this.last_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        return `${firstName}${lastName}`;
+      },
+    },
     isPaidUser: { type: Boolean, default: false },
     role: { type: String, default: "superadmin" },
     googleId: { type: String, default: null },

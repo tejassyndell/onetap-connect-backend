@@ -1531,6 +1531,52 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 });
+exports.updateUserInformation = async (req, res, next) => {
+  const { id } = req.params; // Assuming you pass the userId as a parameter
+  const updatedUserInfo = req.body; // Assuming the updated user information is provided in the request body
+
+  try {
+    // Try to find the user information document by userId
+    let userInformation = await UserInformation.findOne({ user_id: id });
+
+    if (!userInformation) {
+      // If the document doesn't exist, create a new one
+      userInformation = new UserInformation({
+        user_id: id,
+        ...updatedUserInfo,
+      });
+    } else {
+      // If the document exists, update its fields with the new data
+      Object.assign(userInformation, updatedUserInfo);
+    }
+
+    // Save the user information document
+    await userInformation.save();
+
+    res.status(200).json({
+      success: true,
+      message: "User information updated successfully",
+      userInformation: userInformation,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// get single team members
+exports.getUserinfoDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const userinfo = await UserInformation.findOne({ user_id: id } );
+  if (!userinfo) {
+    return next(new ErrorHandler("No user information found", 404));
+  }
+
+
+  res.status(200).json({
+    success: true,
+    userinfo,
+  });
+});
 
 exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
@@ -1575,6 +1621,9 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
 
   if (company._id.toString() !== req.user.companyID.toString()) {
     return next(
+
+
+
       new ErrorHandler("You are not authorized to update this user", 401)
     );
   }
