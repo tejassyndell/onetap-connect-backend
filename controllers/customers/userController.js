@@ -86,11 +86,12 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 <body style="margin: 0;  line-height: normal; font-family: 'Assistant', sans-serif; background-color: #f2f2f2;">
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
-    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-      <img src="${process.env.FRONTEND_URL}/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
+  
+      <img src="https://onetapconnect.sincprojects.com/static/media/Logo-email.png">
 
     </div>
-    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+    <div style="background-color: #fff; margin-bottom:15px; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
         <div style="font-weight: bold; text-align: center;">Email verification</div>
         <p>Please click the “Verify email” button below to continue with the setup of your OneTapConnect account.</p>
         <p>If you believe you received the email by mistake, you may disregard this email, or contact our support team for any information.</p>
@@ -512,17 +513,17 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif; background-color: #f2f2f2;">
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
-    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
+      <img src="https://onetapconnect.sincprojects.com/static/media/Logo-email.png">
 
     </div>
     <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
       <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-      <h3>Dear User</h3>
+      <p>Dear User</p>
       <p>We received a request to reset the password associated with your account. If you did not initiate this request, please disregard this email.</p>
 
       <p>To reset your password, please click the link below:</p>
-      <a href="${process.env.FRONTEND_URL}/reset-password/${resetToken}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+      <a href="${process.env.FRONTEND_URL}/reset-password/${resetToken}" style="display: inline-block; padding: 10px 20px; background-color: #E65925;margin-top:10px ; margin-bottom:10px ; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
 
       <p>If you're having trouble clicking the link, you can copy and paste the following URL into your browser's address bar:</p>
 
