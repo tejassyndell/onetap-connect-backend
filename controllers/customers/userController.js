@@ -15,7 +15,7 @@ const User = require("../../models/NewSchemas/UserModel.js");
 // const Company = require("../../models/Customers/CompanyModel.js");
 const Company = require("../../models/NewSchemas/Company_informationModel.js");
 const { processPayment } = require("../paymentController/paymentcontroller.js");
-const Team = require("../../models/NewSchemas/Team_SchemaModel.js")
+const Team = require("../../models/NewSchemas/Team_SchemaModel.js");
 const multer = require("multer");
 const path = require("path");
 const sharp = require("sharp");
@@ -33,7 +33,6 @@ const shippingAddress = require("../../models/NewSchemas/user_shipping_addresses
 const TeamDetails = require("../../models/NewSchemas/Team_SchemaModel.js");
 const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
-
 
 dotenv.config();
 
@@ -391,7 +390,7 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
-  console.log(req)
+  console.log(req);
   const { id } = req.user;
 
   // checking if user has given password and email both
@@ -611,7 +610,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
-  console.log(req)
+  console.log(req);
   const { companyID } = req.user;
   console.log(req.user);
   const company = await Company.findById(companyID)
@@ -629,7 +628,6 @@ exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
 
 // get all team members
 exports.getUsers = catchAsyncErrors(async (req, res, next) => {
-
   const { companyID } = req.user;
   console.log(companyID);
   const users = await User.find({ companyID });
@@ -1273,18 +1271,17 @@ exports.updateTeamName = catchAsyncErrors(async (req, res, next) => {
 //get team name
 
 exports.getTeam = catchAsyncErrors(async (req, res, next) => {
-  const company_id = req.user.companyID
+  const company_id = req.user.companyID;
   // console.log(company_id, "sadadas")
 
-
-  const team = await Team.find({ companyID: company_id })
+  const team = await Team.find({ companyID: company_id });
   // console.log(team ,"teamname")
   res.status(200).json({ message: "Users updated successfully", team });
-})
+});
 
 // Create new Team
 exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
-  console.log("team")
+  console.log("team");
   // console.log(req.user,"wdsafeg")
   const companyID = req.user.companyID;
   const userID = req.user._id;
@@ -1293,10 +1290,10 @@ exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
   console.log(team_name);
   const teamData = {
     team_name: team_name,
-    companyID: companyID
-  }
+    companyID: companyID,
+  };
 
-  const team = await Team.create(teamData)
+  const team = await Team.create(teamData);
   const latestTeamId = team._id;
   console.log(userID);
   const Newteam = await UserInformation.findOneAndUpdate(
@@ -1305,7 +1302,6 @@ exports.createNewTeam = catchAsyncErrors(async (req, res, next) => {
   );
 
   console.log("Updated User Informationhg", team);
-
 
   if (!team) {
     return res.status(404).json({ message: "Team not created" });
@@ -1430,7 +1426,6 @@ exports.renameTeam = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-
 // delete team
 // exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
 //   const companyID = req.user.companyID; // Assuming you have this value available
@@ -1484,7 +1479,6 @@ exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({ message: "Team deleted successfully" });
 });
-
 
 // exports.checkslugavailiblity = catchAsyncErrors(async (req,res,next)=> {
 //   const { slug } = req.body;
@@ -1663,7 +1657,31 @@ exports.updatecompany_referral_data = catchAsyncErrors(
   }
 );
 
+// exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
+//   async (req, res, next) => {
+//     const { companyurlslug } = req.body;
 
+//     console.log(companyurlslug);
+//     const existingcompanyurlslug = await Company.findOne({ companyurlslug });
+//     if (existingcompanyurlslug) {
+//       return res
+//         .status(400)
+//         .json({ message: "companyurlslug is already taken." });
+//     }
+
+//     // Check case-sensitive duplicates
+//     const caseSensitivecompanyurlslug = await Company.findOne({
+//       companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+//     });
+//     if (caseSensitivecompanyurlslug) {
+//       return res
+//         .status(400)
+//         .json({ message: "companyurlslug is already taken." });
+//     }
+
+//     return res.status(200).json({ message: "companyurlslug is available." });
+//   }
+// );
 exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
   async (req, res, next) => {
     const { companyurlslug } = req.body;
@@ -1671,8 +1689,10 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
     //     console.log(companyurlslug);
     // console.log(req.user.companyID);
     console.log("check is hit");
+    console.log(companyurlslug);
+
     // Assuming you have access to the current company's ID
-    const currentCompanyId = req.user.companyID; // Modify this line based on how you store the current company's ID in your application
+    const currentCompanyId = req.user.companyId; // Modify this line based on how you store the current company's ID in your application
 
     // Check for existing URL slugs that are not the current company's
     const existingcompanyurlslug = await Company.findOne({
@@ -2683,13 +2703,72 @@ exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-
 exports.getTeam = catchAsyncErrors(async (req, res, next) => {
-  const company_id = req.user.companyID
+  const company_id = req.user.companyID;
   // console.log(company_id, "sadadas")
 
-
-  const team = await Team_SchemaModel.find({ companyID: company_id })
+  const team = await Team_SchemaModel.find({ companyID: company_id });
   // console.log(team ,"teamname")
   res.status(200).json({ message: "Users updated successfully", team });
-})
+});
+
+// exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
+//   const { userId, userRole } = req.body;
+
+//   userId.forEach(async (id) => {
+//     console.log(id);
+//     const updatedUser = await User.findByIdAndUpdate(id, {
+//       role: userRole,
+//     });
+//     console.log(updatedUser);
+//   });
+
+//   res.status(200).json({
+//     success: true,
+//   });
+// });
+
+exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
+  const { userId, userRole } = req.body;
+
+  try {
+    // Update user roles based on userId array
+    await User.updateMany({ _id: { $in: userId } }, { role: userRole });
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error updating user roles:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating user roles",
+    });
+  }
+});
+
+// exports.removeUserRole = catchAsyncErrors(async (req, res, next) => {
+//   const { userId } = req.body;
+
+//   try {
+//     userId.forEach(async (id) => {
+//       console.log(id);
+//       // Find the user by ID and update their role to "member"
+//       const updatedUser = await User.findByIdAndUpdate(id, {
+//         role: "member",
+//       });
+
+//       console.log(updatedUser);
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//     });
+//   } catch (error) {
+//     // Handle any errors that occur during the update process
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "An error occurred while removing user roles.",
+//     });
+//   }
+// });
