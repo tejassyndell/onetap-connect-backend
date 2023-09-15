@@ -24,6 +24,9 @@ const couponSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: 'user',
   }],
+  assignedTo:{
+    type:String,
+  },
  
 }, { timestamps: true } );
 

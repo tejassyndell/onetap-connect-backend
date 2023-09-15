@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [8, "Minimum 8 character"],
       select: false,
-      default :null,
+      default: null,
     },
     contact: { type: String, default: null },
     address: {
@@ -43,43 +43,48 @@ const userSchema = new mongoose.Schema(
     },
     shipping_address: [
       {
-        first_name:{ type: String, default: null },
-        last_name:{ type: String, default: null },
-        company_name:{ type: String, default: null },
+        first_name: { type: String, default: null },
+        last_name: { type: String, default: null },
+        company_name: { type: String, default: null },
         line1: { type: String, default: null },
         line2: { type: String, default: null },
         city: { type: String, default: null },
         state: { type: String, default: null },
         country: { type: String, default: null },
-        postal_code: { type: String, default: null }
-    }],
+        postal_code: { type: String, default: null },
+      },
+    ],
     social_media: [
       {
         name: { type: String, default: null },
         link: { type: String, default: null },
       },
     ],
-    aboutUser:{type:String,default:null},
-    useraboutvideo:{type:String,default:null},
-    useranoutbooking:{type:String,default:null},
-    other_links:{type:String,default:null},
-    custom_fields_data:{type:String,default:null},
-    officeNumber:{type:String,default:"-"},
-    keywords:{type:String,default:null},
-    websiteUrl:{type:String,default:null},
-    isVerfied : {type : Boolean},
-    avatar: { type: String, default: '' },
+    aboutUser: { type: String, default: null },
+    useraboutvideo: { type: String, default: null },
+    useranoutbooking: { type: String, default: null },
+    other_links: { type: String, default: null },
+    custom_fields_data: { type: String, default: null },
+    officeNumber: { type: String, default: "-" },
+    keywords: { type: String, default: null },
+    websiteUrl: { type: String, default: null },
+    isVerfied: { type: Boolean },
+    avatar: { type: String, default: "" },
     status: { type: String, default: "active" },
     isIndividual: { type: Boolean, default: false },
     isPaidUser: { type: Boolean, default: false },
     userurlslug: {
       type: String,
       default: function () {
-        const firstName = this.first_name.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const lastName = this.last_name.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        const firstName = this.first_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        const lastName = this.last_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
         return `${firstName}${lastName}`;
-      }
-  },
+      },
+    },
     subscription_details: {
       subscription: {
         type: mongoose.Schema.Types.ObjectId,
@@ -93,10 +98,10 @@ const userSchema = new mongoose.Schema(
       total_user: { type: Number },
       recurring_amount: { type: Number },
       renewal_date: { type: Date },
-      auto_renewal : { type: Boolean, default: true },
+      auto_renewal: { type: Boolean, default: true },
     },
     role: { type: String, default: "member" },
-    team: { type: String , default:'' },
+    teamr: { type: String, default: "" },
     user_address_permission: {
       type: Boolean,
       default: false,
@@ -122,7 +127,7 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    googleId: { type: String,default:null },
+    googleId: { type: String, default: null },
     designation: [{ type: String }],
     resetPasswordToken: String,
     resetPasswordExpire: Date,
@@ -160,4 +165,4 @@ userSchema.methods.getResetPasswordToken = function () {
   return resetToken;
 };
 
-module.exports = mongoose.model("user", userSchema);
+module.exports = mongoose.model("temp_user", userSchema);

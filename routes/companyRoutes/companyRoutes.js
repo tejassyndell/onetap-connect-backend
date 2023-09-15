@@ -7,15 +7,15 @@ const { login,
      addTeamMemberManually,
      deleteCardDetails,
      fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser} = require('../../controllers/customers/userController.js');
+     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation, fetchBillingAddress, getUserInformation, getcompanies_share_referral_data, getTeam} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
-router.post('/register', signUP1)
-router.post('/register/step-2/:token', signUP2)
-router.post('/google-sign-up',googleSignUP)
-router.post('/google-login',googleLogin)
-router.post('/checkout', isAuthenticatedUser,checkoutHandler)
+router.post("/register", signUP1);
+router.post("/register/step-2/:token", signUP2);
+router.post("/google-sign-up", googleSignUP);
+router.post("/google-login", googleLogin);
+router.post("/checkout", isAuthenticatedUser, checkoutHandler);
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/forgot/password", forgotPassword);
@@ -23,6 +23,7 @@ router.put("/reset/password/:token", resetPassword);
 router.post("/register/new", registerUser);
 router.get("/company/profile", isAuthenticatedUser, getCompanyDetails);
 router.get("/users", isAuthenticatedUser, getUsers);
+router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
 router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
@@ -35,47 +36,87 @@ router.get("/fetchCardDetails/:id", isAuthenticatedUser, fetchCardDetails);
 router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
 router.post('/invite/user', isAuthenticatedUser, inviteTeamMember);
 router.delete('/invited-users/:invitedUserID', deleteInvitedUser);
+router.post('/user/teamdata', isAuthenticatedUser, getTeam);
 
 // router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
 
-router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
 router.get('/invitedusers', isAuthenticatedUser, getinvitedUsers)
-router.post("/user/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
-router.put("/user/update/users/team",isAuthenticatedUser, updateTeamName);
+router.post("/update/billingAddress",isAuthenticatedUser,updateBillingAddress);
+router.get("/fetchbillingAddress",isAuthenticatedUser,fetchBillingAddress);
+router.post("/user/update/users/team",isAuthenticatedUser, updateTeamName);
 router.post('/user/create/team',isAuthenticatedUser,createNewTeam)
 router.post("/user/rename/team", isAuthenticatedUser, renameTeam)
 router.post("/user/delete/team", isAuthenticatedUser, deleteTeam)
 router.post(
-     "/upload-profile-picture/:id",
-     isAuthenticatedUser,
-     uploadProfilePicture
-   );
-   router.post(
-     "/uploadlogo",
-     isAuthenticatedUser,
-     uploadLogo
-   );
-   router.post(
-     "/uploadfavicon",
-     isAuthenticatedUser,
-     uploadfavicon
-   );
+  "/update/billingAddress",
+  isAuthenticatedUser,
+  updateBillingAddress
+);
+router.put("/user/update/users/team", isAuthenticatedUser, updateTeamName);
+router.post("/user/create/team", isAuthenticatedUser, createNewTeam);
+router.post("/user/rename/team", isAuthenticatedUser, renameTeam);
+router.post("/user/delete/team", isAuthenticatedUser, deleteTeam);
+router.post(
+  "/upload-profile-picture/:id",
+  isAuthenticatedUser,
+  uploadProfilePicture
+);
+router.post("/uploadlogo", isAuthenticatedUser, uploadLogo);
+router.post("/uploadfavicon", isAuthenticatedUser, uploadfavicon);
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
-router.put("/company/update",isAuthenticatedUser,updateCompanyDetails);
-router.put("/company/update/information",isAuthenticatedUser,updateCompanyDetailsInfo);
-router.post('/user/remove/team',isAuthenticatedUser,removeTeamFromUsers)
+router.put("/company/update", isAuthenticatedUser, updateCompanyDetails);
+router.put(
+  "/company/update/information",
+  isAuthenticatedUser,
+  updateCompanyDetailsInfo
+);
+router.post("/user/remove/team", isAuthenticatedUser, removeTeamFromUsers);
 router.post("/updatecompanyslug", updateCompanySlug);
-router.post('/check-availability', isAuthenticatedUser,checkcompanyurlslugavailiblity)
-router.post("/update-AutoRenewal", isAuthenticatedUser,updateAutoRenewal);
-router.post('/invite/userByCSV', isAuthenticatedUser, inviteTeamMemberByCSV)
-router.get('/company_share_referreldata', isAuthenticatedUser, getcompanies_share_referral_datas)
-router.post("/updatecompany_referral_data", isAuthenticatedUser,updatecompany_referral_data);
-router.post('/user/shippingAddress/add', isAuthenticatedUser, createShippingAddress)
-router.post('/invited/user', invitedUser)
-router.post('/invited/register-user', registerInvitedUser)
-router.post('/invited/google-sign-up', invitedUserGoogleSignup)
+router.post(
+  "/check-availability",
+  isAuthenticatedUser,
+  checkcompanyurlslugavailiblity
+);
+router.post("/update-AutoRenewal", isAuthenticatedUser, updateAutoRenewal);
+router.post("/invite/userByCSV", isAuthenticatedUser, inviteTeamMemberByCSV);
 
+router.get(
+  "/company_share_referreldata",
+  isAuthenticatedUser,
+  getcompanies_share_referral_data
+);
+router.put(
+  "/updatecompany_referral_data",
+  isAuthenticatedUser,
+  updatecompany_referral_data
+);
 
-
+router.post(
+  "/user/shippingAddress/add",
+  isAuthenticatedUser,
+  createShippingAddress
+);
+router.post("/invited/user", invitedUser);
+router.post("/invited/register-user", registerInvitedUser);
+router.post("/invited/google-sign-up", invitedUserGoogleSignup);
+router.post("/reinviteuser", isAuthenticatedUser, resendemailinvitation);
+router.post("/reject-invitation/:invitationToken", rejectInvitation);
+// router.get("/user/shippingAddresses",isAuthenticatedUser, getAllShippingAddress)
+router.get(
+  "/user/all/shippingAddresses",
+  isAuthenticatedUser,
+  getAllShippingAddress
+);
+router.delete(
+  "/user/shippingAddress/remove/:addressId",
+  isAuthenticatedUser,
+  removeShippingAddress
+);
+router.post(
+  "/shippingAddress/edit/:editAddressId",
+  isAuthenticatedUser,
+  editShippingAddress
+);
+router.post('/user/teamdata', isAuthenticatedUser, getTeam);
 
 module.exports = router;

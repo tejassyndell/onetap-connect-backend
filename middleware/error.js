@@ -14,7 +14,7 @@ const errorMiddleware = (err, req, res, next) => {
   }
 
   if (err.code === 11000) {
-    const message = `This Email is already in use`;
+    const message = `This email is already in use`;
     err = new ErrorHandler(message, 400);
   }
 

@@ -6,7 +6,7 @@ const connectDatabase = () => {
     console.log(`mongoDB connect with server : ${data.connection.host}`);
   });
   // mongoose.connect(process.env.DB_URI2,{tlsAllowInvalidCertificates: true, }).then((data) => {
-  //   console.log(`mongoDB connect with server : ${data.connection.host}`);
+  //   console.log(`mosngoDB connect with server : ${data.connection.host}`);
   // });
 };
 
