@@ -25,6 +25,18 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
+    userurlslug: {
+      type: String,
+      default: function () {
+        const firstName = this.first_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        const lastName = this.last_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "");
+        return `${firstName}${lastName}`;
+      },
+    },
     contact: { type: Number, default: null },
     address: {
       line1: { type: String, default: null },
