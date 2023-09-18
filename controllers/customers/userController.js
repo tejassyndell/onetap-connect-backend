@@ -1692,7 +1692,7 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
     console.log(companyurlslug);
 
     // Assuming you have access to the current company's ID
-    const currentCompanyId = req.user.companyId; // Modify this line based on how you store the current company's ID in your application
+    const currentCompanyId = req.user.companyID; // Modify this line based on how you store the current company's ID in your application
 
     // Check for existing URL slugs that are not the current company's
     const existingcompanyurlslug = await Company.findOne({
@@ -1716,6 +1716,63 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
       return res
         .status(400)
         .json({ message: "companyurlslug is already taken." });
+    }
+
+    return res.status(200).json({ message: "companyurlslug is available." });
+  }
+);
+
+
+exports.checkurlslugavailiblity = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyurlslug,userurlslug } = req.body;
+    const currentCompanyId = req.user.companyID; 
+    const currentUserId = req.user.id; 
+
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId },
+      companyurlslug,
+    });
+
+    if (existingcompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+    });
+
+    if (caseSensitivecompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    const existinguserurlslug = await User.findOne({
+      _id: { $ne: currentUserId },
+      userurlslug,
+    });
+
+    if (existinguserurlslug) {
+      return res
+        .status(400)
+        .json({ message: "userurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitiveuserurlslug = await User.findOne({
+      _id: { $ne: currentUserId }, // Exclude the current company by ID
+      userurlslug: new RegExp(`^${userurlslug}$`, "i"),
+    });
+
+    if (caseSensitiveuserurlslug) {
+      return res
+        .status(400)
+        .json({ message: "userurlslug is already taken." });
     }
 
     return res.status(200).json({ message: "companyurlslug is available." });

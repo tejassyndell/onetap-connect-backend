@@ -111,7 +111,7 @@ const userSchema = new mongoose.Schema(
       },
     },
     isPaidUser: { type: Boolean, default: false },
-    role: { type: String, default: "superadmin" },
+    role: { type: String, default: "administrator" },
     googleId: { type: String, default: null },
     companyID: {
       type: mongoose.Schema.Types.ObjectId,
