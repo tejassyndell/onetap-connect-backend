@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema(
   {
     first_name: {
       type: String,
+      validate: {
+        validator: function (value) {
+          return value.trim() !== ""; // Check that first_name is not an empty string
+        },
+        message: "First name cannot be empty",
+      },
     },
     team: { type: mongoose.Schema.Types.ObjectId },
     last_name: {
