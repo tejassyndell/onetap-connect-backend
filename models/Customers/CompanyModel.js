@@ -33,7 +33,7 @@ const CompanySchema = new mongoose.Schema(
     ],
     global_email: { type: String },
     timezone: { type: String, default: "" },
-    keywords: [ String ],
+    keywords: { type: String },
     contact: {
       type: Number,
       default: null,
