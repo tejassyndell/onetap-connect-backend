@@ -57,8 +57,21 @@ app.get("/api/v1/favicon/img/:filename", (req, res) => {
 
   const filePath = path.join(__dirname, "/uploads/favicon", filename);
   res.sendFile(filePath);
-});
-connectDatabase();
+})
+app.get('/api/v1/favicon/img/:filename',(req,res) => {
+  const filename = req.params.filename;
+  console.log(filename)
+
+  const filePath = path.join(__dirname, '/uploads/favicon', filename);
+  res.sendFile(filePath);
+})
+
+app.use('/api/v1',companyRoutes)
+app.use('/api/v1',SuperAdminRoutes)
+app.use('/api/v1',paymentRoutes)
+connectDatabase()
+app.use(errorMiddleware) 
+// app.use('/api/v1',AccountRoutes)
 
 app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
