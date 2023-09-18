@@ -632,13 +632,18 @@ exports.getUsers = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
   console.log(companyID);
   const users = await User.find({ companyID });
+  const teamsData = await Team.find({ _id: { $in: companyID } });
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
+  }
+  const resultData = {
+    users,
+    teamsData
   }
 
   res.status(200).json({
     success: true,
-    users,
+    resultData
   });
 });
 
@@ -1717,8 +1722,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   } else {
     shippingAddressFind.shipping_address.push(shippingData);
   }
-
+  console.log(cardData)
+  
   const card = await Cards.create(cardData);
+  console.log("called123")
   console.log(card, "card");
   card.userID = user._id;
 

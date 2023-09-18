@@ -1,6 +1,7 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 
 const monthlyProductId = process.env.MONTHLY_PLAN_PRODUCT_ID
 const monthlyProfessionalPriceID = process.env.MONTHLY_PROFESSIONAL_PLAN_PRICE_ID
@@ -187,7 +188,7 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
         collection_method: "charge_automatically",
       });
   
-      console.log(myPayment);
+      console.log(myPayment.id);
       console.log("myPayment");
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       const paymentIntent = await stripe.paymentIntents.retrieve(
@@ -199,7 +200,7 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   
       // Save payment ID and user details in your database after successful payment
   
-      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret });
+      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, error: error.message });
@@ -207,13 +208,23 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   });
 
   exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
+    const {userSubID, userID } = req.body
 
     try {
       // Update the subscription to use manual payment collection
-      await stripe.subscriptions.update("sub_1NqFV7SAvu6sJ8LMNymfCnNZ", {
+      await stripe.subscriptions.update(userSubID, {
         collection_method: 'send_invoice',
         days_until_due: 7,
       });
+      const updatedUserInfo = await UserInformation.findOneAndUpdate(
+        { user_id: userID },
+        { $set: { 'subscription_details.auto_renewal': false } },
+        { new: true }
+      );
+      
+      console.log('Updated user information:', updatedUserInfo);
+      
+
   
       res.status(200).json({ success: true, message: 'Switched to manual renewal. Invoices will be sent for manual payment.' });
     } catch (error) {
