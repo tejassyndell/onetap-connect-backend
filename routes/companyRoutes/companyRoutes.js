@@ -8,7 +8,8 @@ const { login,
      deleteCardDetails,
      fetchCardDetails,
      updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation, fetchBillingAddress, getUserInformation, getcompanies_share_referral_data, getTeam, updateUserInformation, getUserinfoDetails, updateUserRole,
-     removeUserRole} = require('../../controllers/customers/userController.js');
+     removeUserRole,
+     checkurlslugavailiblity} = require('../../controllers/customers/userController.js');
 
 const router = express.Router();
 
@@ -82,6 +83,11 @@ router.post(
   "/check-availability",
   isAuthenticatedUser,
   checkcompanyurlslugavailiblity
+);
+router.post(
+  "/checkslug-availability",
+  isAuthenticatedUser,
+  checkurlslugavailiblity
 );
 router.post("/update-AutoRenewal", isAuthenticatedUser, updateAutoRenewal);
 router.post("/invite/userByCSV", isAuthenticatedUser, inviteTeamMemberByCSV);
