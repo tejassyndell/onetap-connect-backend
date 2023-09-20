@@ -2580,6 +2580,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
+      role:"Team member"
     };
 
     const user = await User.create(userdetails);

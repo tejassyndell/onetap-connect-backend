@@ -4,7 +4,13 @@ const Company_information = new mongoose.Schema(
   {
     company_name: {
       type: String,
-      required: [true, "Please Enter Your Company Name"],
+      validate: {
+        validator: function (value) {
+          return value.trim() !== ""; // Check that first_name is not an empty string
+        },
+        message: "Please Enter Your Company Name",
+      },
+      
     },
     contact: { type: Number, default: null },
     fax_number: {
@@ -21,6 +27,7 @@ const Company_information = new mongoose.Schema(
     },
     global_email: {
       type: String,
+      default: ""
       // required: [true, "Please Enter The Company email"],
     },
     industry: { type: String },
@@ -33,6 +40,7 @@ const Company_information = new mongoose.Schema(
     keywords: [{ type: String }],
     website_url: {
       type: String,
+      default: "",
       // required: [true, "Please Enter The Company URL"],
     },
     about: {
@@ -41,10 +49,10 @@ const Company_information = new mongoose.Schema(
     },
     videoAboutUrl: {
       type: String,
-      default: null,
+      default: "",
     },
     timeZone: { type: String, default: "" },
-    booking_link: { type: String, default: null },
+    booking_link: { type: String, default: "" },
     other_links: [
         {
             name: { type: String, default: null },

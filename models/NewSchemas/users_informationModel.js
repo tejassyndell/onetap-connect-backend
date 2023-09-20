@@ -22,6 +22,7 @@ const users_information = new mongoose.Schema(
         },
         primary_office_num: {
             type: Number,
+            default: ""
             // required: [true, "Please Enter The Company Number"],
         },
         fax_number: {
@@ -38,11 +39,11 @@ const users_information = new mongoose.Schema(
         },
         aboutUser: {
             type: String,
-            default: null
+            default: ""
         },
         useraboutvideo: {
             type: String,
-            default: null
+            default: ""
         },
         business_email: {
             type: String,
@@ -50,7 +51,7 @@ const users_information = new mongoose.Schema(
         },
         booking_links: {
             type: String,
-            default: null
+            default: ""
         },
         keywords: [{ type: String }],
         social_media: [
