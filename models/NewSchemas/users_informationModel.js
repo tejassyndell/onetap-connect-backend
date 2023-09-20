@@ -39,7 +39,7 @@ const users_information = new mongoose.Schema(
         },
         aboutUser: {
             type: String,
-            default: null
+            default: ""
         },
         useraboutvideo: {
             type: String,
