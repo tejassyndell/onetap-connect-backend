@@ -3,7 +3,7 @@ require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 
-const monthlyProductId = process.env.MONTHLY_PLAN_PRODUCT_ID
+const productId = process.env.PLAN_PRODUCT_ID
 const monthlyProfessionalPriceID = process.env.MONTHLY_PROFESSIONAL_PLAN_PRICE_ID
 const monthlyTeamPriceID = process.env.MONTHLY_TEAM_PLAN_PRICE_ID
 
@@ -100,7 +100,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         country: user.billing_address.country,
         postal_code: user.billing_address.postal_code,
       },
-      test_clock: "clock_1Nq8d7SAvu6sJ8LMT72ZdYHd",
+      test_clock: "clock_1NsM3hHsjFNmmZSiVkQdrD5s",
       shipping: {
       name: `${user.first_name} ${user.last_name}`,
         address: {
@@ -126,6 +126,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
 
 exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   console.log(req.body)
+  console.log("kjhaasdkjfadkfjksdlafjndklfjnjdkfjnf")
   const Address = req.body.billingAddress;
 
   const myPayment = await stripe.paymentIntents.create({
@@ -160,25 +161,28 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
     const paymentToken = req.body.paymentToken;
     const customerID = req.body.customerID;
     const Address = req.body.billingAddress;
+    const { type} = req.body.plandata;
   
     const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
       customer: customerID,
     });
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
-        currency: 'usd', // Specify the currency
-        unit_amount: req.body.amount * 100, // The custom price in cents
-        product: 'prod_Od7qoG9fmO6B3Q', // Replace with the product ID you created
+        currency: 'usd', 
+        unit_amount: req.body.amount * 100, 
+        product: productId, 
         recurring : {
-        interval : "month",
+        interval : type === "monthly" ? "month" : "year" ,
         interval_count : 1
   },
 });
+console.log(price)
+console.log("price")
 
 
     try {
       const myPayment = await stripe.subscriptions.create({
-        description: 'Test description', // Provide an export-related description
+        description: 'Test description', 
         metadata: {
           company: req.body.company_name,
         },
