@@ -694,12 +694,12 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("No company details Found", 404));
   }
-  console.log(user.companyID, req.user.companyID);
-  if (user.companyID.toString() !== req.user.companyID.toString()) {
-    return next(
-      new ErrorHandler("You are not authorized to access this route", 401)
-    );
-  }
+  // console.log(user.companyID, req.user.companyID);
+  // if (user.companyID.toString() !== req.user.companyID.toString()) {
+  //   return next(
+  //     new ErrorHandler("You are not authorized to access this route", 401)
+  //   );
+  // }
 
   res.status(200).json({
     success: true,
@@ -1064,7 +1064,15 @@ exports.addCardDetails = catchAsyncErrors(async (req, res) => {
 
   card.userID = id;
 
-  card.save();
+  await card.save();
+
+  // If the new card is set as primary, update the status of other cards to "active"
+  if (formData.isPrimary) {
+    await Cards.updateMany(
+      { userID: id, _id: { $ne: card._id } }, // Update all cards for this user except the new one
+      { $set: { status: "active" } } // Set the status to "active"
+    );
+  }
 
   res.status(201).json({
     success: true,
@@ -1140,6 +1148,14 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
   const card = await Cards.findByIdAndUpdate(id, cardData);
 
   await card.save();
+
+   // If the updated card is set as primary, update the status of other cards to "active"
+   if (formData.isPrimary) {
+    await Cards.updateMany(
+      { userID: card.userID, _id: { $ne: id } }, // Update all cards for this user except the updated one
+      { $set: { status: "active" } } // Set the status to "active"
+    );
+  }
 
   res.status(201).json({
     success: true,
@@ -1890,7 +1906,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     nameOnCard: cardDetails.cardName,
     cardExpiryMonth: cardDetails.cardExpiryMonth,
     cardExpiryYear: cardDetails.cardExpiryYear,
-    // CVV: cardDetails.cardCVV
+    // CVV: cardDetails.cardCVV,
+    status: "primary",
   };
 
   const user = await User.findById(id);
