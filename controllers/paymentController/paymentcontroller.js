@@ -100,7 +100,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         country: user.billing_address.country,
         postal_code: user.billing_address.postal_code,
       },
-      test_clock: "clock_1NsM3hHsjFNmmZSiVkQdrD5s",
+      // test_clock: "clock_1NsM3hHsjFNmmZSiVkQdrD5s",
       shipping: {
       name: `${user.first_name} ${user.last_name}`,
         address: {
@@ -212,25 +212,35 @@ console.log("price")
   });
 
   exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
-    const {userSubID, userID } = req.body
+    const {subscription_id, userId, type } = req.body.userData
 
     try {
-      // Update the subscription to use manual payment collection
-      await stripe.subscriptions.update(userSubID, {
+      if( type === 'cancel'){
+      await stripe.subscriptions.update(subscription_id, {
         collection_method: 'send_invoice',
         days_until_due: 7,
       });
       const updatedUserInfo = await UserInformation.findOneAndUpdate(
-        { user_id: userID },
+        { user_id: userId },
         { $set: { 'subscription_details.auto_renewal': false } },
         { new: true }
       );
-      
       console.log('Updated user information:', updatedUserInfo);
-      
-
-  
       res.status(200).json({ success: true, message: 'Switched to manual renewal. Invoices will be sent for manual payment.' });
+    } 
+    else if(type === 'enable')
+    {
+      await stripe.subscriptions.update(subscription_id, {
+        collection_method: 'charge_automatically',
+      });
+      const updatedUserInfo = await UserInformation.findOneAndUpdate(
+        { user_id: userId },
+        { $set: { 'subscription_details.auto_renewal': true } },
+        { new: true }
+      );
+      console.log('Updated user information:', updatedUserInfo);
+      res.status(200).json({ success: true, message: 'Switched to automatic renewal.'});
+    }
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, error: error.message });
