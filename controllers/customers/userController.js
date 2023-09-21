@@ -1018,15 +1018,21 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       }
     });
 
-    const teamRecord = await Team.create({
-      team_name: team,
-      companyID: companyID,
-    });
+    // Check if the team already exists for the company
+    let teamRecord = await Team.findOne({ team_name: team, companyID: companyID });
+
+    if (!teamRecord) {
+      // If the team doesn't exist, create a new team
+      teamRecord = await Team.create({
+        team_name: team,
+        companyID: companyID,
+      });
+    }
 
     const teamId = teamRecord.id;
 
     await User.create({
-      email: email, // This line is removed to prevent email storage
+      email: email,
       first_name: firstName,
       last_name: lastName,
       team: teamId,
@@ -1034,8 +1040,6 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       password: password,
       role: "Team Member",
     });
-
-   
   }
 
   res.status(201).json({
@@ -1149,8 +1153,8 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
 
   await card.save();
 
-   // If the updated card is set as primary, update the status of other cards to "active"
-   if (formData.isPrimary) {
+  // If the updated card is set as primary, update the status of other cards to "active"
+  if (formData.isPrimary) {
     await Cards.updateMany(
       { userID: card.userID, _id: { $ne: id } }, // Update all cards for this user except the updated one
       { $set: { status: "active" } } // Set the status to "active"
@@ -1576,7 +1580,7 @@ exports.updateUserInformation = async (req, res, next) => {
 // get single team members
 exports.getUserinfoDetails = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const userinfo = await UserInformation.findOne({ user_id: id } );
+  const userinfo = await UserInformation.findOne({ user_id: id });
   if (!userinfo) {
     return next(new ErrorHandler("No user information found", 404));
   }
@@ -1741,9 +1745,9 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
 exports.checkurlslugavailiblity = catchAsyncErrors(
   async (req, res, next) => {
-    const { companyurlslug,userurlslug } = req.body;
-    const currentCompanyId = req.user.companyID; 
-    const currentUserId = req.user.id; 
+    const { companyurlslug, userurlslug } = req.body;
+    const currentCompanyId = req.user.companyID;
+    const currentUserId = req.user.id;
 
     const existingcompanyurlslug = await Company.findOne({
       _id: { $ne: currentCompanyId },
@@ -2580,7 +2584,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
-      role:"Team member"
+      role: "Team member"
     };
 
     const user = await User.create(userdetails);
