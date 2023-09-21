@@ -47,6 +47,7 @@ const Company_information = new mongoose.Schema(
     booking_link: { type: String, default: null },
     other_links: [
         {
+          icon: { type: String, default: null },
             name: { type: String, default: null },
             link: { type: String, default: null },
             permission: { type: Boolean, default: false },

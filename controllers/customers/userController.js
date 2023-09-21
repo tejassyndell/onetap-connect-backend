@@ -1692,7 +1692,7 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
     console.log(companyurlslug);
 
     // Assuming you have access to the current company's ID
-    const currentCompanyId = req.user.companyId; // Modify this line based on how you store the current company's ID in your application
+    const currentCompanyId = req.user.companyID; // Modify this line based on how you store the current company's ID in your application
 
     // Check for existing URL slugs that are not the current company's
     const existingcompanyurlslug = await Company.findOne({
