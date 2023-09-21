@@ -1032,7 +1032,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       team: teamId,
       companyID: companyID,
       password: password,
-      role: "Team Member",
+      role: "teammember",
     });
 
    
@@ -2580,7 +2580,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
-      role:"Team member"
+      role:"teammember"
     };
 
     const user = await User.create(userdetails);
