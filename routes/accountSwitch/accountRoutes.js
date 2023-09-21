@@ -4,7 +4,7 @@ const { getActiveAccounts, switchAccounts } = require('../../controllers/custome
 const {isAccountAuthenticated} = require('../../middleware/switchAcAuth.js')
 const router = express.Router();
 
-router.post('/accounts/active',isAuthenticatedUser,getActiveAccounts)
+// router.post('/accounts/active',isAuthenticatedUser,getActiveAccounts)
 router.post('/accounts/switch',isAccountAuthenticated, switchAccounts)
 
 module.exports = router;

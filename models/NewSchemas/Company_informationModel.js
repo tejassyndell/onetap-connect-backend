@@ -4,13 +4,7 @@ const Company_information = new mongoose.Schema(
   {
     company_name: {
       type: String,
-      validate: {
-        validator: function (value) {
-          return value.trim() !== ""; // Check that first_name is not an empty string
-        },
-        message: "Please Enter Your Company Name",
-      },
-      
+      // required: [true, "Please Enter Your Company Name"],
     },
     contact: { type: Number, default: null },
     fax_number: {
