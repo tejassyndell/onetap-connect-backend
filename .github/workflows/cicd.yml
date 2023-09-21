@@ -1,0 +1,33 @@
+name: Build,Push to ECR and deploy to ECS
+
+on:
+  push:
+    branches:
+     - cicd-pipeline
+env:
+  ECR_REPOSITORY: 678443522600.dkr.ecr.us-west-1.amazonaws.com
+  AWS_DEFAULT_REGION: us-west-1
+  AWS_DEFAULT_OUTPUT: json
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup ECR
+      run: |
+        aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
+    - name: Build and push Docker images
+      run: |    
+        docker build -t ${{ env.ECR_REPOSITORY }}/onetap-backend:latest .
+        docker push ${{ env.ECR_REPOSITORY }}/onetap-backend:latest
+        
+        
