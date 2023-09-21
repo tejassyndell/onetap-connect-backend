@@ -188,11 +188,11 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Something went wrong please try again.", 400)
     );
   }
-
+if(company_name != ""){
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
-
+  
   const company = await Company.find();
-
+  
   // checking if compnay already exists
   company.map((item) => {
     if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
@@ -200,6 +200,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Company Already Exists. ", 400));
     }
   });
+}
 
   const newCompany = await Company.create({
     primary_account: user._id,

@@ -4,7 +4,7 @@ const Company_information = new mongoose.Schema(
   {
     company_name: {
       type: String,
-      required: [true, "Please Enter Your Company Name"],
+      // required: [true, "Please Enter Your Company Name"],
     },
     contact: { type: Number, default: null },
     fax_number: {

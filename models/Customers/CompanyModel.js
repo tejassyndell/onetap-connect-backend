@@ -4,7 +4,7 @@ const CompanySchema = new mongoose.Schema(
   {
     company_name: {
       type: String,
-      required: [true, "Please Enter Your Company Name"],
+      // required: [true, "Please Enter Your Company Name"],
     },
     company_name_permission: {
       type: Boolean,
