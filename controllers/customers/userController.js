@@ -87,7 +87,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
   
-      <img src="https://onetapconnect.sincprojects.com/static/media/Logo-email.png">
+      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; margin-bottom:15px; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -493,7 +493,13 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     // Generate or retrieve resetToken here
     const resetToken = user.getResetPasswordToken();
-
+    const resetPasswordExpire = user.resetPasswordExpire;
+    console.log("resetToken")
+    console.log(resetToken)
+    console.log(resetPasswordExpire)
+    user.resetPasswordToken = resetToken
+    
+    await user.save()
     await user.save({ validateBeforeSave: false });
 
     const message = {
@@ -514,7 +520,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
-      <img src="https://onetapconnect.sincprojects.com/static/media/Logo-email.png">
+      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -574,11 +580,16 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
 //reset password
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
+
+  console.log(req.params.token)
   //creating token hash
-  const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  // const resetPasswordToken = crypto
+  //   .createHash("sha256")
+  //   .update(req.params.token)
+  //   .digest("hex");
+  const resetPasswordToken = req.params.token
+
+    // console.log(token)
 
   const user = await User.findOne({
     resetPasswordToken,
@@ -591,7 +602,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(
       new ErrorHandler(
-        "Reset Password Token is invalid or has been expired",
+        "Reset Password Token is invalid or has been expiredssss",
         400
       )
     );
@@ -853,13 +864,13 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex;">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
-            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex;">
                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
-        </div>
+        </div> <br/>
           <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
           <h5>Technical issue?</h5>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
