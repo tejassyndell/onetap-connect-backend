@@ -126,7 +126,7 @@ const userSchema = new mongoose.Schema(
     },
     
     resetPasswordToken: String,
-    resetPasswordExpiry: Date,
+    resetPasswordExpire: Date,
   },
   { timestamps: true }
 );
@@ -158,7 +158,8 @@ userSchema.methods.getResetPasswordToken = function () {
     .update(resetToken)
     .digest("hex");
   this.resetPasswordExpire = Date.now() + 15 * 60 * 60 * 1000;
-  return resetToken;
+  return this.resetPasswordToken; // Return the value stored in this.resetPasswordToken
 };
+
 
 module.exports = mongoose.model("user", userSchema);
