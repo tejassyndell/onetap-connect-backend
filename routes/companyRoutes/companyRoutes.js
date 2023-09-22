@@ -9,7 +9,10 @@ const { login,
      fetchCardDetails,
      updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation, fetchBillingAddress, getUserInformation, getcompanies_share_referral_data, getTeam, updateUserInformation, getUserinfoDetails, updateUserRole,
      removeUserRole,
-     checkurlslugavailiblity} = require('../../controllers/customers/userController.js');
+     checkurlslugavailiblity,
+     inviteTeamMembermanually,
+     uploadImage} = require('../../controllers/customers/userController.js');
+const {imageUpload} = require('../../middleware/imageUpload');
 
 const router = express.Router();
 
@@ -134,5 +137,8 @@ router.post('/update-user-information/:id', updateUserInformation);
 router.get('/get-user-information/:id', getUserinfoDetails);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
+router.post('/users/add-manual-user', isAuthenticatedUser, inviteTeamMembermanually)
+router.post('/users/image-upload', imageUpload, uploadImage)
+
 
 module.exports = router;

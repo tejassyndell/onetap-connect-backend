@@ -2852,3 +2852,143 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
 //     });
 //   }
 // });
+
+
+
+exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
+  const { formData } = req.body;
+  const { companyID, id } = req.user;
+  // console.log(formData);
+
+  if (formData == null) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
+
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const company = await Company.findById(companyID);
+  const userInfo = await User.findById(id);
+
+    const password = generatePassword();
+    const { email, firstname, lastname, contact, designation, website_url, team,avatar, address,user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
+    // console.log(formData);
+
+
+    if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address ) {
+      return next(new ErrorHandler("Please fill out all user details", 400));
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return next(new ErrorHandler("Please enter a valid email", 400));
+    }
+
+    const message = {
+      from: "mailto:manish.syndell@gmail.com",
+      to: email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+      html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstname}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <a href="${process.env.FRONTEND_URL}/login">Click here to Login</a><br/><br/>
+            Your temporary password is: ${password}<br/><br/>
+            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${userInfo.first_name} ${userInfo.last_name}<br/>
+            ${company.company_name}
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(`Error sending email to ${email}: ${err}`);
+      } else {
+        console.log(`Email sent to ${email}: ${info.response}`);
+      }
+    });
+
+
+    const userData = await User.create({
+      email: email, // This line is removed to prevent email storage
+      first_name: firstname,
+      last_name: lastname,
+      contact: contact,
+      designation: designation,
+      team: team,
+      website_url: website_url,
+      user_line1_address_permission:user_line1_address_permission,
+      user_line2_apartment_permission:user_line2_apartment_permission,
+      user_city_permission:user_city_permission,
+      user_state_permission:user_state_permission,
+      user_postal_code_permission:user_postal_code_permission,
+      address: {
+        country: address.country,
+        line1: address.line1,
+        line2: address.line2,
+        city: address.city,
+        state: address.state,
+        postal_code: address.postal_code,
+      },
+      companyID: companyID,
+      password: password,
+      role: "teammember",
+    });
+// console.log("called")
+    const userInformationData = {
+      user_id: userData._id,
+      website_url: website_url,
+      // Add other fields from formData if needed
+    };
+    await UserInformation.create(userInformationData);
+
+    // console.log(userData._id)
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+    userID:userData._id,
+  });
+});
+
+exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
+  const userID = req.body.userID; 
+  // console.log(userID)
+res.send("called api")
+});
