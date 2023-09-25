@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema(
   {
     first_name: {
       type: String,
+      validate: {
+        validator: function (value) {
+          return value.trim() !== ""; // Check that first_name is not an empty string
+        },
+        message: "First name cannot be empty",
+      },
     },
     team: { type: mongoose.Schema.Types.ObjectId },
     last_name: {
@@ -120,7 +126,7 @@ const userSchema = new mongoose.Schema(
     },
     
     resetPasswordToken: String,
-    resetPasswordExpiry: Date,
+    resetPasswordExpire: Date,
   },
   { timestamps: true }
 );
@@ -152,7 +158,8 @@ userSchema.methods.getResetPasswordToken = function () {
     .update(resetToken)
     .digest("hex");
   this.resetPasswordExpire = Date.now() + 15 * 60 * 60 * 1000;
-  return resetToken;
+  return this.resetPasswordToken; // Return the value stored in this.resetPasswordToken
 };
+
 
 module.exports = mongoose.model("user", userSchema);

@@ -87,7 +87,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
   
-      <img src="https://onetapconnect.sincprojects.com/static/media/Logo-email.png">
+      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; margin-bottom:15px; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -188,11 +188,11 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Something went wrong please try again.", 400)
     );
   }
-
+if(company_name != ""){
   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
-
+  
   const company = await Company.find();
-
+  
   // checking if compnay already exists
   company.map((item) => {
     if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
@@ -200,6 +200,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Company Already Exists. ", 400));
     }
   });
+}
 
   const newCompany = await Company.create({
     primary_account: user._id,
@@ -492,7 +493,13 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     // Generate or retrieve resetToken here
     const resetToken = user.getResetPasswordToken();
-
+    const resetPasswordExpire = user.resetPasswordExpire;
+    console.log("resetToken")
+    console.log(resetToken)
+    console.log(resetPasswordExpire)
+    user.resetPasswordToken = resetToken
+    
+    await user.save()
     await user.save({ validateBeforeSave: false });
 
     const message = {
@@ -513,7 +520,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
-      <img src="https://onetapconnect.sincprojects.com/static/media/Logo-email.png">
+      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -573,11 +580,16 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
 //reset password
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
+
+  console.log(req.params.token)
   //creating token hash
-  const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  // const resetPasswordToken = crypto
+  //   .createHash("sha256")
+  //   .update(req.params.token)
+  //   .digest("hex");
+  const resetPasswordToken = req.params.token
+
+    // console.log(token)
 
   const user = await User.findOne({
     resetPasswordToken,
@@ -590,7 +602,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(
       new ErrorHandler(
-        "Reset Password Token is invalid or has been expired",
+        "Reset Password Token is invalid or has been expiredssss",
         400
       )
     );
@@ -694,12 +706,12 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("No company details Found", 404));
   }
-  console.log(user.companyID, req.user.companyID);
-  if (user.companyID.toString() !== req.user.companyID.toString()) {
-    return next(
-      new ErrorHandler("You are not authorized to access this route", 401)
-    );
-  }
+  // console.log(user.companyID, req.user.companyID);
+  // if (user.companyID.toString() !== req.user.companyID.toString()) {
+  //   return next(
+  //     new ErrorHandler("You are not authorized to access this route", 401)
+  //   );
+  // }
 
   res.status(200).json({
     success: true,
@@ -852,13 +864,13 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex;">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
-            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex;">
                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
-        </div>
+        </div> <br/>
           <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
           <h5>Technical issue?</h5>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
@@ -1018,24 +1030,28 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       }
     });
 
-    const teamRecord = await Team.create({
-      team_name: team,
-      companyID: companyID,
-    });
+    // Check if the team already exists for the company
+    let teamRecord = await Team.findOne({ team_name: team, companyID: companyID });
+
+    if (!teamRecord) {
+      // If the team doesn't exist, create a new team
+      teamRecord = await Team.create({
+        team_name: team,
+        companyID: companyID,
+      });
+    }
 
     const teamId = teamRecord.id;
 
     await User.create({
-      email: email, // This line is removed to prevent email storage
+      email: email,
       first_name: firstName,
       last_name: lastName,
       team: teamId,
       companyID: companyID,
       password: password,
-      role: "Team Member",
+      role: "teammember",
     });
-
-   
   }
 
   res.status(201).json({
@@ -1064,7 +1080,15 @@ exports.addCardDetails = catchAsyncErrors(async (req, res) => {
 
   card.userID = id;
 
-  card.save();
+  await card.save();
+
+  // If the new card is set as primary, update the status of other cards to "active"
+  if (formData.isPrimary) {
+    await Cards.updateMany(
+      { userID: id, _id: { $ne: card._id } }, // Update all cards for this user except the new one
+      { $set: { status: "active" } } // Set the status to "active"
+    );
+  }
 
   res.status(201).json({
     success: true,
@@ -1140,6 +1164,14 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
   const card = await Cards.findByIdAndUpdate(id, cardData);
 
   await card.save();
+
+  // If the updated card is set as primary, update the status of other cards to "active"
+  if (formData.isPrimary) {
+    await Cards.updateMany(
+      { userID: card.userID, _id: { $ne: id } }, // Update all cards for this user except the updated one
+      { $set: { status: "active" } } // Set the status to "active"
+    );
+  }
 
   res.status(201).json({
     success: true,
@@ -1560,7 +1592,7 @@ exports.updateUserInformation = async (req, res, next) => {
 // get single team members
 exports.getUserinfoDetails = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const userinfo = await UserInformation.findOne({ user_id: id } );
+  const userinfo = await UserInformation.findOne({ user_id: id });
   if (!userinfo) {
     return next(new ErrorHandler("No user information found", 404));
   }
@@ -1692,7 +1724,7 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
     console.log(companyurlslug);
 
     // Assuming you have access to the current company's ID
-    const currentCompanyId = req.user.companyId; // Modify this line based on how you store the current company's ID in your application
+    const currentCompanyId = req.user.companyID; // Modify this line based on how you store the current company's ID in your application
 
     // Check for existing URL slugs that are not the current company's
     const existingcompanyurlslug = await Company.findOne({
@@ -1716,6 +1748,63 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
       return res
         .status(400)
         .json({ message: "companyurlslug is already taken." });
+    }
+
+    return res.status(200).json({ message: "companyurlslug is available." });
+  }
+);
+
+
+exports.checkurlslugavailiblity = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyurlslug, userurlslug } = req.body;
+    const currentCompanyId = req.user.companyID;
+    const currentUserId = req.user.id;
+
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId },
+      companyurlslug,
+    });
+
+    if (existingcompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+    });
+
+    if (caseSensitivecompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    const existinguserurlslug = await User.findOne({
+      _id: { $ne: currentUserId },
+      userurlslug,
+    });
+
+    if (existinguserurlslug) {
+      return res
+        .status(400)
+        .json({ message: "userurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitiveuserurlslug = await User.findOne({
+      _id: { $ne: currentUserId }, // Exclude the current company by ID
+      userurlslug: new RegExp(`^${userurlslug}$`, "i"),
+    });
+
+    if (caseSensitiveuserurlslug) {
+      return res
+        .status(400)
+        .json({ message: "userurlslug is already taken." });
     }
 
     return res.status(200).json({ message: "companyurlslug is available." });
@@ -1833,7 +1922,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     nameOnCard: cardDetails.cardName,
     cardExpiryMonth: cardDetails.cardExpiryMonth,
     cardExpiryYear: cardDetails.cardExpiryYear,
-    // CVV: cardDetails.cardCVV
+    // CVV: cardDetails.cardCVV,
+    status: "primary",
   };
 
   const user = await User.findById(id);
@@ -2506,6 +2596,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
+      role:"teammember"
     };
 
     const user = await User.create(userdetails);
@@ -2772,3 +2863,143 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
 //     });
 //   }
 // });
+
+
+
+exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
+  const { formData } = req.body;
+  const { companyID, id } = req.user;
+  // console.log(formData);
+
+  if (formData == null) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
+
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const company = await Company.findById(companyID);
+  const userInfo = await User.findById(id);
+
+    const password = generatePassword();
+    const { email, firstname, lastname, contact, designation, website_url, team,avatar, address,user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
+    // console.log(formData);
+
+
+    if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address ) {
+      return next(new ErrorHandler("Please fill out all user details", 400));
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return next(new ErrorHandler("Please enter a valid email", 400));
+    }
+
+    const message = {
+      from: "mailto:manish.syndell@gmail.com",
+      to: email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+      html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstname}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <a href="${process.env.FRONTEND_URL}/login">Click here to Login</a><br/><br/>
+            Your temporary password is: ${password}<br/><br/>
+            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${userInfo.first_name} ${userInfo.last_name}<br/>
+            ${company.company_name}
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(`Error sending email to ${email}: ${err}`);
+      } else {
+        console.log(`Email sent to ${email}: ${info.response}`);
+      }
+    });
+
+
+    const userData = await User.create({
+      email: email, // This line is removed to prevent email storage
+      first_name: firstname,
+      last_name: lastname,
+      contact: contact,
+      designation: designation,
+      team: team,
+      website_url: website_url,
+      user_line1_address_permission:user_line1_address_permission,
+      user_line2_apartment_permission:user_line2_apartment_permission,
+      user_city_permission:user_city_permission,
+      user_state_permission:user_state_permission,
+      user_postal_code_permission:user_postal_code_permission,
+      address: {
+        country: address.country,
+        line1: address.line1,
+        line2: address.line2,
+        city: address.city,
+        state: address.state,
+        postal_code: address.postal_code,
+      },
+      companyID: companyID,
+      password: password,
+      role: "teammember",
+    });
+// console.log("called")
+    const userInformationData = {
+      user_id: userData._id,
+      website_url: website_url,
+      // Add other fields from formData if needed
+    };
+    await UserInformation.create(userInformationData);
+
+    // console.log(userData._id)
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+    userID:userData._id,
+  });
+});
+
+exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
+  const userID = req.body.userID; 
+  // console.log(userID)
+res.send("called api")
+});
