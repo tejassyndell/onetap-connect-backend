@@ -74,10 +74,6 @@ app.get("/", (req, res) => {
   const filePath = path.join(__dirname, "/utils/", "template.html");
   res.sendFile(filePath);
 });
-app.get("/test", (req, res) => {
-  const filePath = path.join(__dirname, "/utils/", "template.html");
-  res.sendFile(filePath);
-});
 
 app.get("/test", (req, res) => {
   const htmlResponse = `
