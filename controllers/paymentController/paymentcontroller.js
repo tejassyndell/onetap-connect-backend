@@ -1,7 +1,8 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+const User = require("../../models/NewSchemas/UserModel.js");
 const dotenv = require('dotenv');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-// const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 
 dotenv.config()
 exports.processPayment = catchAsyncErrors(async (req, res, next) => {
@@ -34,3 +35,15 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, client_secret: myPayment.client_secret });
 });
 
+
+exports.testAPI = catchAsyncErrors(async (req, res, next) => {
+
+  const userData = await User.find({});
+  const uuid = uuidv4();
+  console.log(uuid)
+  const data = {
+    user : userData,
+    uuid : uuid
+  }
+  res.send(data);
+})
