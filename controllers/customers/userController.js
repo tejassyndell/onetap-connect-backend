@@ -219,6 +219,12 @@ if(company_name != ""){
   });
   await user.save({ validateBeforeSave: true });
 
+  const userInfo = await UserInformation.create({
+    user_id: user._id,
+    // Add any other fields you want to store in userinfo
+  });
+  await userInfo.save();
+
   // res.status(200).json({
   //   message: "user saved successfully",
   //   user
@@ -1994,9 +2000,110 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    billingdata,
+    user,
+    userInformation
   });
 });
+
+exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
+  const { id, companyID } = req.user;
+  console.log("-----------------------------------------------------------------")
+  console.log(id, "login user id")
+  console.log("-----------------------------------------------------------------")
+
+  const {
+    userData,
+    company_name,
+    billingdata,
+    shippingData,
+    shipping_method,
+    planData,
+    // cardDetails,
+  } = req.body;
+
+  // const cardData = {
+  //   cardNumber: cardDetails.cardNumber,
+  //   brand: cardDetails.brand,
+  //   nameOnCard: cardDetails.cardName,
+  //   cardExpiryMonth: cardDetails.cardExpiryMonth,
+  //   cardExpiryYear: cardDetails.cardExpiryYear,
+  //   // CVV: cardDetails.cardCVV,
+  //   status: "primary",
+  // };
+
+  const user = await User.findById(id);
+  // console.log(user, "user");
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  let billingAddressFind = await billingAddress.findOne({ userId: user._id });
+
+  if (!billingAddressFind) {
+    billingAddressFind = new billingAddress({
+      userId: user._id,
+      billing_address: billingdata,
+    });
+  } else {
+    billingAddressFind.billing_address = billingdata;
+  }
+
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      shipping_address: [shippingData],
+    });
+  } else {
+    shippingAddressFind.shipping_address.push(shippingData);
+  }
+
+  // const card = await Cards.create(cardData);
+  // console.log(card, "card");
+  // card.userID = user._id;
+
+  let userInformation = await UserInformation.findOne({ user_id: user._id });
+
+  if (!userInformation) {
+    userInformation = new UserInformation({
+      user_id: user._id,
+      subscription_details: planData,
+    });
+    userInformation.subscription_details = planData;
+    console.log(userInformation, "userInformation");
+  } else {
+    userInformation.subscription_details = planData;
+  }
+  shippingAddressFind.shipping_address.address_name = "Default";
+  userInformation.subscription_details.auto_renewal = true;
+  userInformation.shipping_method = shipping_method;
+  user.isPaidUser = true;
+  user.first_name = userData.first_name;
+  user.last_name = userData.last_name;
+  user.contact = userData.contact;
+  user.email = userData.email;
+  user.address = billingdata;
+
+  const company = await Company.findById(companyID);
+  company.address = billingdata;
+  company.company_name = company_name;
+  // console.log(company.address, "company address");
+
+  await user.save();
+  // await card.save();
+  await company.save();
+  await billingAddressFind.save();
+  await shippingAddressFind.save();
+  await userInformation.save();
+
+  res.status(200).json({
+    success: true,
+    user,
+    userInformation
+  });
+});
+
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
