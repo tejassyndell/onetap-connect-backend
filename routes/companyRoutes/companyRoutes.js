@@ -74,7 +74,7 @@ router.post(
   isAuthenticatedUser,
   uploadProfilePicture
 );
-router.post("/uploadlogo", isAuthenticatedUser, uploadLogo);
+router.post("/uploadlogo",isAuthenticatedUser, imageUpload, uploadLogo);
 router.post("/uploadfavicon", isAuthenticatedUser, uploadfavicon);
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update", isAuthenticatedUser, updateCompanyDetails);
