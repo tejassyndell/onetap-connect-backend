@@ -2125,7 +2125,7 @@ exports.uploadProfilePicture = async (req, res) => {
 // multer image upload
 const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/logo");
+    cb(null, "//////////////////////////////////////////////////////////////////////////////////////////////////////////");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -2176,52 +2176,53 @@ const checkLogoSize = (req, res, next) => {
 
 // Modify the route handler to include the checkLogoSize middleware
 exports.uploadLogo = async (req, res) => {
-  try {
-    // Use async/await for better error handling and readability
-    const { companyID } = req.user;
-    // console.log("object", req.user)
-    // Check if the company already has a logo path
-    const company = await Company.findById(companyID);
-    console.log(company);
-    const oldLogoPath = company.logopath;
+  res.send("called")
+  // try {
+  //   // Use async/await for better error handling and readability
+  //   const { companyID } = req.user;
+  //   // console.log("object", req.user)
+  //   // Check if the company already has a logo path
+  //   const company = await Company.findById(companyID);
+  //   console.log(company);
+  //   const oldLogoPath = company.logopath;
 
-    logoupload.single("logoimage")(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: "File upload failed." });
-      }
+  //   logoupload.single("logoimage")(req, res, async (err) => {
+  //     if (err) {
+  //       return res.status(400).json({ error: "File upload failed." });
+  //     }
 
-      const logoPicturePath = req.file.filename;
+  //     const logoPicturePath = req.file.filename;
 
-      // Delete the old logo file if it exists
-      if (oldLogoPath) {
-        // Remove the old logo file from the storage folder
-        fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error("Error deleting old logo:", unlinkErr);
-          }
-        });
-      }
+  //     // Delete the old logo file if it exists
+  //     if (oldLogoPath) {
+  //       // Remove the old logo file from the storage folder
+  //       fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
+  //         if (unlinkErr) {
+  //           console.error("Error deleting old logo:", unlinkErr);
+  //         }
+  //       });
+  //     }
 
-      const updatedCompany = await Company.findByIdAndUpdate(
-        companyID,
-        { logopath: logoPicturePath },
-        { new: true }
-      );
+  //     const updatedCompany = await Company.findByIdAndUpdate(
+  //       companyID,
+  //       { logopath: logoPicturePath },
+  //       { new: true }
+  //     );
 
-      if (!updatedCompany) {
-        return res.status(404).json({ error: "Company not found." });
-      }
+  //     if (!updatedCompany) {
+  //       return res.status(404).json({ error: "Company not found." });
+  //     }
 
-      return res.status(200).json({
-        success: true,
-        message: "Logo uploaded successfully.",
-        updatedCompany,
-      });
-    });
-  } catch (error) {
-    console.error("Error updating Logo:", error);
-    return res.status(500).json({ error: "Internal server error." });
-  }
+  //     return res.status(200).json({
+  //       success: true,
+  //       message: "Logo uploaded successfully.",
+  //       updatedCompany,
+  //     });
+  //   });
+  // } catch (error) {
+  //   console.error("Error updating Logo:", error);
+  //   return res.status(500).json({ error: "Internal server error." });
+  // }
 };
 
 // --------------------------------------------------------------------------------------------------------------------------------------
