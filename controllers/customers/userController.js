@@ -188,19 +188,19 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Something went wrong please try again.", 400)
     );
   }
-if(company_name != ""){
-  const trimedString = company_name.replace(/\s/g, "").toLowerCase();
-  
-  const company = await Company.find();
-  
-  // checking if compnay already exists
-  company.map((item) => {
-    if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
-      console.log(item.company_name);
-      return next(new ErrorHandler("Company Already Exists. ", 400));
-    }
-  });
-}
+  if (company_name != "") {
+    const trimedString = company_name.replace(/\s/g, "").toLowerCase();
+
+    const company = await Company.find();
+
+    // checking if compnay already exists
+    company.map((item) => {
+      if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
+        console.log(item.company_name);
+        return next(new ErrorHandler("Company Already Exists. ", 400));
+      }
+    });
+  }
 
   const newCompany = await Company.create({
     primary_account: user._id,
@@ -498,7 +498,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     console.log(resetToken)
     console.log(resetPasswordExpire)
     user.resetPasswordToken = resetToken
-    
+
     await user.save()
     await user.save({ validateBeforeSave: false });
 
@@ -589,7 +589,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   //   .digest("hex");
   const resetPasswordToken = req.params.token
 
-    // console.log(token)
+  // console.log(token)
 
   const user = await User.findOne({
     resetPasswordToken,
@@ -2596,7 +2596,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
-      role:"teammember"
+      role: "teammember"
     };
 
     const user = await User.create(userdetails);
@@ -2888,26 +2888,26 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   const company = await Company.findById(companyID);
   const userInfo = await User.findById(id);
 
-    const password = generatePassword();
-    const { email, firstname, lastname, contact, designation, website_url, team,avatar, address,user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
-    // console.log(formData);
+  const password = generatePassword();
+  const { email, firstname, lastname, contact, designation, website_url, team, avatar, address, user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
+  // console.log(formData);
 
 
-    if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address ) {
-      return next(new ErrorHandler("Please fill out all user details", 400));
-    }
+  if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
+    return next(new ErrorHandler("Please fill out all user details", 400));
+  }
 
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      return next(new ErrorHandler("Please enter a valid email", 400));
-    }
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return next(new ErrorHandler("Please enter a valid email", 400));
+  }
 
-    const message = {
-      from: "mailto:manish.syndell@gmail.com",
-      to: email,
-      subject: `${company.company_name} Invited you to join OneTapConnect`,
+  const message = {
+    from: "mailto:manish.syndell@gmail.com",
+    to: email,
+    subject: `${company.company_name} Invited you to join OneTapConnect`,
 
-      html: `
+    html: `
     <!DOCTYPE html>
     <html>
     
@@ -2945,61 +2945,110 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-    };
+  };
 
-    transporter.sendMail(message, (err, info) => {
-      if (err) {
-        console.log(`Error sending email to ${email}: ${err}`);
-      } else {
-        console.log(`Email sent to ${email}: ${info.response}`);
-      }
-    });
+  transporter.sendMail(message, (err, info) => {
+    if (err) {
+      console.log(`Error sending email to ${email}: ${err}`);
+    } else {
+      console.log(`Email sent to ${email}: ${info.response}`);
+    }
+  });
 
 
-    const userData = await User.create({
-      email: email, // This line is removed to prevent email storage
-      first_name: firstname,
-      last_name: lastname,
-      contact: contact,
-      designation: designation,
-      team: team,
-      website_url: website_url,
-      user_line1_address_permission:user_line1_address_permission,
-      user_line2_apartment_permission:user_line2_apartment_permission,
-      user_city_permission:user_city_permission,
-      user_state_permission:user_state_permission,
-      user_postal_code_permission:user_postal_code_permission,
-      address: {
-        country: address.country,
-        line1: address.line1,
-        line2: address.line2,
-        city: address.city,
-        state: address.state,
-        postal_code: address.postal_code,
-      },
-      companyID: companyID,
-      password: password,
-      role: "teammember",
-    });
-// console.log("called")
-    const userInformationData = {
-      user_id: userData._id,
-      website_url: website_url,
-      // Add other fields from formData if needed
-    };
-    await UserInformation.create(userInformationData);
+  const userData = await User.create({
+    email: email, // This line is removed to prevent email storage
+    first_name: firstname,
+    last_name: lastname,
+    contact: contact,
+    designation: designation,
+    team: team,
+    website_url: website_url,
+    user_line1_address_permission: user_line1_address_permission,
+    user_line2_apartment_permission: user_line2_apartment_permission,
+    user_city_permission: user_city_permission,
+    user_state_permission: user_state_permission,
+    user_postal_code_permission: user_postal_code_permission,
+    address: {
+      country: address.country,
+      line1: address.line1,
+      line2: address.line2,
+      city: address.city,
+      state: address.state,
+      postal_code: address.postal_code,
+    },
+    companyID: companyID,
+    password: password,
+    role: "teammember",
+  });
+  // console.log("called")
+  const userInformationData = {
+    user_id: userData._id,
+    website_url: website_url,
+    // Add other fields from formData if needed
+  };
+  await UserInformation.create(userInformationData);
 
-    // console.log(userData._id)
+  // console.log(userData._id)
 
   res.status(201).json({
     success: true,
     message: "Invitaion Email sent Successfully",
-    userID:userData._id,
+    userID: userData._id,
   });
 });
 
 exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
-  const userID = req.body.userID; 
+  const userID = req.body.userID;
   // console.log(userID)
-res.send("called api")
+  res.send("called api")
 });
+
+
+exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
+  const { userid, companyid } = req.body;
+  console.log(userid)
+  console.log(companyid)
+
+  try {
+    const deletePromises = [];
+
+    const pushDeletePromise = async (deletePromise, errorMessage) => {
+      try {
+        const result = await deletePromise;
+        if (!result) {
+          console.log(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error deleting data:', error);
+      }
+    };
+
+    pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
+    pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
+    pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
+    pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
+    pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
+    pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+    pushDeletePromise(
+      CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
+      'Company Share Referral data not found'
+    );
+    deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+    await Promise.all(deletePromises);
+
+    res.cookie('token', null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
+
+
