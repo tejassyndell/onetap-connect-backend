@@ -3124,6 +3124,21 @@ exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
+  const { field_name, field_value } = req.body;
+  const { id } = req.user;
+  const updateData = {};
+
+  updateData[field_name] = field_value;
+  
+  const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
+  
+  res.status(200).json({
+    success: true,
+    data
+  });
+});
+
 exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
   const { field_name, field_value } = req.body;
   const { companyID } = req.user;
