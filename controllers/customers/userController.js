@@ -87,7 +87,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
   
-      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+<img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; margin-bottom:15px; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -218,6 +218,12 @@ if(company_name != ""){
     companyID: newCompany._id,
   });
   await user.save({ validateBeforeSave: true });
+
+  const userInfo = await UserInformation.create({
+    user_id: user._id,
+    // Add any other fields you want to store in userinfo
+  });
+  await userInfo.save();
 
   // res.status(200).json({
   //   message: "user saved successfully",
@@ -595,14 +601,14 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
-
+ 
   console.log(user);
   console.log(req.body);
 
   if (!user) {
     return next(
       new ErrorHandler(
-        "Reset Password Token is invalid or has been expiredssss",
+        "Reset Password Token is invalid or has been expired",
         400
       )
     );
