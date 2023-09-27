@@ -3003,3 +3003,39 @@ exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
   // console.log(userID)
 res.send("called api")
 });
+
+
+
+exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
+  const { field_name, field_value } = req.body;
+  const { id } = req.user;
+  const updateData = {};
+
+  updateData[field_name] = field_value;
+  
+  const data = await User.updateOne({ _id: id }, { $set: updateData });
+  
+  res.status(200).json({
+    success: true,
+    data
+  });
+});
+
+exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
+  const { field_name, field_value } = req.body;
+  const { companyID } = req.user;
+
+  const company = await Company.findById(companyID);
+
+  if (!company) {
+    return res.status(404).json({ success: false, message: 'Company not found' });
+  }
+
+  company[field_name] = field_value;
+  await company.save();
+
+  res.status(200).json({
+    success: true,
+  });
+});
+

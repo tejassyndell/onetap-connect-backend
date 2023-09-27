@@ -11,7 +11,9 @@ const { login,
      removeUserRole,
      checkurlslugavailiblity,
      inviteTeamMembermanually,
-     uploadImage} = require('../../controllers/customers/userController.js');
+     uploadImage,
+     saveuserdata,
+     savecompanydata} = require('../../controllers/customers/userController.js');
 const {imageUpload} = require('../../middleware/imageUpload');
 
 const router = express.Router();
@@ -139,6 +141,8 @@ router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
 router.post('/users/add-manual-user', isAuthenticatedUser, inviteTeamMembermanually)
 router.post('/users/image-upload', imageUpload, uploadImage)
+router.post('/save_user_data', isAuthenticatedUser, saveuserdata);
+router.post('/save_company_data', isAuthenticatedUser, savecompanydata);
 
 
 module.exports = router;
