@@ -2007,10 +2007,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
 
 exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
-  console.log("-----------------------------------------------------------------")
-  console.log(id, "login user id")
-  console.log("-----------------------------------------------------------------")
-
   const {
     userData,
     company_name,
