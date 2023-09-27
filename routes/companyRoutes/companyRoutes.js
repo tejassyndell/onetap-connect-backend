@@ -13,7 +13,7 @@ const { login,
      inviteTeamMembermanually,
      uploadImage,
      saveuserdata,
-     savecompanydata, deleteuser} = require('../../controllers/customers/userController.js');
+     savecompanydata, deleteuser, saveuserinfodata} = require('../../controllers/customers/userController.js');
 const {imageUpload} = require('../../middleware/imageUpload');
 
 const router = express.Router();
@@ -143,6 +143,7 @@ router.post('/users/add-manual-user', isAuthenticatedUser, inviteTeamMembermanua
 router.post('/users/image-upload', imageUpload, uploadImage)
 router.post('/save_user_data', isAuthenticatedUser, saveuserdata);
 router.post('/save_company_data', isAuthenticatedUser, savecompanydata);
+router.post('/save_userinfo_data', isAuthenticatedUser, saveuserinfodata);
 router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
 
 
