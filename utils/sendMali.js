@@ -18,7 +18,7 @@ const sendMail = (email, data, invitationToken) => {
   // onclick="handleClick('decline')"
 
   const message = {
-    from: "manish.syndell@gmail.com",
+    from: "developersweb001@gmail.com",
     to: email,
     subject: `Invitaiton email from ${data.company_name}`,
     //   text: `Your Verification code is ${code}`,

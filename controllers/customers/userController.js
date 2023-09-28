@@ -87,7 +87,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
   
-<img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
 
     </div>
     <div style="background-color: #fff; margin-bottom:15px; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -188,19 +188,19 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Something went wrong please try again.", 400)
     );
   }
-  if (company_name != "") {
-    const trimedString = company_name.replace(/\s/g, "").toLowerCase();
-
-    const company = await Company.find();
-
-    // checking if compnay already exists
-    company.map((item) => {
-      if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
-        console.log(item.company_name);
-        return next(new ErrorHandler("Company Already Exists. ", 400));
-      }
-    });
-  }
+if(company_name != ""){
+  const trimedString = company_name.replace(/\s/g, "").toLowerCase();
+  
+  const company = await Company.find();
+  
+  // checking if compnay already exists
+  company.map((item) => {
+    if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
+      console.log(item.company_name);
+      return next(new ErrorHandler("Company Already Exists. ", 400));
+    }
+  });
+}
 
   const newCompany = await Company.create({
     primary_account: user._id,
@@ -218,12 +218,6 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     companyID: newCompany._id,
   });
   await user.save({ validateBeforeSave: true });
-
-  const userInfo = await UserInformation.create({
-    user_id: user._id,
-    // Add any other fields you want to store in userinfo
-  });
-  await userInfo.save();
 
   // res.status(200).json({
   //   message: "user saved successfully",
@@ -441,7 +435,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   });
 
 //   const message = {
-//     from: "manish.syndell@gmail.com",
+//     from: "developersweb001@gmail.com",
 //     to: email,
 //     subject: `Password recovery email`,
 //     text: `Password reset link is  :- \n\n ${process.env.FRONTEND_URL + '/reset/password/' + resetToken} \n\n If you have not requested this email then please ignore It `,
@@ -504,12 +498,12 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     console.log(resetToken)
     console.log(resetPasswordExpire)
     user.resetPasswordToken = resetToken
-
+    
     await user.save()
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -595,20 +589,20 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   //   .digest("hex");
   const resetPasswordToken = req.params.token
 
-  // console.log(token)
+    // console.log(token)
 
   const user = await User.findOne({
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
- 
+
   console.log(user);
   console.log(req.body);
 
   if (!user) {
     return next(
       new ErrorHandler(
-        "Reset Password Token is invalid or has been expired",
+        "Reset Password Token is invalid or has been expiredssss",
         400
       )
     );
@@ -830,7 +824,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     // const expiryDateString = expiryDate.toISOString();
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       //   html: `
@@ -984,7 +978,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     }
 
     const message = {
-      from: "mailto:manish.syndell@gmail.com",
+      from: "mailto:developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2000,106 +1994,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user,
-    userInformation
-  });
-});
-
-exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
-  const { id, companyID } = req.user;
-  const {
-    userData,
-    company_name,
     billingdata,
-    shippingData,
-    shipping_method,
-    planData,
-    // cardDetails,
-  } = req.body;
-
-  // const cardData = {
-  //   cardNumber: cardDetails.cardNumber,
-  //   brand: cardDetails.brand,
-  //   nameOnCard: cardDetails.cardName,
-  //   cardExpiryMonth: cardDetails.cardExpiryMonth,
-  //   cardExpiryYear: cardDetails.cardExpiryYear,
-  //   // CVV: cardDetails.cardCVV,
-  //   status: "primary",
-  // };
-
-  const user = await User.findById(id);
-  // console.log(user, "user");
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
-  }
-
-  let billingAddressFind = await billingAddress.findOne({ userId: user._id });
-
-  if (!billingAddressFind) {
-    billingAddressFind = new billingAddress({
-      userId: user._id,
-      billing_address: billingdata,
-    });
-  } else {
-    billingAddressFind.billing_address = billingdata;
-  }
-
-  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
-
-  if (!shippingAddressFind) {
-    shippingAddressFind = new shippingAddress({
-      userId: user._id,
-      shipping_address: [shippingData],
-    });
-  } else {
-    shippingAddressFind.shipping_address.push(shippingData);
-  }
-
-  // const card = await Cards.create(cardData);
-  // console.log(card, "card");
-  // card.userID = user._id;
-
-  let userInformation = await UserInformation.findOne({ user_id: user._id });
-
-  if (!userInformation) {
-    userInformation = new UserInformation({
-      user_id: user._id,
-      subscription_details: planData,
-    });
-    userInformation.subscription_details = planData;
-    console.log(userInformation, "userInformation");
-  } else {
-    userInformation.subscription_details = planData;
-  }
-  shippingAddressFind.shipping_address.address_name = "Default";
-  userInformation.subscription_details.auto_renewal = true;
-  userInformation.shipping_method = shipping_method;
-  user.isPaidUser = true;
-  user.first_name = userData.first_name;
-  user.last_name = userData.last_name;
-  user.contact = userData.contact;
-  user.email = userData.email;
-  user.address = billingdata;
-
-  const company = await Company.findById(companyID);
-  company.address = billingdata;
-  company.company_name = company_name;
-  // console.log(company.address, "company address");
-
-  await user.save();
-  // await card.save();
-  await company.save();
-  await billingAddressFind.save();
-  await shippingAddressFind.save();
-  await userInformation.save();
-
-  res.status(200).json({
-    success: true,
-    user,
-    userInformation
   });
 });
-
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
@@ -2228,7 +2125,7 @@ exports.uploadProfilePicture = async (req, res) => {
 // multer image upload
 const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "//////////////////////////////////////////////////////////////////////////////////////////////////////////");
+    cb(null, "./uploads/logo");
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -2279,53 +2176,52 @@ const checkLogoSize = (req, res, next) => {
 
 // Modify the route handler to include the checkLogoSize middleware
 exports.uploadLogo = async (req, res) => {
-  res.send("called")
-  // try {
-  //   // Use async/await for better error handling and readability
-  //   const { companyID } = req.user;
-  //   // console.log("object", req.user)
-  //   // Check if the company already has a logo path
-  //   const company = await Company.findById(companyID);
-  //   console.log(company);
-  //   const oldLogoPath = company.logopath;
+  try {
+    // Use async/await for better error handling and readability
+    const { companyID } = req.user;
+    // console.log("object", req.user)
+    // Check if the company already has a logo path
+    const company = await Company.findById(companyID);
+    console.log(company);
+    const oldLogoPath = company.logopath;
 
-  //   logoupload.single("logoimage")(req, res, async (err) => {
-  //     if (err) {
-  //       return res.status(400).json({ error: "File upload failed." });
-  //     }
+    logoupload.single("logoimage")(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: "File upload failed." });
+      }
 
-  //     const logoPicturePath = req.file.filename;
+      const logoPicturePath = req.file.filename;
 
-  //     // Delete the old logo file if it exists
-  //     if (oldLogoPath) {
-  //       // Remove the old logo file from the storage folder
-  //       fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
-  //         if (unlinkErr) {
-  //           console.error("Error deleting old logo:", unlinkErr);
-  //         }
-  //       });
-  //     }
+      // Delete the old logo file if it exists
+      if (oldLogoPath) {
+        // Remove the old logo file from the storage folder
+        fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting old logo:", unlinkErr);
+          }
+        });
+      }
 
-  //     const updatedCompany = await Company.findByIdAndUpdate(
-  //       companyID,
-  //       { logopath: logoPicturePath },
-  //       { new: true }
-  //     );
+      const updatedCompany = await Company.findByIdAndUpdate(
+        companyID,
+        { logopath: logoPicturePath },
+        { new: true }
+      );
 
-  //     if (!updatedCompany) {
-  //       return res.status(404).json({ error: "Company not found." });
-  //     }
+      if (!updatedCompany) {
+        return res.status(404).json({ error: "Company not found." });
+      }
 
-  //     return res.status(200).json({
-  //       success: true,
-  //       message: "Logo uploaded successfully.",
-  //       updatedCompany,
-  //     });
-  //   });
-  // } catch (error) {
-  //   console.error("Error updating Logo:", error);
-  //   return res.status(500).json({ error: "Internal server error." });
-  // }
+      return res.status(200).json({
+        success: true,
+        message: "Logo uploaded successfully.",
+        updatedCompany,
+      });
+    });
+  } catch (error) {
+    console.error("Error updating Logo:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
 };
 
 // --------------------------------------------------------------------------------------------------------------------------------------
@@ -2700,7 +2596,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
-      role: "teammember"
+      role:"teammember"
     };
 
     const user = await User.create(userdetails);
@@ -2819,7 +2715,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     expiryDate.setDate(currentDate.getDate() + 10);
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2992,26 +2888,26 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   const company = await Company.findById(companyID);
   const userInfo = await User.findById(id);
 
-  const password = generatePassword();
-  const { email, firstname, lastname, contact, designation, website_url, team, avatar, address, user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
-  // console.log(formData);
+    const password = generatePassword();
+    const { email, firstname, lastname, contact, designation, website_url, team,avatar, address,user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
+    // console.log(formData);
 
 
-  if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
-    return next(new ErrorHandler("Please fill out all user details", 400));
-  }
+    if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address ) {
+      return next(new ErrorHandler("Please fill out all user details", 400));
+    }
 
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    return next(new ErrorHandler("Please enter a valid email", 400));
-  }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return next(new ErrorHandler("Please enter a valid email", 400));
+    }
 
-  const message = {
-    from: "mailto:manish.syndell@gmail.com",
-    to: email,
-    subject: `${company.company_name} Invited you to join OneTapConnect`,
+    const message = {
+      from: "mailto:developersweb001@gmail.com",
+      to: email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
 
-    html: `
+      html: `
     <!DOCTYPE html>
     <html>
     
@@ -3049,159 +2945,61 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-  };
+    };
 
-  transporter.sendMail(message, (err, info) => {
-    if (err) {
-      console.log(`Error sending email to ${email}: ${err}`);
-    } else {
-      console.log(`Email sent to ${email}: ${info.response}`);
-    }
-  });
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(`Error sending email to ${email}: ${err}`);
+      } else {
+        console.log(`Email sent to ${email}: ${info.response}`);
+      }
+    });
 
 
-  const userData = await User.create({
-    email: email, // This line is removed to prevent email storage
-    first_name: firstname,
-    last_name: lastname,
-    contact: contact,
-    designation: designation,
-    team: team,
-    website_url: website_url,
-    user_line1_address_permission: user_line1_address_permission,
-    user_line2_apartment_permission: user_line2_apartment_permission,
-    user_city_permission: user_city_permission,
-    user_state_permission: user_state_permission,
-    user_postal_code_permission: user_postal_code_permission,
-    address: {
-      country: address.country,
-      line1: address.line1,
-      line2: address.line2,
-      city: address.city,
-      state: address.state,
-      postal_code: address.postal_code,
-    },
-    companyID: companyID,
-    password: password,
-    role: "teammember",
-  });
-  // console.log("called")
-  const userInformationData = {
-    user_id: userData._id,
-    website_url: website_url,
-    // Add other fields from formData if needed
-  };
-  await UserInformation.create(userInformationData);
+    const userData = await User.create({
+      email: email, // This line is removed to prevent email storage
+      first_name: firstname,
+      last_name: lastname,
+      contact: contact,
+      designation: designation,
+      team: team,
+      website_url: website_url,
+      user_line1_address_permission:user_line1_address_permission,
+      user_line2_apartment_permission:user_line2_apartment_permission,
+      user_city_permission:user_city_permission,
+      user_state_permission:user_state_permission,
+      user_postal_code_permission:user_postal_code_permission,
+      address: {
+        country: address.country,
+        line1: address.line1,
+        line2: address.line2,
+        city: address.city,
+        state: address.state,
+        postal_code: address.postal_code,
+      },
+      companyID: companyID,
+      password: password,
+      role: "teammember",
+    });
+// console.log("called")
+    const userInformationData = {
+      user_id: userData._id,
+      website_url: website_url,
+      // Add other fields from formData if needed
+    };
+    await UserInformation.create(userInformationData);
 
-  // console.log(userData._id)
+    // console.log(userData._id)
 
   res.status(201).json({
     success: true,
     message: "Invitaion Email sent Successfully",
-    userID: userData._id,
+    userID:userData._id,
   });
 });
 
 exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
-  const userID = req.body.userID;
+  const userID = req.body.userID; 
   // console.log(userID)
-  res.send("called api")
+res.send("called api")
 });
-
-
-
-exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
-  const { field_name, field_value } = req.body;
-  const { id } = req.user;
-  const updateData = {};
-
-  updateData[field_name] = field_value;
-  
-  const data = await User.updateOne({ _id: id }, { $set: updateData });
-  
-  res.status(200).json({
-    success: true,
-    data
-  });
-});
-
-exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
-  const { field_name, field_value } = req.body;
-  const { id } = req.user;
-  const updateData = {};
-
-  updateData[field_name] = field_value;
-  
-  const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
-  
-  res.status(200).json({
-    success: true,
-    data
-  });
-});
-
-exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
-  const { field_name, field_value } = req.body;
-  const { companyID } = req.user;
-
-  const company = await Company.findById(companyID);
-
-  if (!company) {
-    return res.status(404).json({ success: false, message: 'Company not found' });
-  }
-
-  company[field_name] = field_value;
-  await company.save();
-
-  res.status(200).json({
-    success: true,
-  });
-});
-
-exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
-  const { userid, companyid } = req.body;
-  console.log(userid)
-  console.log(companyid)
-
-  try {
-    const deletePromises = [];
-
-    const pushDeletePromise = async (deletePromise, errorMessage) => {
-      try {
-        const result = await deletePromise;
-        if (!result) {
-          console.log(errorMessage);
-        }
-      } catch (error) {
-        console.error('Error deleting data:', error);
-      }
-    };
-
-    pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
-    pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
-    pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
-    pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
-    pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
-    pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
-    pushDeletePromise(
-      CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
-      'Company Share Referral data not found'
-    );
-    deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
-    await Promise.all(deletePromises);
-
-    res.cookie('token', null, {
-      expires: new Date(Date.now()),
-      httpOnly: true,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully',
-    });
-  } catch (error) {
-    return next(new ErrorHandler(error.message, 500));
-  }
-});
-
-
