@@ -11,7 +11,9 @@ const { login,
      removeUserRole,
      checkurlslugavailiblity,
      inviteTeamMembermanually,
-     uploadImage} = require('../../controllers/customers/userController.js');
+     uploadImage,
+     saveuserdata,
+     savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata} = require('../../controllers/customers/userController.js');
 const {imageUpload} = require('../../middleware/imageUpload');
 
 const router = express.Router();
@@ -21,6 +23,7 @@ router.post("/register/step-2/:token", signUP2);
 router.post("/google-sign-up", googleSignUP);
 router.post("/google-login", googleLogin);
 router.post("/checkout", isAuthenticatedUser, checkoutHandler);
+router.post("/checkout/free", isAuthenticatedUser, checkoutHandlerFree);
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/forgot/password", forgotPassword);
@@ -71,7 +74,7 @@ router.post(
   isAuthenticatedUser,
   uploadProfilePicture
 );
-router.post("/uploadlogo", isAuthenticatedUser, uploadLogo);
+router.post("/uploadlogo",isAuthenticatedUser, imageUpload, uploadLogo);
 router.post("/uploadfavicon", isAuthenticatedUser, uploadfavicon);
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update", isAuthenticatedUser, updateCompanyDetails);
@@ -139,6 +142,10 @@ router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
 router.post('/users/add-manual-user', isAuthenticatedUser, inviteTeamMembermanually)
 router.post('/users/image-upload', imageUpload, uploadImage)
+router.post('/save_user_data', isAuthenticatedUser, saveuserdata);
+router.post('/save_company_data', isAuthenticatedUser, savecompanydata);
+router.post('/save_userinfo_data', isAuthenticatedUser, saveuserinfodata);
+router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
 
 
 module.exports = router;
