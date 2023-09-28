@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const companyRoutes = require("./routes/companyRoutes/companyRoutes.js");
 const paymentRoutes = require("./routes/paymentRoutes/paymentRoutes.js");
+const productRoutes = require("./routes/ProductRoutes/ProductRoutes.js");
 const SuperAdminRoutes = require("./routes/SuperAdminRoutes/superAdminRoutes.js");
 const AccountRoutes = require("./routes/accountSwitch/accountRoutes.js");
 const errorMiddleware = require("./middleware/error.js");
@@ -63,6 +64,7 @@ connectDatabase();
 app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
 app.use("/api/v1", paymentRoutes);
+app.use("/api/v1", productRoutes);
 // app.use('/api/v1',AccountRoutes)
 app.use(errorMiddleware);
 
