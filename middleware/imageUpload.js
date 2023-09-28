@@ -1,64 +1,231 @@
-const multer = require('multer');
+const multer = require("multer");
 const User = require("../models/NewSchemas/UserModel");
+const Company = require("../models/NewSchemas/Company_informationModel.js");
+const fs = require("fs");
+const path = require("path");
+const sharp = require("sharp");
 
-exports.imageUpload = (req, res, next) => {
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, "./uploads/profileImages");
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const extension = file.originalname.split(".").pop(); // Get the file extension
-      cb(null, `profile-${uniqueSuffix}.${extension}`);
-    },
-  });
+const storage = multer.memoryStorage();
 
-  const fileFilter = (req, file, cb) => {
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
+  fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true); // Accept the file
     } else {
       cb(null, false); // Reject the file
     }
-  };
+  },
+}).single('image');
 
-  const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter
-  });
 
-  // Call the upload function
-  upload.single('avatar')(req, res, async (err) => {
+const saveImageToFolder = async (imageType, imageData) => {
+  let fileNamePrefix;
+
+
+  if (imageType === 'profile') {
+    fileNamePrefix = 'profile-image-';
+
+  } else if (imageType === 'logo') {
+    fileNamePrefix = 'logo-';
+  } else if (imageType === 'favicon') {
+    console.log("called favicon")
+    fileNamePrefix = 'favicon-';
+  } else {
+    throw new Error('Invalid image type');
+  }
+
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  const fileName = `${fileNamePrefix}${uniqueSuffix}.png`; // Assume PNG format
+
+  let folderPath = '';
+
+  if (imageType === 'profile') {
+    folderPath = './uploads/profileImages';
+  } else if (imageType === 'logo') {
+    folderPath = '../uploads/logo';
+  } else if (imageType === 'favicon') {
+    folderPath = './uploads/favicon';
+  } else {
+    throw new Error('Invalid image type');
+  }
+
+  const destinationPath = path.join(__dirname, folderPath, fileName);
+
+
+    await saveBase64Image(imageData, destinationPath);
+
+    return fileName;
+
+};
+
+const getImageDimensionsFromBuffer = async (imageData) => {
+  const base64ImageWithoutPrefix = imageData.replace(
+    /^data:image\/(jpeg|png|jpg);base64,/,
+    ""
+  );
+
+  try {
+    const imageBuffer = Buffer.from(base64ImageWithoutPrefix, 'base64');
+    const { width, height } = await sharp(imageBuffer, { format: 'jpeg' }).metadata(); // Change 'jpeg' to the appropriate format
+    console.log('Image dimensions:', { width, height });
+    return { width, height };
+  } catch (error) {
+    console.error('Error getting image dimensions:', error);
+    throw error;
+  }
+};
+
+
+
+
+const saveBase64Image = async (base64Data, filePath) => {
+  try {
+    // Remove the data URL prefix (e.g., "data:image/png;base64,")
+    const base64ImageWithoutPrefix = base64Data.replace(
+      /^data:image\/(jpeg|png|jpg);base64,/,
+      ""
+    );
+
+    // Create a Buffer from the base64 image
+    const imageBuffer = Buffer.from(base64ImageWithoutPrefix, "base64");
+
+    // Ensure the directory exists
+    const directory = path.dirname(filePath);
+    fs.mkdirSync(directory, { recursive: true });
+
+    // Write the Buffer data to a file
+    fs.writeFileSync(filePath, imageBuffer);
+
+    console.log("Image saved successfully:", filePath);
+  } catch (error) {
+    console.error("Error saving the image:", error);
+    throw error;
+  }
+};
+const saveimageDatabase = async(type, userID, companyID, imagePath)=>{
+  const company = await Company.findById(companyID);
+  if(type === 'logo'){
+      const oldLogoPath = company.logopath;
+      console.log("oldLogoPath")
+      console.log(oldLogoPath)
+      console.log("oldLogoPath")
+
+      if (oldLogoPath) {
+        const filePath = path.join(__dirname, '..', 'uploads', 'logo', oldLogoPath);
+        console.log('Deleting file at path:', filePath);
+              fs.unlink(filePath, (unlinkErr) => {
+                if (unlinkErr) {
+                  console.error("Error deleting old logo:", unlinkErr);
+                }
+              });
+            }
+    const updatedCompany = await Company.findByIdAndUpdate(
+      companyID,
+      { logopath: imagePath },
+      { new: true }
+    );
+  }else if(type === 'favicon'){
+    const oldfaviconPath = company.fav_icon_path;
+    console.log(oldfaviconPath)
+
+    const filePath = path.join(__dirname, '..', 'uploads', 'favicon', oldfaviconPath);
+
+    if (oldfaviconPath) {
+      // Remove the old favicon file from the storage folder
+      fs.unlink(filePath, (unlinkErr) => {
+        if (unlinkErr) {
+          console.error("Error deleting old favicon:", unlinkErr);
+        }
+      });
+    }
+
+    const updatedCompany = await Company.findByIdAndUpdate(
+      companyID,
+      { fav_icon_path: imagePath },
+      { new: true }
+    );
+  }else if(type === 'profile'){
+
+    const removeuser = await User.findById(userID);
+    const oldAvatarPath = removeuser.avatar;
+
+    if (oldAvatarPath) {
+    const filePath = path.join(__dirname, '..', 'uploads', 'profileImages', oldfaviconPath);
+      fs.unlink(filePath, (unlinkErr) => {
+        if (unlinkErr) {
+          console.error("Error deleting old profile picture:", unlinkErr);
+        }
+      });
+    }
+    const updatedUser = await User.findByIdAndUpdate(
+      userID,
+      { avatar: imagePath },
+      { new: true }
+    );
+  }
+
+
+}
+
+exports.imageUpload = (req, res, next) => {
+  console.log("called")
+
+  upload(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: 'Error uploading file', error: err });
     }
 
-    const userID = req.body.userID;
-    const filename = req.file.filename;
-    // console.log(userID, "...")
-    // console.log(filename, "...") // Assuming 'filename' contains the saved file name
+    let base64ImageData;
+
+  if (req.file && req.file.buffer) {
+    // If a file is uploaded
+    base64ImageData = req.file.buffer.toString("base64");
+    console.log("base34");
+  } else if (req.body.image) {
+    // If base64 image data is provided in req.body.image
+    base64ImageData = req.body.image;
+    console.log("image");
+  } else {
+    return res
+      .status(400)
+      .json({ message: "No image or base64 data provided." });
+  }
 
     try {
-      // Find the user with the corresponding userID
-      const user = await User.findById(userID);
-    //   console.log(user, "...........................")
+      const { imageType } = req.body;
+      const { companyID, _id } = req.user;
+      console.log('--------------------')
+      console.log(_id)
+      console.log('--------------------')
+      const uploadedFileName = req.file ? req.file.filename : null;
 
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+      let base64FileName;
+      if (imageType === 'profile') {
+        base64FileName = await saveImageToFolder('profile', base64ImageData);
+        // ... rest of the code remains unchanged
+      } else if (imageType === 'logo') {
+        base64FileName = await saveImageToFolder('logo', base64ImageData);
+      } else if (imageType === 'favicon') {
+        base64FileName = await saveImageToFolder('favicon', base64ImageData);
+
+      } else {
+        throw new Error('Invalid image type');
       }
+      saveimageDatabase (imageType,_id, companyID, base64FileName )
 
-      // Update the 'avatar' field with the filename
-      user.avatar = filename;
-      await user.save();
+      console.log(base64FileName)
+      
 
       req.file = {
-        buffer: req.file.buffer,
-        mimetype: req.file.mimetype,
-        originalname: req.file.originalname,
-        // userID: userID,
-        avatar: filename // Add avatar field to req.file object
+        buffer: null,
+        mimetype: 'image/jpeg', // Assuming PNG format
+        originalname: uploadedFileName || base64FileName,
+        avatar: uploadedFileName || base64FileName,
       };
+      console.log(updatedCompany)
 
       next();
     } catch (error) {
