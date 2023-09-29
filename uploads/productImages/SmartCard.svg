@@ -1,9 +1,9 @@
 <svg width="201" height="200" viewBox="0 0 201 200" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<rect width="201" height="200" fill="#E7E7E7"/>
-<rect width="1920" height="1644" transform="translate(-387 -871)" fill="#F2F2F2"/>
-<rect width="1920" height="1644" transform="translate(-387 -871)" fill="#F2F2F2"/>
+<rect width="201" height="200" fill="none"/>
+<rect width="1920" height="1644" transform="translate(-387 -871)" fill="none"/>
+<rect width="1920" height="1644" transform="translate(-387 -871)" fill="none"/>
 <g clip-path="url(#clip0_0_1)">
-<rect x="-42" width="285" height="333" rx="4" fill="white"/>
+<rect x="-42" width="285" height="333" rx="4" fill="none"/>
 <rect x="0.5" width="200" height="200" rx="4" fill="url(#pattern0)"/>
 </g>
 <defs>

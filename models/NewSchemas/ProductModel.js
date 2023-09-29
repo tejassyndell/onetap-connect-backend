@@ -59,6 +59,13 @@ const productSchema = new mongoose.Schema(
     hasVariations: {
       type: Boolean,
     },
+    shortDescription: {
+      tagline: String,
+      shortdescription: String
+    },    
+    description: {
+      type: String,
+    },
     variations: [
       {
         Type: {
@@ -94,6 +101,13 @@ const productSchema = new mongoose.Schema(
             type: String, // Assuming coupon codes are stored as strings
           },
         ],
+        shortDescription: {
+          tagline: String,
+          shortdescription: String
+        },
+        description: {
+          type: String,
+        },
         CustomPermalink: {
           type: String,
         },
