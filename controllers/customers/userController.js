@@ -441,7 +441,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   });
 
 //   const message = {
-//     from: "manish.syndell@gmail.com",
+//     from: "developersweb001@gmail.com",
 //     to: email,
 //     subject: `Password recovery email`,
 //     text: `Password reset link is  :- \n\n ${process.env.FRONTEND_URL + '/reset/password/' + resetToken} \n\n If you have not requested this email then please ignore It `,
@@ -509,7 +509,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -830,7 +830,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     // const expiryDateString = expiryDate.toISOString();
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       //   html: `
@@ -984,7 +984,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     }
 
     const message = {
-      from: "mailto:manish.syndell@gmail.com",
+      from: "mailto:developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2170,57 +2170,14 @@ const checkimgSize = (req, res, next) => {
 
 // Define a function to handle profile picture upload
 exports.uploadProfilePicture = async (req, res) => {
-  const { id } = req.params;
   try {
-    // Use async/await for better error handling and readability
-    // const userId = req.user.id;
-    // Check if the user already has an avatar path
-    const removeuser = await User.findById(id);
-    const oldAvatarPath = removeuser.avatar;
+    // Your code to handle image upload and processing goes here
 
-    upload.single("profilePicture")(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: "File upload failed." });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded." });
-      }
-
-      const profilePicturePath = req.file.filename;
-
-      // Delete the old profile picture if it exists
-      if (oldAvatarPath) {
-        // Remove the old profile picture file from the storage folder
-        fs.unlink(`./uploads/profileImages/${oldAvatarPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error("Error deleting old profile picture:", unlinkErr);
-          }
-        });
-
-        // Remove the old avatar path from the user document in the database
-        await User.findByIdAndUpdate(id, { avatar: null });
-      }
-
-      const user = await User.findByIdAndUpdate(
-        id,
-        { avatar: profilePicturePath }, // Update the 'avatar' field
-        { new: true }
-      );
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found." });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "Profile picture uploaded successfully.",
-        user,
-      });
-    });
+    // Assuming the upload and processing were successful, you can send a success response
+    res.status(200).json({ message: 'Profile Picture uploaded successfully', imagePath: 'path_to_uploaded_image' });
   } catch (error) {
-    console.error("Error updating profile picture:", error);
-    return res.status(500).json({ error: "Internal server error." });
+    console.error('Error during Profile Picture upload:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 
@@ -2276,57 +2233,68 @@ const checkLogoSize = (req, res, next) => {
     return res.status(500).json({ error: "Internal server error." });
   }
 };
+exports.uploadLogo = async (req, res) => {
+  try {
+    // Your code to handle image upload and processing goes here
+
+    // Assuming the upload and processing were successful, you can send a success response
+    res.status(200).json({ message: 'Logo uploaded successfully', imagePath: 'path_to_uploaded_image' });
+  } catch (error) {
+    console.error('Error during logo upload:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
 
 // Modify the route handler to include the checkLogoSize middleware
-exports.uploadLogo = async (req, res) => {
-  res.send("called")
-  // try {
-  //   // Use async/await for better error handling and readability
-  //   const { companyID } = req.user;
-  //   // console.log("object", req.user)
-  //   // Check if the company already has a logo path
-  //   const company = await Company.findById(companyID);
-  //   console.log(company);
-  //   const oldLogoPath = company.logopath;
+// exports.uploadLogo = async (req, res) => {
+//   res.send("called")
+//   // try {
+//   //   // Use async/await for better error handling and readability
+//   //   const { companyID } = req.user;
+//   //   // console.log("object", req.user)
+//   //   // Check if the company already has a logo path
+//   //   const company = await Company.findById(companyID);
+//   //   console.log(company);
+//   //   const oldLogoPath = company.logopath;
 
-  //   logoupload.single("logoimage")(req, res, async (err) => {
-  //     if (err) {
-  //       return res.status(400).json({ error: "File upload failed." });
-  //     }
+//   //   logoupload.single("logoimage")(req, res, async (err) => {
+//   //     if (err) {
+//   //       return res.status(400).json({ error: "File upload failed." });
+//   //     }
 
-  //     const logoPicturePath = req.file.filename;
+//   //     const logoPicturePath = req.file.filename;
 
-  //     // Delete the old logo file if it exists
-  //     if (oldLogoPath) {
-  //       // Remove the old logo file from the storage folder
-  //       fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
-  //         if (unlinkErr) {
-  //           console.error("Error deleting old logo:", unlinkErr);
-  //         }
-  //       });
-  //     }
+//   //     // Delete the old logo file if it exists
+//   //     if (oldLogoPath) {
+//   //       // Remove the old logo file from the storage folder
+//   //       fs.unlink(`./uploads/logo/${oldLogoPath}`, (unlinkErr) => {
+//   //         if (unlinkErr) {
+//   //           console.error("Error deleting old logo:", unlinkErr);
+//   //         }
+//   //       });
+//   //     }
 
-  //     const updatedCompany = await Company.findByIdAndUpdate(
-  //       companyID,
-  //       { logopath: logoPicturePath },
-  //       { new: true }
-  //     );
+//   //     const updatedCompany = await Company.findByIdAndUpdate(
+//   //       companyID,
+//   //       { logopath: logoPicturePath },
+//   //       { new: true }
+//   //     );
 
-  //     if (!updatedCompany) {
-  //       return res.status(404).json({ error: "Company not found." });
-  //     }
+//   //     if (!updatedCompany) {
+//   //       return res.status(404).json({ error: "Company not found." });
+//   //     }
 
-  //     return res.status(200).json({
-  //       success: true,
-  //       message: "Logo uploaded successfully.",
-  //       updatedCompany,
-  //     });
-  //   });
-  // } catch (error) {
-  //   console.error("Error updating Logo:", error);
-  //   return res.status(500).json({ error: "Internal server error." });
-  // }
-};
+//   //     return res.status(200).json({
+//   //       success: true,
+//   //       message: "Logo uploaded successfully.",
+//   //       updatedCompany,
+//   //     });
+//   //   });
+//   // } catch (error) {
+//   //   console.error("Error updating Logo:", error);
+//   //   return res.status(500).json({ error: "Internal server error." });
+//   // }
+// };
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 //favicon update API
@@ -2384,47 +2352,13 @@ const faviconupload = multer({
 // Define a function to handle profile picture upload
 exports.uploadfavicon = async (req, res) => {
   try {
-    // Use async/await for better error handling and readability
-    const { companyID } = req.user;
+    // Your code to handle image upload and processing goes here
 
-    // Check if the company already has a favicon path
-    const company = await Company.findById(companyID);
-    const oldfaviconPath = company.fav_icon_path;
-
-    faviconupload.single("faviconimage")(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: "File upload failed." });
-      }
-      const faviconPicturePath = req.file.filename;
-
-      // Delete the old favicon file if it exists
-      if (oldfaviconPath) {
-        // Remove the old favicon file from the storage folder
-        fs.unlink(`./uploads/favicon/${oldfaviconPath}`, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error("Error deleting old favicon:", unlinkErr);
-          }
-        });
-      }
-      const updatedCompany = await Company.findByIdAndUpdate(
-        companyID,
-        { fav_icon_path: faviconPicturePath },
-        { new: true }
-      );
-
-      if (!updatedCompany) {
-        return res.status(404).json({ error: "Company not found." });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: "favicon uploaded successfully.",
-        updatedCompany,
-      });
-    });
+    // Assuming the upload and processing were successful, you can send a success response
+    res.status(200).json({ message: 'Favicon uploaded successfully', imagePath: 'path_to_uploaded_image' });
   } catch (error) {
-    console.error("Error updating favicon:", error);
-    return res.status(500).json({ error: "Internal server error." });
+    console.error('Error during Favicon upload:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 
@@ -2819,7 +2753,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     expiryDate.setDate(currentDate.getDate() + 10);
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3007,7 +2941,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "mailto:manish.syndell@gmail.com",
+    from: "mailto:developersweb001@gmail.com",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3103,7 +3037,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
-  const userID = req.body.userID;
+  // const userID = req.body.userID;
   // console.log(userID)
   res.send("called api")
 });
