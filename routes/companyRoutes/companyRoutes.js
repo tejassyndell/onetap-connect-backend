@@ -72,10 +72,11 @@ router.post("/user/delete/team", isAuthenticatedUser, deleteTeam);
 router.post(
   "/upload-profile-picture/:id",
   isAuthenticatedUser,
+  imageUpload,
   uploadProfilePicture
 );
 router.post("/uploadlogo",isAuthenticatedUser, imageUpload, uploadLogo);
-router.post("/uploadfavicon", isAuthenticatedUser, uploadfavicon);
+router.post("/uploadfavicon", isAuthenticatedUser,imageUpload, uploadfavicon);
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update", isAuthenticatedUser, updateCompanyDetails);
 router.put(

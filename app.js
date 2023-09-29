@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const companyRoutes = require("./routes/companyRoutes/companyRoutes.js");
 const paymentRoutes = require("./routes/paymentRoutes/paymentRoutes.js");
+const productRoutes = require("./routes/ProductRoutes/ProductRoutes.js");
 const SuperAdminRoutes = require("./routes/SuperAdminRoutes/superAdminRoutes.js");
 const AccountRoutes = require("./routes/accountSwitch/accountRoutes.js");
 const errorMiddleware = require("./middleware/error.js");
@@ -44,6 +45,14 @@ app.get("/api/v1/profile/img/:filename", (req, res) => {
   res.sendFile(filePath);
 });
 
+app.get("/api/v1/product/img/:filename", (req, res) => {
+  const filename = req.params.filename;
+  console.log(filename);
+
+  const filePath = path.join(__dirname, "/uploads/productImages", filename);
+  res.sendFile(filePath);
+});
+
 app.get("/api/v1/logo/img/:filename", (req, res) => {
   const filename = req.params.filename;
   console.log(filename);
@@ -63,6 +72,7 @@ connectDatabase();
 app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
 app.use("/api/v1", paymentRoutes);
+app.use("/api/v1", productRoutes);
 // app.use('/api/v1',AccountRoutes)
 app.use(errorMiddleware);
 
