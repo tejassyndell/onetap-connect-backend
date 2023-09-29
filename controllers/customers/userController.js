@@ -441,7 +441,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   });
 
 //   const message = {
-//     from: "manish.syndell@gmail.com",
+//     from: "developersweb001@gmail.com",
 //     to: email,
 //     subject: `Password recovery email`,
 //     text: `Password reset link is  :- \n\n ${process.env.FRONTEND_URL + '/reset/password/' + resetToken} \n\n If you have not requested this email then please ignore It `,
@@ -509,7 +509,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -830,7 +830,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     // const expiryDateString = expiryDate.toISOString();
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       //   html: `
@@ -984,7 +984,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     }
 
     const message = {
-      from: "mailto:manish.syndell@gmail.com",
+      from: "mailto:developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2819,7 +2819,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     expiryDate.setDate(currentDate.getDate() + 10);
 
     const message = {
-      from: "manish.syndell@gmail.com",
+      from: "developersweb001@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3007,7 +3007,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "mailto:manish.syndell@gmail.com",
+    from: "mailto:developersweb001@gmail.com",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
