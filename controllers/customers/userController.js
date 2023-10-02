@@ -2931,7 +2931,10 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   // console.log(formData);
 
 
-  if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
+  // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
+  //   return next(new ErrorHandler("Please fill out all user details", 400));
+  // }
+  if (!email || !firstname || !lastname || !team) {
     return next(new ErrorHandler("Please fill out all user details", 400));
   }
 
