@@ -9,13 +9,14 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
+  // limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp","image/svg+xml","image/jpg"];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true); // Accept the file
-    } else {
-      cb(null, false); // Reject the file
+    }  else {
+      // Reject the file with an error message
+      cb(new Error("Image format should be JPG, JPEG, PNG, or SVG"), false);
     }
   },
 }).single("image");
