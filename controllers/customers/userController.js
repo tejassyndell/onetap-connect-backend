@@ -795,7 +795,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   for (const userData of memberData) {
     const { email, first_name, last_name, team } = userData;
 
-    if (!email || !first_name || !last_name || !team) {
+    if (!email || !first_name || !last_name) {
       if (!email) {
         return next(new ErrorHandler("Please Enter Email", 400));
       }
@@ -805,9 +805,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
       if (!last_name) {
         return next(new ErrorHandler("Please Enter Last Name", 400));
       }
-      if (!team) {
-        return next(new ErrorHandler("Please Enter Team", 400));
-      } else {
+     else {
         return next(new ErrorHandler("Please fill out all details", 400));
       }
     }
@@ -2934,7 +2932,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
   //   return next(new ErrorHandler("Please fill out all user details", 400));
   // }
-  if (!email || !firstname || !lastname || !team) {
+  if (!email || !firstname || !lastname) {
     return next(new ErrorHandler("Please fill out all user details", 400));
   }
 
