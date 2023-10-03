@@ -9,12 +9,18 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
-  // limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
+  // limits: { fileSize: 10  1024  1024 }, // 10MB file size limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp","image/svg+xml","image/jpg"];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/svg+xml",
+      "image/jpg",
+    ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true); // Accept the file
-    }  else {
+    } else {
       // Reject the file with an error message
       cb(new Error("Image format should be JPG, JPEG, PNG, or SVG"), false);
     }
@@ -155,7 +161,7 @@ const saveimageDatabase = async (type, userID, companyID, imagePath) => {
       { new: true }
     );
   } else if (type === "profile") {
-    const removeuser = await User.findById(userID);
+    const removeuser = await User.findById({ _id: userID });
     const oldAvatarPath = removeuser.avatar;
 
     if (oldAvatarPath) {
@@ -208,8 +214,8 @@ exports.imageUpload = (req, res, next) => {
 
     try {
       const { imageType } = req.body;
-      const { companyID, _id } = req.user;
-      console.log(_id);
+      const { companyID } = req.user;
+      const { id } = req.params;
       const uploadedFileName = req.file ? req.file.filename : null;
 
       let base64FileName;
@@ -223,7 +229,7 @@ exports.imageUpload = (req, res, next) => {
       } else {
         throw new Error("Invalid image type");
       }
-      saveimageDatabase(imageType, _id, companyID, base64FileName);
+      saveimageDatabase(imageType, id, companyID, base64FileName);
 
       console.log(base64FileName);
 
