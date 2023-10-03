@@ -24,7 +24,7 @@ exports.imageinviteUpload = (req, res, next) => {
     }
 
     const userID = req.body.userID;
-    const filename = req.file.filename;
+    const filename = req.file ? req.file.filename : "";
 
     try {
       // Find the user with the corresponding userID
