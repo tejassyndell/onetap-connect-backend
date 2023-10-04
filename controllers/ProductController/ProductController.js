@@ -35,45 +35,58 @@ exports.getProductsInfo = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCartProducts = catchAsyncErrors(async (req, res, next) => {
-  const Cartproducts = await cart.find();
-  if (!Cartproducts) {
-    return next(new ErrorHandler("No cart Found", 404));
+  // console.log( req.body.user)
+  const {_id}= req.body.user;
+  const userId = _id;
+  console.log( _id,"hello user")
+  const userCart = await cart.findOne({ userID: userId });
+
+  if (!userCart) {
+    return 
+    // next(new ErrorHandler("No cart found for the user", 404));
+    "No cart found for the user"
   }
+
   res.status(200).json({
-    Cartproducts,
+    Cartproducts: userCart.products,
   });
 });
 
-exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.user; // Assuming you want to associate the cart with the user ID
 
-  // Extract data from the request body (assuming you're sending data in the request body)
-  const { productId, quantity } = req.body;
+exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.body.user._id;
 
   try {
     // Check if a cart exists for the user ID
-    let userCart = await cart.findOne({ userID: id });
+    let userCart = await cart.findOne({ userID: userId });
 
     // If no cart exists for the user, create a new cart
     if (!userCart) {
       userCart = new cart({
-        userID: id,
+        userID: userId,
         products: [],
       });
     }
 
-    // Check if the product is already in the cart
-    const existingCartItemIndex = userCart.products.findIndex((item) => item.product._id == productId);
+    // Iterate through addedProducts array
+    for (const addedProduct of req.body.addedProducts) {
+      const { product, quantity } = addedProduct;
 
-    if (existingCartItemIndex !== -1) {
-      // If the product is already in the cart, update the quantity
-      userCart.products[existingCartItemIndex].quantity += quantity;
-    } else {
-      // If the product is not in the cart, add it as a new item
-      userCart.products.push({
-        product: productId, // You can store the product ID here
-        quantity: quantity,
-      });
+      // Check if the product is already in the cart
+      const existingCartItemIndex = userCart.products.findIndex(
+        (item) => item.product._id.toString() === product._id.toString()
+      );
+
+      if (existingCartItemIndex !== -1) {
+        // If the product is already in the cart, update the quantity
+        userCart.products[existingCartItemIndex].quantity = quantity;
+      } else {
+        // If the product is not in the cart, add it as a new item
+        userCart.products.push({
+          product: product,
+          quantity: quantity,
+        });
+      }
     }
 
     // Save the updated cart
@@ -83,8 +96,12 @@ exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
       message: "Cart updated successfully",
     });
   } catch (error) {
+    console.error(error);
     return next(new ErrorHandler("Failed to update cart", 500));
   }
 });
+
+
+
 
 

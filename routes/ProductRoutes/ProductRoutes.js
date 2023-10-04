@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { isAuthenticatedUser } = require("../../middleware/auth");
+const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.js");
+
 
 const {
   testAPI,
@@ -15,7 +16,7 @@ router.get("/products", getProducts);
 // router.get("/product/:id", getProductsInfo);
 // router.get("/product/:name", getProductsInfo);
 router.get("/:name", getProductsInfo);
-router.get("/cart", getCartProducts);
-router.post("/cart/update", updateCartProducts);
+router.post("/product/cart", getCartProducts);
+router.post("/cart/update" ,updateCartProducts);
 
 module.exports = router;
