@@ -344,6 +344,11 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
+  if(user.status === "inactive"){
+    return next(
+      new ErrorHandler("Your account has been deactivated by administrator.", 401)
+    );
+  }
 
   // res.send(payload)
   sendToken(user, 200, res);
@@ -364,6 +369,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User does not found. ", 401));
   }
+  console.log(user)
 
   // Check if the user signed up with Google
   if (user.googleId !== null) {
@@ -378,7 +384,11 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-
+  if(user.status === "inactive"){
+    return next(
+      new ErrorHandler("Your account has been deactivated by administrator.", 401)
+    );
+  }
   sendToken(user, 200, res);
 });
 
