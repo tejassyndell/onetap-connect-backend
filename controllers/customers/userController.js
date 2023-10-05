@@ -344,6 +344,11 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
+  if(user.status === "inactive"){
+    return next(
+      new ErrorHandler("Your account has been deactivated by administrator.", 401)
+    );
+  }
 
   // res.send(payload)
   sendToken(user, 200, res);
@@ -364,6 +369,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User does not found. ", 401));
   }
+  console.log(user)
 
   // Check if the user signed up with Google
   if (user.googleId !== null) {
@@ -378,7 +384,11 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-
+  if(user.status === "inactive"){
+    return next(
+      new ErrorHandler("Your account has been deactivated by administrator.", 401)
+    );
+  }
   sendToken(user, 200, res);
 });
 
@@ -795,7 +805,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   for (const userData of memberData) {
     const { email, first_name, last_name, team } = userData;
 
-    if (!email || !first_name || !last_name || !team) {
+    if (!email || !first_name || !last_name) {
       if (!email) {
         return next(new ErrorHandler("Please Enter Email", 400));
       }
@@ -805,9 +815,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
       if (!last_name) {
         return next(new ErrorHandler("Please Enter Last Name", 400));
       }
-      if (!team) {
-        return next(new ErrorHandler("Please Enter Team", 400));
-      } else {
+     else {
         return next(new ErrorHandler("Please fill out all details", 400));
       }
     }
@@ -2934,7 +2942,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
   //   return next(new ErrorHandler("Please fill out all user details", 400));
   // }
-  if (!email || !firstname || !lastname || !team) {
+  if (!email || !firstname || !lastname) {
     return next(new ErrorHandler("Please fill out all user details", 400));
   }
 

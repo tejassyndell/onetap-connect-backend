@@ -2,6 +2,7 @@ const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../utils/errorHandler.js");
 const Product = require("../../models/NewSchemas/ProductModel.js");
 const ProductCategory = require("../../models/NewSchemas/ProductCategoryModel.js");
+const cart = require("../../models/NewSchemas/cartModel.js");
 
 exports.testAPI = catchAsyncErrors(async (req, res, next) => {
   res.send("called monika");
@@ -11,7 +12,7 @@ exports.getProducts = catchAsyncErrors(async (req, res, next) => {
   const products = await Product.find();
 
   if (!products) {
-    return next(new ErrorHandler("No Products Found", 404));
+    return next(new ErrorHandler("No Products Found.....", 404));
   }
 
   res.status(200).json({
@@ -20,15 +21,87 @@ exports.getProducts = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getProductsInfo = catchAsyncErrors(async (req, res, next) => {
-    const { id } = req.params;
-    console.log(req.params)
-    const products = await Product.findById(id);
-  
-    if (!products) {
-      return next(new ErrorHandler("No Product Found", 404));
-    }
-  
-    res.status(200).json({
-      products,
-    });
+  const { name } = req.params; // Get the name parameter from the URL
+  const productName = name.replace(/-/g, ' '); // Replace hyphens with spaces
+
+  const products = await Product.findOne({ name: productName }); // Find the product by name
+
+  if (!products) {
+    return next(new ErrorHandler("No Product Found", 404));
+  }
+  res.status(200).json({
+    products,
   });
+});
+
+exports.getCartProducts = catchAsyncErrors(async (req, res, next) => {
+  // console.log( req.body.user)
+  const {_id}= req.body.user;
+  const userId = _id;
+  console.log( _id,"hello user")
+  const userCart = await cart.findOne({ userID: userId });
+
+  if (!userCart) {
+    return 
+    // next(new ErrorHandler("No cart found for the user", 404));
+    "No cart found for the user"
+  }
+
+  res.status(200).json({
+    Cartproducts: userCart.products,
+  });
+});
+
+
+exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.body.user._id;
+
+  try {
+    // Check if a cart exists for the user ID
+    let userCart = await cart.findOne({ userID: userId });
+
+    // If no cart exists for the user, create a new cart
+    if (!userCart) {
+      userCart = new cart({
+        userID: userId,
+        products: [],
+      });
+    }
+
+    // Iterate through addedProducts array
+    for (const addedProduct of req.body.addedProducts) {
+      const { product, quantity } = addedProduct;
+
+      // Check if the product is already in the cart
+      const existingCartItemIndex = userCart.products.findIndex(
+        (item) => item.product._id.toString() === product._id.toString()
+      );
+
+      if (existingCartItemIndex !== -1) {
+        // If the product is already in the cart, update the quantity
+        userCart.products[existingCartItemIndex].quantity = quantity;
+      } else {
+        // If the product is not in the cart, add it as a new item
+        userCart.products.push({
+          product: product,
+          quantity: quantity,
+        });
+      }
+    }
+
+    // Save the updated cart
+    await userCart.save();
+
+    res.status(200).json({
+      message: "Cart updated successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return next(new ErrorHandler("Failed to update cart", 500));
+  }
+});
+
+
+
+
+

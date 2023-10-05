@@ -16,7 +16,20 @@ const userSchema = new mongoose.Schema(
         message: "First name cannot be empty",
       },
     },
-    team: { type: mongoose.Schema.Types.ObjectId },
+    team: { type: mongoose.Schema.Types.ObjectId, require:false, set: v => v === '' ? null : v  },
+    // team: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   default: null,
+    //   validate: {
+    //     validator: function(value) {
+    //       if (value === null || value === "") {
+    //         return true; // Allow null or empty string
+    //       }
+    //       return typeof value === "string" && validator.isMongoId(value);
+    //     },
+    //     message: "Team must be a valid ObjectId, null, or an empty string",
+    //   },
+    // },
     last_name: {
       type: String,
     },
