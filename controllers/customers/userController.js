@@ -3057,24 +3057,41 @@ exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
 
 
 
-exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
-  const { field_name, field_value } = req.body;
-  const { id } = req.user;
-  const updateData = {};
+// exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
+//   const { field_name, field_value } = req.body;
+//   const { id } = req.user;
+//   const updateData = {};
 
+//   updateData[field_name] = field_value;
+  
+//   const data = await User.updateOne({ _id: id }, { $set: updateData });
+  
+//   res.status(200).json({
+//     success: true,
+//     data
+//   });
+// });
+exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params; // Assuming you pass the user ID in the URL parameters
+  const { field_name, field_value } = req.body;
+  
+  const updateData = {};
   updateData[field_name] = field_value;
   
-  const data = await User.updateOne({ _id: id }, { $set: updateData });
+  const updatedUser = await User.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+  
+  if (!updatedUser) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
   
   res.status(200).json({
     success: true,
-    data
+    data: updatedUser,
   });
 });
-
 exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
   const { field_name, field_value } = req.body;
-  const { id } = req.user;
+  const { id } = req.params;
   const updateData = {};
 
   updateData[field_name] = field_value;
@@ -3083,9 +3100,23 @@ exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
   
   res.status(200).json({
     success: true,
-    data
+    data:data
   });
 });
+// exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
+//   const { field_name, field_value } = req.body;
+//   const { id } = req.user;
+//   const updateData = {};
+
+//   updateData[field_name] = field_value;
+  
+//   const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
+  
+//   res.status(200).json({
+//     success: true,
+//     data
+//   });
+// });
 
 exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
   const { field_name, field_value } = req.body;
