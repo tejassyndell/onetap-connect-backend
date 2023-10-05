@@ -31,7 +31,7 @@ const monthlyTeamPriceID = process.env.MONTHLY_TEAM_PLAN_PRICE_ID
 //       name: req.body.name
 //     },
 //   });
-  
+
 //   console.log(myPayment)
 //   // need to save payment id and user details in database after successfull payment
 
@@ -46,7 +46,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
 
     const existingCustomer = await stripe.customers.list({
       email: user.email,
-      limit: 1, 
+      limit: 1,
     });
 
     console.log(user.email)
@@ -68,7 +68,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
           postal_code: user.billing_address.postal_code,
         },
         shipping: {
-        name: `${user.first_name} ${user.last_name}`,
+          name: `${user.first_name} ${user.last_name}`,
           address: {
             line1: user.shipping_address.line1,
             line2: user.shipping_address.line2,
@@ -78,46 +78,54 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
             postal_code: user.shipping_address.postal_code,
           },
         },
-        metadata :{
+        metadata: {
           company: user.company_name,
-        }
+        },
+        expand: ['tax']
       });
+      console.log("----------------------------------------------------------")
+      console.log(customer)
+      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
 
 
 
-    }else{
+    } else {
       console.log("called2")
-    const customer = await stripe.customers.create({
-      name: `${user.first_name} ${user.last_name}`,
-      email: user.email,
-      phone: user.contact,
-      address: {
-        line1: user.billing_address.line1,
-        line2: user.billing_address.line2,
-        city: user.billing_address.city,
-        state: user.billing_address.state,
-        country: user.billing_address.country,
-        postal_code: user.billing_address.postal_code,
-      },
-      // test_clock: "clock_1NsM3hHsjFNmmZSiVkQdrD5s",
-      shipping: {
-      name: `${user.first_name} ${user.last_name}`,
+      const customer = await stripe.customers.create({
+        name: `${user.first_name} ${user.last_name}`,
+        email: user.email,
+        phone: user.contact,
         address: {
-          line1: user.shipping_address.line1,
-          line2: user.shipping_address.line2,
-          city: user.shipping_address.city,
-          state: user.shipping_address.state,
-          country: user.shipping_address.country,
-          postal_code: user.shipping_address.postal_code,
+          line1: user.billing_address.line1,
+          line2: user.billing_address.line2,
+          city: user.billing_address.city,
+          state: user.billing_address.state,
+          country: user.billing_address.country,
+          postal_code: user.billing_address.postal_code,
         },
-      },
-      metadata :{
-        company: user.company_name,
-      }
-    });
-    res.status(200).json({ success: true, customer });
-  }
+        // test_clock: "clock_1NsM3hHsjFNmmZSiVkQdrD5s",
+        shipping: {
+          name: `${user.first_name} ${user.last_name}`,
+          address: {
+            line1: user.shipping_address.line1,
+            line2: user.shipping_address.line2,
+            city: user.shipping_address.city,
+            state: user.shipping_address.state,
+            country: user.shipping_address.country,
+            postal_code: user.shipping_address.postal_code,
+          },
+        },
+        metadata: {
+          company: user.company_name,
+        },
+        expand: ['tax']
+      });
+      console.log("----------------------------------------------------------")
+      console.log(customer)
+      console.log("----------------------------------------------------------")
+      res.status(200).json({ success: true, customer });
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -148,74 +156,83 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
       name: req.body.name
     },
   });
-  
+
   console.log(myPayment)
-  
+
 
   res.status(200).json({ success: true, client_secret: myPayment.client_secret });
 });
 
 
-  exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
-    // const paymentintentID  = req.body.id
-    const paymentToken = req.body.paymentToken;
-    const customerID = req.body.customerID;
-    const Address = req.body.billingAddress;
-    const { type} = req.body.plandata;
-  
-    const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
-      customer: customerID,
-    });
+exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
+  // const paymentintentID  = req.body.id
+  const paymentToken = req.body.paymentToken;
+  const customerID = req.body.customerID;
+  const taxID = req.body.taxId;
+  const Address = req.body.billingAddress;
+  const { type } = req.body.plandata;
+
+  // console.log("--------------------------------")
+  // console.log(taxID)
+  // console.log("--------------------------------")
+  const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+    customer: customerID,
+  });
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
-        currency: 'usd', 
-        unit_amount: req.body.amount * 100, 
-        product: productId, 
-        recurring : {
-        interval : type === "monthly" ? "month" : "year" ,
-        interval_count : 1
-  },
-});
-console.log(price)
-console.log("price")
-
-
-    try {
-      const myPayment = await stripe.subscriptions.create({
-        description: 'Test description', 
-        metadata: {
-          company: req.body.company_name,
-        },
-        customer: customerID, // Associate the customer with the PaymentIntent
-        default_payment_method: attachedPaymentMethod.id,
-        items: [{ price: price.id }],
-        collection_method: "charge_automatically",
-      });
-  
-      console.log(myPayment.id);
-      console.log("myPayment");
-      const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-      const paymentIntent = await stripe.paymentIntents.retrieve(
-        latestInvoice.payment_intent
-      );
-      console.log("paymentIntent")
-      console.log(paymentIntent)
-      console.log("paymentIntent")
-  
-      // Save payment ID and user details in your database after successful payment
-  
-      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, error: error.message });
-    }
+    currency: 'usd',
+    unit_amount: req.body.amount * 100,
+    product: productId,
+    // metadata: {tax_code: taxID},
+    tax_behavior: 'exclusive',
+    recurring: {
+      interval: type === "monthly" ? "month" : "year",
+      interval_count: 1
+    },
   });
+  console.log(price)
+  console.log("price")
 
-  exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
-    const {subscription_id, userId, type } = req.body.userData
 
-    try {
-      if( type === 'cancel'){
+  try {
+    const myPayment = await stripe.subscriptions.create({
+      description: 'Test description',
+      metadata: {
+        company: req.body.company_name,
+      },
+      automatic_tax: {
+        enabled: true,
+      },
+      customer: customerID, // Associate the customer with the PaymentIntent
+      default_payment_method: attachedPaymentMethod.id,
+      items: [{ price: price.id }],
+      collection_method: "charge_automatically",
+    });
+
+    console.log(myPayment.id);
+    console.log("myPayment");
+    const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      latestInvoice.payment_intent
+    );
+    console.log("paymentIntent")
+    console.log(paymentIntent)
+    console.log("paymentIntent")
+
+    // Save payment ID and user details in your database after successful payment
+
+    res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID: myPayment.id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
+  const { subscription_id, userId, type } = req.body.userData
+
+  try {
+    if (type === 'cancel') {
       await stripe.subscriptions.update(subscription_id, {
         collection_method: 'send_invoice',
         days_until_due: 7,
@@ -227,9 +244,8 @@ console.log("price")
       );
       console.log('Updated user information:', updatedUserInfo);
       res.status(200).json({ success: true, message: 'Switched to manual renewal. Invoices will be sent for manual payment.' });
-    } 
-    else if(type === 'enable')
-    {
+    }
+    else if (type === 'enable') {
       await stripe.subscriptions.update(subscription_id, {
         collection_method: 'charge_automatically',
       });
@@ -239,10 +255,45 @@ console.log("price")
         { new: true }
       );
       console.log('Updated user information:', updatedUserInfo);
-      res.status(200).json({ success: true, message: 'Switched to automatic renewal.'});
+      res.status(200).json({ success: true, message: 'Switched to automatic renewal.' });
     }
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+
+exports.createTax = catchAsyncErrors(async (req, res, next) => {
+  const { shippingAddress } = req.body;
+
+  console.log(shippingAddress); 
+
+  try {
+    const calculation = await stripe.tax.calculations.create({
+      currency: 'usd',
+      line_items: [
+        {
+          amount: 0,
+          reference: 'L1',
+        },
+      ],
+      customer_details: {
+        address: {
+          line1: shippingAddress.Sstreet1,
+          city: shippingAddress.Scity,
+          state: shippingAddress.Sstate,
+          postal_code: shippingAddress.SpostalCode,
+          country: shippingAddress.Scountry,
+        },
+        address_source: 'shipping',
+      },
+      expand: ['line_items.data.tax_breakdown'],
+    });
+    res.status(200).json({ success: true, calculation });
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});

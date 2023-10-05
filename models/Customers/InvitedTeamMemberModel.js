@@ -25,8 +25,8 @@ const invitedTeamMemberSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ['administrator', 'manager', 'member'],
-    default: 'member',
+    enum: ['administrator', 'manager', 'teammember'],
+    default: 'teammember',
   },
   invitationToken: {
     type: String,
