@@ -1,21 +1,86 @@
-const express = require('express');
-const { isAuthenticatedUser, authorizeRoles } = require("../../middleware/auth.js");
-const { login,
-     registerUser,
-     forgotPassword, 
-     resetPassword, getCompanyDetails, getUsers,uploadLogo, uploadfavicon, getUserDetails, getProfile, logout, updateTeam, updateStatus,updateUserDetails, inviteTeamMember, getinvitedUsers, signUP1, signUP2, addCardDetails, showCardDetails, updateBillingAddress, createNewTeam, updateTeamName, checkslugavailiblity,updateCompanyDetails, removeTeamFromUsers, updateCompanyDetailsInfo, checkoutHandler,googleSignUP, googleLogin, renameTeam, deleteTeam, checkcompanyurlslugavailiblity, updateCompanySlug, updateAutoRenewal, inviteTeamMemberByCSV,  uploadProfilePicture,
-     addTeamMemberManually,
-     deleteCardDetails,
-     fetchCardDetails,
-     updateCardDetails, createShippingAddress, invitedUserGoogleSignup, registerInvitedUser, invitedUser, getcompanies_share_referral_datas, updatecompany_referral_data,deleteInvitedUser, getAllShippingAddress, removeShippingAddress, editShippingAddress , resendemailinvitation, rejectInvitation, fetchBillingAddress, getUserInformation, getcompanies_share_referral_data, getTeam, updateUserInformation, getUserinfoDetails, updateUserRole,
-     removeUserRole,
-     checkurlslugavailiblity,
-     inviteTeamMembermanually,
-     uploadImage,
-     saveuserdata,
-     savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata} = require('../../controllers/customers/userController.js');
-const {imageUpload, deleteProfileImage, deleteLogoImage, deleteFaviconImage} = require('../../middleware/imageUpload');
-const { imageinviteUpload } = require('../../middleware/inviteimgupload.js');
+const express = require("express");
+const {
+  isAuthenticatedUser,
+  authorizeRoles,
+} = require("../../middleware/auth.js");
+const {
+  login,
+  registerUser,
+  forgotPassword,
+  resetPassword,
+  getCompanyDetails,
+  getUsers,
+  uploadLogo,
+  uploadfavicon,
+  getUserDetails,
+  getProfile,
+  logout,
+  updateTeam,
+  updateStatus,
+  updateUserDetails,
+  inviteTeamMember,
+  getinvitedUsers,
+  signUP1,
+  signUP2,
+  addCardDetails,
+  showCardDetails,
+  updateBillingAddress,
+  createNewTeam,
+  updateTeamName,
+  checkslugavailiblity,
+  updateCompanyDetails,
+  removeTeamFromUsers,
+  updateCompanyDetailsInfo,
+  checkoutHandler,
+  googleSignUP,
+  googleLogin,
+  renameTeam,
+  deleteTeam,
+  checkcompanyurlslugavailiblity,
+  updateCompanySlug,
+  updateAutoRenewal,
+  inviteTeamMemberByCSV,
+  uploadProfilePicture,
+  addTeamMemberManually,
+  deleteCardDetails,
+  fetchCardDetails,
+  updateCardDetails,
+  createShippingAddress,
+  invitedUserGoogleSignup,
+  registerInvitedUser,
+  invitedUser,
+  getcompanies_share_referral_datas,
+  updatecompany_referral_data,
+  deleteInvitedUser,
+  getAllShippingAddress,
+  removeShippingAddress,
+  editShippingAddress,
+  resendemailinvitation,
+  rejectInvitation,
+  fetchBillingAddress,
+  getUserInformation,
+  getcompanies_share_referral_data,
+  getTeam,
+  updateUserInformation,
+  getUserinfoDetails,
+  updateUserRole,
+  removeUserRole,
+  checkurlslugavailiblity,
+  inviteTeamMembermanually,
+  uploadImage,
+  saveuserdata,
+  savecompanydata,
+  deleteuser,
+  checkoutHandlerFree,
+  saveuserinfodata,
+} = require("../../controllers/customers/userController.js");
+const {
+  imageUpload,
+  deleteProfileImage,
+  deleteLogoImage,
+  deleteFaviconImage,
+} = require("../../middleware/imageUpload");
+const { imageinviteUpload } = require("../../middleware/inviteimgupload.js");
 
 const router = express.Router();
 
@@ -76,11 +141,11 @@ router.post(
   imageUpload,
   uploadProfilePicture
 );
-router.delete('/deleteProfileImage/:avatarFileName', deleteProfileImage);
-router.delete('/deleteLogoImage/:logoFileName', deleteLogoImage);
-router.delete('/deleteFaviconImage/:faviconFileName', deleteFaviconImage);
-router.post("/uploadlogo",isAuthenticatedUser, imageUpload, uploadLogo);
-router.post("/uploadfavicon", isAuthenticatedUser,imageUpload, uploadfavicon);
+router.delete("/deleteProfileImage/:avatarFileName", deleteProfileImage);
+router.delete("/deleteLogoImage/:logoFileName", deleteLogoImage);
+router.delete("/deleteFaviconImage/:faviconFileName", deleteFaviconImage);
+router.post("/uploadlogo", isAuthenticatedUser, imageUpload, uploadLogo);
+router.post("/uploadfavicon", isAuthenticatedUser, imageUpload, uploadfavicon);
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update", isAuthenticatedUser, updateCompanyDetails);
 router.put(
@@ -140,17 +205,20 @@ router.post(
   isAuthenticatedUser,
   editShippingAddress
 );
-router.post('/user/teamdata', isAuthenticatedUser, getTeam);
-router.post('/update-user-information/:id', updateUserInformation);
-router.get('/get-user-information/:id', getUserinfoDetails);
+router.post("/user/teamdata", isAuthenticatedUser, getTeam);
+router.post("/update-user-information/:id", updateUserInformation);
+router.get("/get-user-information/:id", getUserinfoDetails);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
-router.post('/users/add-manual-user', isAuthenticatedUser, inviteTeamMembermanually)
-router.post('/users/image-upload', imageinviteUpload, uploadImage)
-router.post('/save_user_data/:id', isAuthenticatedUser, saveuserdata);
-router.post('/save_company_data', isAuthenticatedUser, savecompanydata);
-router.post('/save_userinfo_data/:id', isAuthenticatedUser, saveuserinfodata);
-router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
-
+router.post(
+  "/users/add-manual-user",
+  isAuthenticatedUser,
+  inviteTeamMembermanually
+);
+router.post("/users/image-upload", imageinviteUpload, uploadImage);
+router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
+router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
+router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
+router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
 
 module.exports = router;
