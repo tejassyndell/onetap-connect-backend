@@ -13,7 +13,7 @@ const { login,
      inviteTeamMembermanually,
      uploadImage,
      saveuserdata,
-     savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata} = require('../../controllers/customers/userController.js');
+     savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata, guestcheckoutHandler} = require('../../controllers/customers/userController.js');
 const {imageUpload} = require('../../middleware/imageUpload');
 const { imageinviteUpload } = require('../../middleware/inviteimgupload.js');
 
@@ -24,6 +24,7 @@ router.post("/register/step-2/:token", signUP2);
 router.post("/google-sign-up", googleSignUP);
 router.post("/google-login", googleLogin);
 router.post("/checkout", isAuthenticatedUser, checkoutHandler);
+router.post("/guest_checkout", isAuthenticatedUser, guestcheckoutHandler);
 router.post("/checkout/free", isAuthenticatedUser, checkoutHandlerFree);
 router.post("/login", login);
 router.post("/logout", logout);
