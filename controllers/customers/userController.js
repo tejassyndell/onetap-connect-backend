@@ -344,7 +344,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
-  if(user.status === "inactive"){
+  if (user.status === "inactive") {
     return next(
       new ErrorHandler("Your account has been deactivated by administrator.", 401)
     );
@@ -384,7 +384,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-  if(user.status === "inactive"){
+  if (user.status === "inactive") {
     return next(
       new ErrorHandler("Your account has been deactivated by administrator.", 401)
     );
@@ -611,7 +611,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
- 
+
   console.log(user);
   console.log(req.body);
 
@@ -815,7 +815,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
       if (!last_name) {
         return next(new ErrorHandler("Please Enter Last Name", 400));
       }
-     else {
+      else {
         return next(new ErrorHandler("Please fill out all details", 400));
       }
     }
@@ -3061,9 +3061,9 @@ exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
 //   const updateData = {};
 
 //   updateData[field_name] = field_value;
-  
+
 //   const data = await User.updateOne({ _id: id }, { $set: updateData });
-  
+
 //   res.status(200).json({
 //     success: true,
 //     data
@@ -3072,16 +3072,16 @@ exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
 exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params; // Assuming you pass the user ID in the URL parameters
   const { field_name, field_value } = req.body;
-  
+
   const updateData = {};
   updateData[field_name] = field_value;
-  
+
   const updatedUser = await User.findByIdAndUpdate(id, { $set: updateData }, { new: true });
-  
+
   if (!updatedUser) {
     return res.status(404).json({ success: false, message: 'User not found' });
   }
-  
+
   res.status(200).json({
     success: true,
     data: updatedUser,
@@ -3093,12 +3093,12 @@ exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
   const updateData = {};
 
   updateData[field_name] = field_value;
-  
+
   const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
-  
+
   res.status(200).json({
     success: true,
-    data:data
+    data: data
   });
 });
 // exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
@@ -3107,9 +3107,9 @@ exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
 //   const updateData = {};
 
 //   updateData[field_name] = field_value;
-  
+
 //   const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
-  
+
 //   res.status(200).json({
 //     success: true,
 //     data
@@ -3134,50 +3134,101 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
-  const { userid, companyid } = req.body;
-  console.log(userid)
-  console.log(companyid)
+
+exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
+  const { userid, password } = req.body;
+  console.log(userid, password);
 
   try {
-    const deletePromises = [];
+    const user = await User.findOne({ _id: userid }).select("+password");
+    // console.log(user)
 
-    const pushDeletePromise = async (deletePromise, errorMessage) => {
-      try {
-        const result = await deletePromise;
-        if (!result) {
-          console.log(errorMessage);
-        }
-      } catch (error) {
-        console.error('Error deleting data:', error);
-      }
-    };
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'User not found' });
+    }
+    const isPasswordValid = await user.comparePassword(password);
 
-    pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
-    pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
-    pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
-    pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
-    pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
-    pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
-    pushDeletePromise(
-      CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
-      'Company Share Referral data not found'
+    if (isPasswordValid) {
+      return res.status(200).json({ success: true });
+    } else {
+      return res.status(400).json({ success: false, message: 'Incorrect password' });
+    }
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+exports.updatestatus_on_delete_account = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { companyid } = req.body;
+
+    const updatedUser = await User.updateMany(
+      { companyID: companyid },
+      { $set: { status: 'inactive' } },
+      { new: true }
     );
-    deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
-    await Promise.all(deletePromises);
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
     res.cookie('token', null, {
       expires: new Date(Date.now()),
       httpOnly: true,
     });
 
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully',
-    });
+    res.status(200).json({ success: true, message: 'User status updated to inactive' });
   } catch (error) {
-    return next(new ErrorHandler(error.message, 500));
+    console.error('Error updating user status:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
+// exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
+//   const { userid, companyid } = req.body;
+//   console.log(userid)
+//   console.log(companyid)
+
+//   try {
+//     const deletePromises = [];
+
+//     const pushDeletePromise = async (deletePromise, errorMessage) => {
+//       try {
+//         const result = await deletePromise;
+//         if (!result) {
+//           console.log(errorMessage);
+//         }
+//       } catch (error) {
+//         console.error('Error deleting data:', error);
+//       }
+//     };
+
+//     pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
+//     pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
+//     pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
+//     pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
+//     pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
+//     pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+//     pushDeletePromise(
+//       CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
+//       'Company Share Referral data not found'
+//     );
+//     deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+//     await Promise.all(deletePromises);
+
+//     res.cookie('token', null, {
+//       expires: new Date(Date.now()),
+//       httpOnly: true,
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       message: 'User deleted successfully',
+//     });
+//   } catch (error) {
+//     return next(new ErrorHandler(error.message, 500));
+//   }
+// });
 
 
