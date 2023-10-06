@@ -8,7 +8,8 @@ const {
   getProducts,
   getProductsInfo,
   getCartProducts,
-  updateCartProducts
+  updateCartProducts,
+  updateCart
 } = require("../../controllers/ProductController/ProductController");
 
 router.get("/product/test", testAPI);
@@ -18,5 +19,6 @@ router.get("/products", getProducts);
 router.get("/:name", getProductsInfo);
 router.post("/product/cart", getCartProducts);
 router.post("/cart/update" ,updateCartProducts);
+router.post("/cart/removeproduct" ,updateCart);
 
 module.exports = router;
