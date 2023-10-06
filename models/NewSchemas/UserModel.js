@@ -112,6 +112,7 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     status: { type: String, default: "active" },
+    statusChangeDate: { type: Date },
     isIndividual: {
       type: Boolean,
       default: false,
@@ -174,5 +175,11 @@ userSchema.methods.getResetPasswordToken = function () {
   return this.resetPasswordToken; // Return the value stored in this.resetPasswordToken
 };
 
+userSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    this.statusChangeDate = new Date();
+  }
+  next();
+});
 
 module.exports = mongoose.model("user", userSchema);
