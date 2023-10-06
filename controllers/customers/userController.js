@@ -33,6 +33,7 @@ const shippingAddress = require("../../models/NewSchemas/user_shipping_addresses
 const TeamDetails = require("../../models/NewSchemas/Team_SchemaModel.js");
 const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
+const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 
 dotenv.config();
 
@@ -67,6 +68,8 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
     },
     tls: { rejectUnauthorized: false },
   });
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
   const message = {
     from: process.env.NODMAILER_EMAIL,
@@ -86,8 +89,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
-  
-<img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+    <img src="cid:logo">
 
     </div>
     <div style="background-color: #fff; margin-bottom:15px; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -117,7 +119,14 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 </body>
 
 </html>    
-  `,
+  `,      
+  attachments: [
+    {
+      filename: "Logo.png",
+      path: uploadsDirectory,
+      cid: "logo",
+    },
+  ],
     //     <h3>Dear User</h3><br>
     //     <p>Thank you for choosing One Tap Connect LLC! We're thrilled to have you join our community. To complete your sign-up process, please click the button below:</p><br>
     //     <p></p><a href="${process.env.FRONTEND_URL}/sign-up/step-2/${user._id}">Click me</a> to complete sign up</p>
@@ -344,9 +353,12 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
-  if(user.status === "inactive"){
+  if (user.status === "inactive") {
     return next(
-      new ErrorHandler("Your account has been deactivated by administrator.", 401)
+      new ErrorHandler(
+        "Your account has been deactivated by administrator.",
+        401
+      )
     );
   }
 
@@ -369,7 +381,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User does not found. ", 401));
   }
-  console.log(user)
+  console.log(user);
 
   // Check if the user signed up with Google
   if (user.googleId !== null) {
@@ -384,9 +396,12 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-  if(user.status === "inactive"){
+  if (user.status === "inactive") {
     return next(
-      new ErrorHandler("Your account has been deactivated by administrator.", 401)
+      new ErrorHandler(
+        "Your account has been deactivated by administrator.",
+        401
+      )
     );
   }
   sendToken(user, 200, res);
@@ -510,12 +525,12 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     // Generate or retrieve resetToken here
     const resetToken = user.getResetPasswordToken();
     const resetPasswordExpire = user.resetPasswordExpire;
-    console.log("resetToken")
-    console.log(resetToken)
-    console.log(resetPasswordExpire)
-    user.resetPasswordToken = resetToken
+    console.log("resetToken");
+    console.log(resetToken);
+    console.log(resetPasswordExpire);
+    user.resetPasswordToken = resetToken;
 
-    await user.save()
+    await user.save();
     await user.save({ validateBeforeSave: false });
 
     const message = {
@@ -596,14 +611,13 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
 //reset password
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
-
-  console.log(req.params.token)
+  console.log(req.params.token);
   //creating token hash
   // const resetPasswordToken = crypto
   //   .createHash("sha256")
   //   .update(req.params.token)
   //   .digest("hex");
-  const resetPasswordToken = req.params.token
+  const resetPasswordToken = req.params.token;
 
   // console.log(token)
 
@@ -611,7 +625,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
- 
+
   console.log(user);
   console.log(req.body);
 
@@ -805,7 +819,13 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   for (const userData of memberData) {
     const { email, first_name, last_name, team } = userData;
 
-    if (!email || !first_name || !last_name) {
+     // Check if email is already in use
+     const existingUser = await InvitedTeamMemberModel.findOne({ email });
+     if (existingUser) {
+       return next(new ErrorHandler(`Email is already exists`, 400));
+     }
+
+    if (!email || !first_name || !last_name || !team) {
       if (!email) {
         return next(new ErrorHandler("Please Enter Email", 400));
       }
@@ -814,8 +834,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
       }
       if (!last_name) {
         return next(new ErrorHandler("Please Enter Last Name", 400));
-      }
-     else {
+      } else {
         return next(new ErrorHandler("Please fill out all details", 400));
       }
     }
@@ -836,25 +855,13 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
     // Convert the expiry date to ISO string format
     // const expiryDateString = expiryDate.toISOString();
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "developersweb001@gmail.com",
+      from: "OneTapConnect:developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
-      //   html: `
-      //  <div>
-      //  <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div>
-      //  <h3>Welcome to OneTapConnect!</h3>
-      //  <p>Hi ${first_name}<br/>
-      //  You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
-      //  <div><button>Accept invitation</button><button>Reject</button></div>
-      //  <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
-      //  <h5>Technical issue?</h5>
-      //  <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
-      //  <a></a>
-      //  </div>
-      // `
-
       html: `
   <!DOCTYPE html>
   <html>
@@ -868,8 +875,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   
       <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-          <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
-          
+          <img src="cid:logo">
           </div>
           <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
           <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
@@ -893,9 +899,14 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   </body>
   
   </html>
-  
-  
 `,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
     };
 
     transporter.sendMail(message, (err, info) => {
@@ -990,9 +1001,10 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     if (!emailPattern.test(email)) {
       return next(new ErrorHandler("Please enter a valid email", 400));
     }
-
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const message = {
-      from: "mailto:developersweb001@gmail.com",
+      from: "OneTapConnect:developersweb001@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -1009,7 +1021,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     
         <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-            <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+            <img src="cid:logo">
             
             </div>
             <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -1034,6 +1046,13 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
+  attachments: [
+    {
+      filename: "Logo.png",
+      path: uploadsDirectory,
+      cid: "logo",
+    },
+  ],
     };
 
     transporter.sendMail(message, (err, info) => {
@@ -1045,7 +1064,10 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     });
 
     // Check if the team already exists for the company
-    let teamRecord = await Team.findOne({ team_name: team, companyID: companyID });
+    let teamRecord = await Team.findOne({
+      team_name: team,
+      companyID: companyID,
+    });
 
     if (!teamRecord) {
       // If the team doesn't exist, create a new team
@@ -1073,7 +1095,6 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     message: "Invitaion Email sent Successfully",
   });
 });
-
 
 //add card details
 exports.addCardDetails = catchAsyncErrors(async (req, res) => {
@@ -1611,7 +1632,6 @@ exports.getUserinfoDetails = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("No user information found", 404));
   }
 
-
   res.status(200).json({
     success: true,
     userinfo,
@@ -1661,9 +1681,6 @@ exports.updateCompanyDetailsInfo = catchAsyncErrors(async (req, res, next) => {
 
   if (company._id.toString() !== req.user.companyID.toString()) {
     return next(
-
-
-
       new ErrorHandler("You are not authorized to update this user", 401)
     );
   }
@@ -1768,62 +1785,55 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
   }
 );
 
+exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
+  const { companyurlslug, userurlslug } = req.body;
+  const currentCompanyId = req.user.companyID;
+  const currentUserId = req.user.id;
 
-exports.checkurlslugavailiblity = catchAsyncErrors(
-  async (req, res, next) => {
-    const { companyurlslug, userurlslug } = req.body;
-    const currentCompanyId = req.user.companyID;
-    const currentUserId = req.user.id;
+  const existingcompanyurlslug = await Company.findOne({
+    _id: { $ne: currentCompanyId },
+    companyurlslug,
+  });
 
-    const existingcompanyurlslug = await Company.findOne({
-      _id: { $ne: currentCompanyId },
-      companyurlslug,
-    });
-
-    if (existingcompanyurlslug) {
-      return res
-        .status(400)
-        .json({ message: "companyurlslug is already taken." });
-    }
-
-    // Check case-sensitive duplicates
-    const caseSensitivecompanyurlslug = await Company.findOne({
-      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
-      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
-    });
-
-    if (caseSensitivecompanyurlslug) {
-      return res
-        .status(400)
-        .json({ message: "companyurlslug is already taken." });
-    }
-
-    const existinguserurlslug = await User.findOne({
-      _id: { $ne: currentUserId },
-      userurlslug,
-    });
-
-    if (existinguserurlslug) {
-      return res
-        .status(400)
-        .json({ message: "userurlslug is already taken." });
-    }
-
-    // Check case-sensitive duplicates
-    const caseSensitiveuserurlslug = await User.findOne({
-      _id: { $ne: currentUserId }, // Exclude the current company by ID
-      userurlslug: new RegExp(`^${userurlslug}$`, "i"),
-    });
-
-    if (caseSensitiveuserurlslug) {
-      return res
-        .status(400)
-        .json({ message: "userurlslug is already taken." });
-    }
-
-    return res.status(200).json({ message: "companyurlslug is available." });
+  if (existingcompanyurlslug) {
+    return res
+      .status(400)
+      .json({ message: "companyurlslug is already taken." });
   }
-);
+
+  // Check case-sensitive duplicates
+  const caseSensitivecompanyurlslug = await Company.findOne({
+    _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+    companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+  });
+
+  if (caseSensitivecompanyurlslug) {
+    return res
+      .status(400)
+      .json({ message: "companyurlslug is already taken." });
+  }
+
+  const existinguserurlslug = await User.findOne({
+    _id: { $ne: currentUserId },
+    userurlslug,
+  });
+
+  if (existinguserurlslug) {
+    return res.status(400).json({ message: "userurlslug is already taken." });
+  }
+
+  // Check case-sensitive duplicates
+  const caseSensitiveuserurlslug = await User.findOne({
+    _id: { $ne: currentUserId }, // Exclude the current company by ID
+    userurlslug: new RegExp(`^${userurlslug}$`, "i"),
+  });
+
+  if (caseSensitiveuserurlslug) {
+    return res.status(400).json({ message: "userurlslug is already taken." });
+  }
+
+  return res.status(200).json({ message: "companyurlslug is available." });
+});
 
 exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   const {
@@ -2009,7 +2019,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     user,
-    userInformation
+    userInformation,
   });
 });
 
@@ -2104,10 +2114,9 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     user,
-    userInformation
+    userInformation,
   });
 });
-
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
@@ -2182,10 +2191,15 @@ exports.uploadProfilePicture = async (req, res) => {
     // Your code to handle image upload and processing goes here
 
     // Assuming the upload and processing were successful, you can send a success response
-    res.status(200).json({ message: 'Profile Picture uploaded successfully', imagePath: 'path_to_uploaded_image' });
+    res.status(200).json({
+      message: "Profile Picture uploaded successfully",
+      imagePath: "path_to_uploaded_image",
+    });
   } catch (error) {
-    console.error('Error during Profile Picture upload:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error("Error during Profile Picture upload:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -2193,7 +2207,10 @@ exports.uploadProfilePicture = async (req, res) => {
 // multer image upload
 const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "//////////////////////////////////////////////////////////////////////////////////////////////////////////");
+    cb(
+      null,
+      "//////////////////////////////////////////////////////////////////////////////////////////////////////////"
+    );
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -2246,10 +2263,15 @@ exports.uploadLogo = async (req, res) => {
     // Your code to handle image upload and processing goes here
 
     // Assuming the upload and processing were successful, you can send a success response
-    res.status(200).json({ message: 'Logo uploaded successfully', imagePath: 'path_to_uploaded_image' });
+    res.status(200).json({
+      message: "Logo uploaded successfully",
+      imagePath: "path_to_uploaded_image",
+    });
   } catch (error) {
-    console.error('Error during logo upload:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error("Error during logo upload:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -2363,10 +2385,15 @@ exports.uploadfavicon = async (req, res) => {
     // Your code to handle image upload and processing goes here
 
     // Assuming the upload and processing were successful, you can send a success response
-    res.status(200).json({ message: 'Favicon uploaded successfully', imagePath: 'path_to_uploaded_image' });
+    res.status(200).json({
+      message: "Favicon uploaded successfully",
+      imagePath: "path_to_uploaded_image",
+    });
   } catch (error) {
-    console.error('Error during Favicon upload:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error("Error during Favicon upload:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -2642,7 +2669,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isIndividual: false,
       isPaidUser: true,
       companyID: userdetails.companyId,
-      role: "teammember"
+      role: "teammember",
     };
 
     const user = await User.create(userdetails);
@@ -2753,6 +2780,8 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     });
     const company = await Company.findById(companyID);
     let invitationToken = crypto.randomBytes(20).toString("hex");
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const currentDate = new Date();
 
@@ -2778,8 +2807,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
   
       <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-          <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
-          
+          <img src="cid:logo">          
           </div>
           <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
           <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
@@ -2806,6 +2834,13 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
   
   
   `,
+  attachments: [
+    {
+      filename: "Logo.png",
+      path: uploadsDirectory,
+      cid: "logo",
+    },
+  ],
     };
 
     transporter.sendMail(message, (err, info) => {
@@ -2910,8 +2945,6 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
 //   }
 // });
 
-
-
 exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   const { formData } = req.body;
   const { companyID, id } = req.user;
@@ -2920,7 +2953,6 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   if (formData == null) {
     return next(new ErrorHandler("No user data provided", 400));
   }
-
 
   const transporter = nodemailer.createTransport({
     service: "Gmail",
@@ -2933,11 +2965,27 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
 
   const company = await Company.findById(companyID);
   const userInfo = await User.findById(id);
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
   const password = generatePassword();
-  const { email, firstname, lastname, contact, designation, website_url, team, avatar, address, user_line1_address_permission, user_line2_apartment_permission, user_city_permission, user_state_permission, user_postal_code_permission } = formData;
+  const {
+    email,
+    firstname,
+    lastname,
+    contact,
+    designation,
+    website_url,
+    team,
+    avatar,
+    address,
+    user_line1_address_permission,
+    user_line2_apartment_permission,
+    user_city_permission,
+    user_state_permission,
+    user_postal_code_permission,
+  } = formData;
   // console.log(formData);
-
 
   // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
   //   return next(new ErrorHandler("Please fill out all user details", 400));
@@ -2952,7 +3000,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "mailto:developersweb001@gmail.com",
+    from: "OneTapConnect:developersweb001@gmail.com",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2969,7 +3017,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     
         <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-            <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+            <img src="cid:logo">
             
             </div>
             <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -2994,6 +3042,13 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
+  attachments: [
+    {
+      filename: "Logo.png",
+      path: uploadsDirectory,
+      cid: "logo",
+    },
+  ],
   };
 
   transporter.sendMail(message, (err, info) => {
@@ -3003,7 +3058,6 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
       console.log(`Email sent to ${email}: ${info.response}`);
     }
   });
-
 
   const userData = await User.create({
     email: email, // This line is removed to prevent email storage
@@ -3050,10 +3104,8 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
 exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
   // const userID = req.body.userID;
   // console.log(userID)
-  res.send("called api")
+  res.send("called api");
 });
-
-
 
 // exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
 //   const { field_name, field_value } = req.body;
@@ -3061,9 +3113,9 @@ exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
 //   const updateData = {};
 
 //   updateData[field_name] = field_value;
-  
+
 //   const data = await User.updateOne({ _id: id }, { $set: updateData });
-  
+
 //   res.status(200).json({
 //     success: true,
 //     data
@@ -3072,16 +3124,20 @@ exports.uploadImage = catchAsyncErrors(async (req, res, next) => {
 exports.saveuserdata = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params; // Assuming you pass the user ID in the URL parameters
   const { field_name, field_value } = req.body;
-  
+
   const updateData = {};
   updateData[field_name] = field_value;
-  
-  const updatedUser = await User.findByIdAndUpdate(id, { $set: updateData }, { new: true });
-  
+
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    { $set: updateData },
+    { new: true }
+  );
+
   if (!updatedUser) {
-    return res.status(404).json({ success: false, message: 'User not found' });
+    return res.status(404).json({ success: false, message: "User not found" });
   }
-  
+
   res.status(200).json({
     success: true,
     data: updatedUser,
@@ -3093,12 +3149,15 @@ exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
   const updateData = {};
 
   updateData[field_name] = field_value;
-  
-  const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
-  
+
+  const data = await UserInformation.updateOne(
+    { user_id: id },
+    { $set: updateData }
+  );
+
   res.status(200).json({
     success: true,
-    data:data
+    data: data,
   });
 });
 // exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
@@ -3107,9 +3166,9 @@ exports.saveuserinfodata = catchAsyncErrors(async (req, res, next) => {
 //   const updateData = {};
 
 //   updateData[field_name] = field_value;
-  
+
 //   const data = await UserInformation.updateOne({ user_id: id }, { $set: updateData });
-  
+
 //   res.status(200).json({
 //     success: true,
 //     data
@@ -3123,7 +3182,9 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
   const company = await Company.findById(companyID);
 
   if (!company) {
-    return res.status(404).json({ success: false, message: 'Company not found' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Company not found" });
   }
 
   company[field_name] = field_value;
@@ -3136,8 +3197,8 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 
 exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
   const { userid, companyid } = req.body;
-  console.log(userid)
-  console.log(companyid)
+  console.log(userid);
+  console.log(companyid);
 
   try {
     const deletePromises = [];
@@ -3149,35 +3210,102 @@ exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
           console.log(errorMessage);
         }
       } catch (error) {
-        console.error('Error deleting data:', error);
+        console.error("Error deleting data:", error);
       }
     };
 
-    pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
-    pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
-    pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
-    pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
-    pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
-    pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+    pushDeletePromise(User.findOneAndDelete({ _id: userid }), "User not found");
+    pushDeletePromise(
+      UserInformation.findOneAndDelete({ user_id: userid }),
+      "User Information not found"
+    );
+    pushDeletePromise(
+      Cards.findOneAndDelete({ userID: userid }),
+      "Card info not found"
+    );
+    pushDeletePromise(
+      billingAddress.findOneAndDelete({ userId: userid }),
+      "Billing address not found"
+    );
+    pushDeletePromise(
+      shippingAddress.findOneAndDelete({ userId: userid }),
+      "Shipping address not found"
+    );
+    pushDeletePromise(
+      Company.findOneAndDelete({ primary_account: userid }),
+      "Company info not found"
+    );
     pushDeletePromise(
       CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
-      'Company Share Referral data not found'
+      "Company Share Referral data not found"
     );
     deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
     await Promise.all(deletePromises);
 
-    res.cookie('token', null, {
+    res.cookie("token", null, {
       expires: new Date(Date.now()),
       httpOnly: true,
     });
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully',
+      message: "User deleted successfully",
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
+});
+
+
+exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
+  const {
+    userData,
+    billingdata,
+    shippingData,
+    shipping_method,
+    cardDetails,
+  } = req.body;
+
+  const guestCustomer = new GuestCustomer({
+    first_name: userData.first_name,
+    last_name: userData.last_name,
+    email: userData.email,
+    contact: userData.contact,
+    billing_address: {
+      first_name: billingdata.first_name,
+      last_name: billingdata.last_name,
+      line1: billingdata.line1,
+      line2: billingdata.line2,
+      city: billingdata.city,
+      state: billingdata.state,
+      country: billingdata.country,
+      postal_code: billingdata.postal_code
+    },
+    shipping_address: [
+      {
+        first_name: shippingData.first_name,
+        last_name: shippingData.last_name,
+        line1: shippingData.line1,
+        line2: shippingData.line2,
+        city: shippingData.city,
+        state: shippingData.state,
+        country: shippingData.country,
+        postal_code: shippingData.postal_code
+      }
+    ],
+    card_details: {
+      nameOnCard: cardDetails.cardName,
+      cardNumber: cardDetails.cardNumber,
+      cardExpiryMonth: cardDetails.cardExpiryMonth,
+      cardExpiryYear: cardDetails.cardExpiryYear,
+      brand: cardDetails.brand,
+    },
+  });
+
+  await guestCustomer.save();
+
+  res.status(201).json({ success: true, message: 'Guest customer created successfully' });
+
 });
 
 
