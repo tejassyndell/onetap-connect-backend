@@ -4,6 +4,7 @@ const Company = require("../models/NewSchemas/Company_informationModel.js");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const catchAsyncErrors = require("./catchAsyncErrors");
 
 const storage = multer.memoryStorage();
 
@@ -327,4 +328,73 @@ exports.imageUpload = (req, res, next) => {
         .json({ message: "Internal server error", error: error.message });
     }
   });
+};
+
+exports.deleteProfileImage = async (req, res, next) => {
+  try {
+    const avatarFileName = req.params.avatarFileName;
+    const avatarPath = path.join(__dirname, '..', 'uploads', 'profileImages', avatarFileName);
+
+    // Check if the avatar file exists
+    if (fs.existsSync(avatarPath)) {
+      // Delete the file
+      fs.unlinkSync(avatarPath);
+
+      // Update the User's avatar field in the database
+      await User.findOneAndUpdate({ avatar: avatarFileName }, { avatar: '' });
+
+      res.status(200).json({ message: 'Avatar deleted successfully.' });
+    } else {
+      res.status(404).json({ message: 'Avatar not found.' });
+    }
+  } catch (error) {
+    console.error('Error deleting avatar:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+exports.deleteLogoImage = async (req, res, next) => {
+  try {
+    const logoFileName = req.params.logoFileName;
+    const logoPath = path.join(__dirname, '..', 'uploads', 'logo', logoFileName);
+
+    // Check if the Logo file exists
+    if (fs.existsSync(logoPath)) {
+      // Delete the file
+      fs.unlinkSync(logoPath);
+
+      // Update the User's Logo field in the database
+      await Company.findOneAndUpdate({ logopath: logoFileName }, { logopath: '' });
+
+      res.status(200).json({ message: 'Logo deleted successfully.' });
+    } else {
+      res.status(404).json({ message: 'Logo not found.' });
+    }
+  } catch (error) {
+    console.error('Error deleting Logo:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+exports.deleteFaviconImage = async (req, res, next) => {
+  try {
+    const FaviconFileName = req.params.faviconFileName;
+    const FaviconPath = path.join(__dirname, '..', 'uploads', 'favicon', FaviconFileName);
+
+    // Check if the FaviconPath file exists
+    if (fs.existsSync(FaviconPath)) {
+      // Delete the file
+      fs.unlinkSync(FaviconPath);
+
+      // Update the User's FaviconPath field in the database
+      await Company.findOneAndUpdate({ fav_icon_path: FaviconFileName }, { fav_icon_path: '' });
+
+      res.status(200).json({ message: 'Favicon deleted successfully.' });
+    } else {
+      res.status(404).json({ message: 'Favicon not found.' });
+    }
+  } catch (error) {
+    console.error('Error deleting Favicon:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
 };
