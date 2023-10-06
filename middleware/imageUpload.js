@@ -4,12 +4,16 @@ const Company = require("../models/NewSchemas/Company_informationModel.js");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const catchAsyncErrors = require("./catchAsyncErrors");
 
 const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
-  // limits: { fileSize: 10  1024  1024 }, // 10MB file size limit
+  limits: {
+    fieldSize: 1024 * 1024 * 5, // 5MB for base64 data
+    fileSize: 1024 * 1024 * 10, // 10MB for the entire request (adjust as needed)
+  },
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
       "image/jpeg",
@@ -22,11 +26,86 @@ const upload = multer({
       cb(null, true); // Accept the file
     } else {
       // Reject the file with an error message
-      cb(new Error("Image format should be JPG, JPEG, PNG, or SVG"), false);
+      cb(new Error("Please select an image to upload."), false);
     }
   },
 }).single("image");
+// const saveImageToFolder = async (imageType, imageData, uploadedFileName) => {
+//   let fileNamePrefix;
 
+//   if (imageType === "profile") {
+//     fileNamePrefix = "profile-image-";
+//   } else if (imageType === "logo") {
+//     fileNamePrefix = "logo-";
+//   } else if (imageType === "favicon") {
+//     console.log("called favicon");
+//     fileNamePrefix = "favicon-";
+//   } else {
+//     throw new Error("Invalid image type");
+//   }
+
+//   const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+//   // Extract the file extension from the uploaded file name
+//   // const fileExtension = path.extname(uploadedFileName);
+
+//   const fileName = `${fileNamePrefix}${uniqueSuffix}.png`;
+
+//   let folderPath = "";
+
+//   if (imageType === "profile") {
+//     folderPath = "../uploads/profileImages";
+//   } else if (imageType === "logo") {
+//     folderPath = "../uploads/logo";
+//   } else if (imageType === "favicon") {
+//     folderPath = "../uploads/favicon";
+//   } else {
+//     throw new Error("Invalid image type");
+//   }
+
+//   const destinationPath = path.join(__dirname, folderPath, fileName);
+
+//   try {
+//     // Remove the data URL prefix (e.g., "data:image/png;base64,")
+//     const base64ImageWithoutPrefix = imageData.replace(
+//       /^data:image\/(jpeg|png|jpg);base64,/,
+//       ""
+//     );
+
+//     // Create a Buffer from the base64 image
+//     const imageBuffer = Buffer.from(base64ImageWithoutPrefix, "base64");
+
+//     // Compress the image using sharp
+//     const compressedImageBuffer = await sharp(imageBuffer)
+//       .resize({ width: 300 }) // Set the desired width (adjust as needed)
+//       .toBuffer();
+
+//     // Ensure the directory exists
+//     const directory = path.dirname(destinationPath);
+//     fs.mkdirSync(directory, { recursive: true });
+
+//     // Write the compressed Buffer data to a file
+//     fs.writeFileSync(destinationPath, compressedImageBuffer);
+
+//     console.log("Image saved successfully:", destinationPath);
+
+//     return fileName;
+//   } catch (error) {
+//     console.error("Error saving the image:", error);
+//     throw error;
+//   }
+// };
+const getImageExtensionFromBase64 = (base64Data) => {
+  const mimeRegex = /^data:image\/([a-zA-Z]+);base64,/;
+  const match = base64Data.match(mimeRegex);
+
+  if (match && match[1]) {
+    return match[1];
+  }
+
+  // Default to a specific extension (e.g., "png") if not found
+  return "png";
+};
 const saveImageToFolder = async (imageType, imageData) => {
   let fileNamePrefix;
 
@@ -42,7 +121,8 @@ const saveImageToFolder = async (imageType, imageData) => {
   }
 
   const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-  const fileName = `${fileNamePrefix}${uniqueSuffix}.png`; // Assume PNG format
+  const imageExtension = getImageExtensionFromBase64(imageData);
+  const fileName = `${fileNamePrefix}${uniqueSuffix}.${imageExtension}`; // Assume PNG format
 
   let folderPath = "";
 
@@ -63,24 +143,24 @@ const saveImageToFolder = async (imageType, imageData) => {
   return fileName;
 };
 
-const getImageDimensionsFromBuffer = async (imageData) => {
-  const base64ImageWithoutPrefix = imageData.replace(
-    /^data:image\/(jpeg|png|jpg);base64,/,
-    ""
-  );
+// const getImageDimensionsFromBuffer = async (imageData) => {
+//   const base64ImageWithoutPrefix = imageData.replace(
+//     /^data:image\/(jpeg|png|jpg);base64,/,
+//     ""
+//   );
 
-  try {
-    const imageBuffer = Buffer.from(base64ImageWithoutPrefix, "base64");
-    const { width, height } = await sharp(imageBuffer, {
-      format: "jpeg",
-    }).metadata(); // Change 'jpeg' to the appropriate format
-    console.log("Image dimensions:", { width, height });
-    return { width, height };
-  } catch (error) {
-    console.error("Error getting image dimensions:", error);
-    throw error;
-  }
-};
+//   try {
+//     const imageBuffer = Buffer.from(base64ImageWithoutPrefix, "base64");
+//     const { width, height } = await sharp(imageBuffer, {
+//       format: "jpeg",
+//     }).metadata(); // Change 'jpeg' to the appropriate format
+//     console.log("Image dimensions:", { width, height });
+//     return { width, height };
+//   } catch (error) {
+//     console.error("Error getting image dimensions:", error);
+//     throw error;
+//   }
+// };
 
 const saveBase64Image = async (base64Data, filePath) => {
   try {
@@ -248,4 +328,73 @@ exports.imageUpload = (req, res, next) => {
         .json({ message: "Internal server error", error: error.message });
     }
   });
+};
+
+exports.deleteProfileImage = async (req, res, next) => {
+  try {
+    const avatarFileName = req.params.avatarFileName;
+    const avatarPath = path.join(__dirname, '..', 'uploads', 'profileImages', avatarFileName);
+
+    // Check if the avatar file exists
+    if (fs.existsSync(avatarPath)) {
+      // Delete the file
+      fs.unlinkSync(avatarPath);
+
+      // Update the User's avatar field in the database
+      await User.findOneAndUpdate({ avatar: avatarFileName }, { avatar: '' });
+
+      res.status(200).json({ message: 'Avatar deleted successfully.' });
+    } else {
+      res.status(404).json({ message: 'Avatar not found.' });
+    }
+  } catch (error) {
+    console.error('Error deleting avatar:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+exports.deleteLogoImage = async (req, res, next) => {
+  try {
+    const logoFileName = req.params.logoFileName;
+    const logoPath = path.join(__dirname, '..', 'uploads', 'logo', logoFileName);
+
+    // Check if the Logo file exists
+    if (fs.existsSync(logoPath)) {
+      // Delete the file
+      fs.unlinkSync(logoPath);
+
+      // Update the User's Logo field in the database
+      await Company.findOneAndUpdate({ logopath: logoFileName }, { logopath: '' });
+
+      res.status(200).json({ message: 'Logo deleted successfully.' });
+    } else {
+      res.status(404).json({ message: 'Logo not found.' });
+    }
+  } catch (error) {
+    console.error('Error deleting Logo:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+exports.deleteFaviconImage = async (req, res, next) => {
+  try {
+    const FaviconFileName = req.params.faviconFileName;
+    const FaviconPath = path.join(__dirname, '..', 'uploads', 'favicon', FaviconFileName);
+
+    // Check if the FaviconPath file exists
+    if (fs.existsSync(FaviconPath)) {
+      // Delete the file
+      fs.unlinkSync(FaviconPath);
+
+      // Update the User's FaviconPath field in the database
+      await Company.findOneAndUpdate({ fav_icon_path: FaviconFileName }, { fav_icon_path: '' });
+
+      res.status(200).json({ message: 'Favicon deleted successfully.' });
+    } else {
+      res.status(404).json({ message: 'Favicon not found.' });
+    }
+  } catch (error) {
+    console.error('Error deleting Favicon:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
 };

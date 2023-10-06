@@ -16,7 +16,20 @@ const userSchema = new mongoose.Schema(
         message: "First name cannot be empty",
       },
     },
-    team: { type: mongoose.Schema.Types.ObjectId },
+    team: { type: mongoose.Schema.Types.ObjectId, require:false, set: v => v === '' ? null : v  },
+    // team: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   default: null,
+    //   validate: {
+    //     validator: function(value) {
+    //       if (value === null || value === "") {
+    //         return true; // Allow null or empty string
+    //       }
+    //       return typeof value === "string" && validator.isMongoId(value);
+    //     },
+    //     message: "Team must be a valid ObjectId, null, or an empty string",
+    //   },
+    // },
     last_name: {
       type: String,
     },
@@ -99,6 +112,7 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     status: { type: String, default: "active" },
+    statusChangeDate: { type: Date },
     isIndividual: {
       type: Boolean,
       default: false,
@@ -161,5 +175,11 @@ userSchema.methods.getResetPasswordToken = function () {
   return this.resetPasswordToken; // Return the value stored in this.resetPasswordToken
 };
 
+userSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    this.statusChangeDate = new Date();
+  }
+  next();
+});
 
 module.exports = mongoose.model("user", userSchema);
