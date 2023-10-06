@@ -33,6 +33,7 @@ const shippingAddress = require("../../models/NewSchemas/user_shipping_addresses
 const TeamDetails = require("../../models/NewSchemas/Team_SchemaModel.js");
 const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
+const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 
 dotenv.config();
 
@@ -818,7 +819,13 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   for (const userData of memberData) {
     const { email, first_name, last_name, team } = userData;
 
-    if (!email || !first_name || !last_name) {
+     // Check if email is already in use
+     const existingUser = await InvitedTeamMemberModel.findOne({ email });
+     if (existingUser) {
+       return next(new ErrorHandler(`Email is already exists`, 400));
+     }
+
+    if (!email || !first_name || !last_name || !team) {
       if (!email) {
         return next(new ErrorHandler("Please Enter Email", 400));
       }
@@ -3248,3 +3255,57 @@ exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 500));
   }
 });
+
+
+exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
+  const {
+    userData,
+    billingdata,
+    shippingData,
+    shipping_method,
+    cardDetails,
+  } = req.body;
+
+  const guestCustomer = new GuestCustomer({
+    first_name: userData.first_name,
+    last_name: userData.last_name,
+    email: userData.email,
+    contact: userData.contact,
+    billing_address: {
+      first_name: billingdata.first_name,
+      last_name: billingdata.last_name,
+      line1: billingdata.line1,
+      line2: billingdata.line2,
+      city: billingdata.city,
+      state: billingdata.state,
+      country: billingdata.country,
+      postal_code: billingdata.postal_code
+    },
+    shipping_address: [
+      {
+        first_name: shippingData.first_name,
+        last_name: shippingData.last_name,
+        line1: shippingData.line1,
+        line2: shippingData.line2,
+        city: shippingData.city,
+        state: shippingData.state,
+        country: shippingData.country,
+        postal_code: shippingData.postal_code
+      }
+    ],
+    card_details: {
+      nameOnCard: cardDetails.cardName,
+      cardNumber: cardDetails.cardNumber,
+      cardExpiryMonth: cardDetails.cardExpiryMonth,
+      cardExpiryYear: cardDetails.cardExpiryYear,
+      brand: cardDetails.brand,
+    },
+  });
+
+  await guestCustomer.save();
+
+  res.status(201).json({ success: true, message: 'Guest customer created successfully' });
+
+});
+
+
