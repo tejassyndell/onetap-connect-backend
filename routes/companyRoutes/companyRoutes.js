@@ -14,7 +14,7 @@ const { login,
      uploadImage,
      saveuserdata,
      savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata} = require('../../controllers/customers/userController.js');
-const {imageUpload} = require('../../middleware/imageUpload');
+const {imageUpload, deleteProfileImage, deleteLogoImage, deleteFaviconImage} = require('../../middleware/imageUpload');
 const { imageinviteUpload } = require('../../middleware/inviteimgupload.js');
 
 const router = express.Router();
@@ -76,6 +76,9 @@ router.post(
   imageUpload,
   uploadProfilePicture
 );
+router.delete('/deleteProfileImage/:avatarFileName', deleteProfileImage);
+router.delete('/deleteLogoImage/:logoFileName', deleteLogoImage);
+router.delete('/deleteFaviconImage/:faviconFileName', deleteFaviconImage);
 router.post("/uploadlogo",isAuthenticatedUser, imageUpload, uploadLogo);
 router.post("/uploadfavicon", isAuthenticatedUser,imageUpload, uploadfavicon);
 // router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
@@ -144,9 +147,9 @@ router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
 router.post('/users/add-manual-user', isAuthenticatedUser, inviteTeamMembermanually)
 router.post('/users/image-upload', imageinviteUpload, uploadImage)
-router.post('/save_user_data', isAuthenticatedUser, saveuserdata);
+router.post('/save_user_data/:id', isAuthenticatedUser, saveuserdata);
 router.post('/save_company_data', isAuthenticatedUser, savecompanydata);
-router.post('/save_userinfo_data', isAuthenticatedUser, saveuserinfodata);
+router.post('/save_userinfo_data/:id', isAuthenticatedUser, saveuserinfodata);
 router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
 
 
