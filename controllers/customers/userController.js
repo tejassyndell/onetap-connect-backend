@@ -34,7 +34,7 @@ const TeamDetails = require("../../models/NewSchemas/Team_SchemaModel.js");
 const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
-
+const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
 dotenv.config();
 
 //--sign up step - 1 ----
@@ -119,14 +119,14 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 </body>
 
 </html>    
-  `,      
-  attachments: [
-    {
-      filename: "Logo.png",
-      path: uploadsDirectory,
-      cid: "logo",
-    },
-  ],
+  `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
     //     <h3>Dear User</h3><br>
     //     <p>Thank you for choosing One Tap Connect LLC! We're thrilled to have you join our community. To complete your sign-up process, please click the button below:</p><br>
     //     <p></p><a href="${process.env.FRONTEND_URL}/sign-up/step-2/${user._id}">Click me</a> to complete sign up</p>
@@ -819,11 +819,11 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   for (const userData of memberData) {
     const { email, first_name, last_name, team } = userData;
 
-     // Check if email is already in use
-     const existingUser = await InvitedTeamMemberModel.findOne({ email });
-     if (existingUser) {
-       return next(new ErrorHandler(`Email is already exists`, 400));
-     }
+    // Check if email is already in use
+    const existingUser = await InvitedTeamMemberModel.findOne({ email });
+    if (existingUser) {
+      return next(new ErrorHandler(`Email is already exists`, 400));
+    }
 
     if (!email || !first_name || !last_name || !team) {
       if (!email) {
@@ -1046,13 +1046,13 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-  attachments: [
-    {
-      filename: "Logo.png",
-      path: uploadsDirectory,
-      cid: "logo",
-    },
-  ],
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
     };
 
     transporter.sendMail(message, (err, info) => {
@@ -2834,13 +2834,13 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
   
   
   `,
-  attachments: [
-    {
-      filename: "Logo.png",
-      path: uploadsDirectory,
-      cid: "logo",
-    },
-  ],
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
     };
 
     transporter.sendMail(message, (err, info) => {
@@ -3042,13 +3042,13 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-  attachments: [
-    {
-      filename: "Logo.png",
-      path: uploadsDirectory,
-      cid: "logo",
-    },
-  ],
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
   };
 
   transporter.sendMail(message, (err, info) => {
@@ -3308,4 +3308,39 @@ exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
 
 });
 
+
+
+// Create a new order for a specific user
+exports.createOrder = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Get the user ID from the authenticated user or request data
+    const userId = req.body.userId; // Assuming you have a user object in the request with an "id" property
+    console.log(userId, "order by userId");
+    const {
+      smartAccessories,
+      totalAmount,
+      tax,
+    } = req.body;
+
+    // Create a new order linked to the specific user
+    const order = new Order({
+      user: userId, // Link the order to the specific user
+      smartAccessories,
+      totalAmount,
+      tax,
+    });
+
+    // Save the order to the database
+    await order.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
