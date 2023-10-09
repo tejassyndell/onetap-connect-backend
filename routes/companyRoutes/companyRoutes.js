@@ -73,7 +73,8 @@ const {
   deleteuser,
   checkoutHandlerFree,
   saveuserinfodata,
-  guestcheckoutHandler
+  guestcheckoutHandler,
+  createOrder
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -223,4 +224,6 @@ router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
 router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
 router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
 
+
+router.post("/create-order", createOrder);
 module.exports = router;

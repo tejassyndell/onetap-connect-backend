@@ -121,7 +121,7 @@ exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-
+// delete product from cart
 exports.updateCart = catchAsyncErrors(async (req, res, next) => {
   const userId = req.body.user._id;
   try {
