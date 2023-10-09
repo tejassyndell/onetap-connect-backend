@@ -2189,11 +2189,11 @@ const checkimgSize = (req, res, next) => {
 exports.uploadProfilePicture = async (req, res) => {
   try {
     // Your code to handle image upload and processing goes here
-
+    const uploadedFileName = req.base64FileName;
     // Assuming the upload and processing were successful, you can send a success response
     res.status(200).json({
       message: "Profile Picture uploaded successfully",
-      imagePath: "path_to_uploaded_image",
+      imagePath: uploadedFileName ,
     });
   } catch (error) {
     console.error("Error during Profile Picture upload:", error);
@@ -2261,11 +2261,11 @@ const checkLogoSize = (req, res, next) => {
 exports.uploadLogo = async (req, res) => {
   try {
     // Your code to handle image upload and processing goes here
-
+    const uploadedFileName = req.base64FileName;
     // Assuming the upload and processing were successful, you can send a success response
     res.status(200).json({
       message: "Logo uploaded successfully",
-      imagePath: "path_to_uploaded_image",
+      imagePath: uploadedFileName ,
     });
   } catch (error) {
     console.error("Error during logo upload:", error);
@@ -2383,11 +2383,11 @@ const faviconupload = multer({
 exports.uploadfavicon = async (req, res) => {
   try {
     // Your code to handle image upload and processing goes here
-
+    const uploadedFileName = req.base64FileName;
     // Assuming the upload and processing were successful, you can send a success response
     res.status(200).json({
       message: "Favicon uploaded successfully",
-      imagePath: "path_to_uploaded_image",
+      imagePath: uploadedFileName,
     });
   } catch (error) {
     console.error("Error during Favicon upload:", error);
@@ -3026,7 +3026,8 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
             <p>Dear ${firstname}<br/><br/>
             We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
             To get started, simply click on the link below to Login your account:<br/><br/>
-            <a href="${process.env.FRONTEND_URL}/login">Click here to Login</a><br/><br/>
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex;">
+            <a href="${process.env.FRONTEND_URL}/login"  style="display: inline-block; ; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Click here to Login</a> </div><br/><br/>
             Your temporary password is: ${password}<br/><br/>
             Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
             In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
