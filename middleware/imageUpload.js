@@ -310,7 +310,7 @@ exports.imageUpload = (req, res, next) => {
         throw new Error("Invalid image type");
       }
       saveimageDatabase(imageType, id, companyID, base64FileName);
-
+      req.base64FileName = base64FileName; // Add this line
       console.log(base64FileName);
 
       req.file = {
