@@ -10,14 +10,14 @@ const order_Schema = new mongoose.Schema(
         company: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'company',
-            required: true,
+
         },
         type: [{ value: { type: String } }],
         smartAccessories: [
             {
-                smartAccessoriesId: { type: mongoose.Schema.Types.ObjectId },
-                quantity: { type: number },
-                amount: { type: number },
+                smartAccessoriesId: { type: mongoose.Schema.Types.ObjectId, ref: 'product', },
+                quantity: { type: Number },
+                amount: { type: Number },
             }
         ],
         subscriptionPlan: {
@@ -30,9 +30,9 @@ const order_Schema = new mongoose.Schema(
         tax: { type: Number },
         paymentStatus: { type: String },
         paymentDate: { type: Date },
-        transactionId : {
+        transactionId: {
             type: String,
-            required: true,
+
         },
     },
     { timestamps: true }
