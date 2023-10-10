@@ -13,7 +13,7 @@ const { login,
      inviteTeamMembermanually,
      uploadImage,
      saveuserdata,
-     savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata, verifypassword, updatestatus_on_delete_account} = require('../../controllers/customers/userController.js');
+     savecompanydata, deleteuser, checkoutHandlerFree,saveuserinfodata, verifypassword, updatestatus_on_delete_account, verifyRecoveryToken} = require('../../controllers/customers/userController.js');
 const {imageUpload, deleteProfileImage, deleteLogoImage, deleteFaviconImage} = require('../../middleware/imageUpload');
 const { imageinviteUpload } = require('../../middleware/inviteimgupload.js');
 
@@ -152,5 +152,6 @@ router.post('/save_company_data', isAuthenticatedUser, savecompanydata);
 router.post('/save_userinfo_data/:id', isAuthenticatedUser, saveuserinfodata);
 // router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
 router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
-router.put('/updateuserstatus',isAuthenticatedUser,updatestatus_on_delete_account)
+router.post('/recover_account', verifyRecoveryToken)
+// router.put('/updateuserstatus',isAuthenticatedUser,updatestatus_on_delete_account)
 module.exports = router;

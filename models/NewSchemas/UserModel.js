@@ -112,6 +112,8 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     status: { type: String, default: "active" },
+    delete_account_status:{ type: String, default: "active" },
+    recoveryToken: String,
     statusChangeDate: { type: Date },
     isIndividual: {
       type: Boolean,

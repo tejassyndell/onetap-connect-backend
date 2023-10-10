@@ -389,6 +389,11 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Your account has been deactivated by administrator.", 401)
     );
   }
+  if (user.delete_account_status === "inactive") {
+    return next(
+      new ErrorHandler("Your account has been Deleted, Please Check you Email for more Information.", 401)
+    );
+  }
   sendToken(user, 200, res);
 });
 
@@ -658,7 +663,7 @@ exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
 exports.getUsers = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
   console.log(companyID);
-  const users = await User.find({ companyID });
+  const users = await User.find({ companyID, delete_account_status: 'active' });
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
   }
@@ -3136,36 +3141,42 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
-  const { userid, password } = req.body;
-  console.log(userid, password);
+  const { userid, password, email, companyid } = req.body;
+  console.log(userid, password, email, companyid);
 
   try {
     const user = await User.findOne({ _id: userid }).select("+password");
-    // console.log(user)
 
     if (!user) {
       return res.status(400).json({ success: false, message: 'User not found' });
     }
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+
     const isPasswordValid = await user.comparePassword(password);
 
-    if (isPasswordValid) {
-      return res.status(200).json({ success: true });
-    } else {
+    if (!isPasswordValid) {
       return res.status(400).json({ success: false, message: 'Incorrect password' });
     }
-  } catch (error) {
-    console.error('Error verifying password:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
 
-exports.updatestatus_on_delete_account = catchAsyncErrors(async (req, res, next) => {
-  try {
-    const { companyid } = req.body;
+    const recoveryToken = jwt.sign(
+      { _id: userid },
+      process.env.JWT_SECRET,
+      { expiresIn: '1m' }
+    );
 
     const updatedUser = await User.updateMany(
-      { companyID: companyid },
-      { $set: { status: 'inactive' } },
+      { _id: userid },
+      {
+        $set: { delete_account_status: 'inactive' },
+        recoveryToken: recoveryToken
+      },
       { new: true }
     );
 
@@ -3173,62 +3184,113 @@ exports.updatestatus_on_delete_account = catchAsyncErrors(async (req, res, next)
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    const mailOptions = {
+      from: 'developersweb001@gmail.com', 
+      to: email, 
+      subject: 'Account Recovery',
+      text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
     res.cookie('token', null, {
       expires: new Date(Date.now()),
       httpOnly: true,
     });
 
-    res.status(200).json({ success: true, message: 'User status updated to inactive' });
+    res.status(200).json({ success: true, message: 'Password verified and user status updated to inactive' });
+    scheduleTokenExpiration(recoveryToken, userid, companyid);
+
   } catch (error) {
-    console.error('Error updating user status:', error);
+    console.error('Error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+function scheduleTokenExpiration(token, userid, companyid) {
+  const { exp } = jwt.decode(token);
 
-// exports.deleteuser = catchAsyncErrors(async (req, res, next) => {
-//   const { userid, companyid } = req.body;
-//   console.log(userid)
-//   console.log(companyid)
+  const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000; 
+console.log(expirationTime,".....expiring time")
+  setTimeout(async () => {
+    try {
+      const user = await User.findOne({ _id: userid });
 
-//   try {
-//     const deletePromises = [];
+      if (user && user.recoveryToken === token) {
+        const deletePromises = [];
 
-//     const pushDeletePromise = async (deletePromise, errorMessage) => {
-//       try {
-//         const result = await deletePromise;
-//         if (!result) {
-//           console.log(errorMessage);
-//         }
-//       } catch (error) {
-//         console.error('Error deleting data:', error);
-//       }
-//     };
+        const pushDeletePromise = async (deletePromise, errorMessage) => {
+          try {
+            const result = await deletePromise;
+            if (!result) {
+              console.log(errorMessage);
+            }
+          } catch (error) {
+            console.error('Error deleting data:', error);
+          }
+        };
 
-//     pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
-//     pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
-//     pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
-//     pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
-//     pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
-//     pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
-//     pushDeletePromise(
-//       CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
-//       'Company Share Referral data not found'
-//     );
-//     deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
-//     await Promise.all(deletePromises);
+        pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
+        pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
+        pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
+        pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
+        pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
+        pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+        pushDeletePromise(
+          CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
+          'Company Share Referral data not found'
+        );
+        deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
 
-//     res.cookie('token', null, {
-//       expires: new Date(Date.now()),
-//       httpOnly: true,
-//     });
+        await Promise.all(deletePromises);
 
-//     res.status(200).json({
-//       success: true,
-//       message: 'User deleted successfully',
-//     });
-//   } catch (error) {
-//     return next(new ErrorHandler(error.message, 500));
-//   }
-// });
+        console.log(`Expired token for user ${userid} deleted.`);
+      }
+    } catch (error) {
+      console.error('Error deleting expired token:', error);
+    }
+  }, expirationTime);
+}
 
 
+exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.body;
+  // console.log("tooken.....",token)
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userid = decoded._id;
+    // console.log("iddd...",userid)
+
+    const user = await User.findOne({ _id: userid });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'User not found' });
+    }
+    const userRecoveryToken = user.recoveryToken;
+    // console.log("database token........",userRecoveryToken)
+  
+    jwt.verify(userRecoveryToken, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+          if (err.name === 'TokenExpiredError') {
+              return res.status(400).json({ success: false, message: 'Token expired' });
+          }
+          return res.status(400).json({ success: false, message: 'Invalid token' });
+      }
+
+      try {
+          await User.updateOne(
+              { _id: userid },
+              { $set: { delete_account_status: 'active' }, recoveryToken: null }
+          );
+
+          return res.status(200).json({ success: true, message: 'Token verified and fields updated successfully' });
+      } catch (error) {
+          console.error(error);
+          return res.status(500).json({ success: false, message: 'Internal Server Error' });
+      }
+  });
+
+} catch (error) {
+  console.error(error);
+  return res.status(500).json({ success: false, message: 'Internal Server Error' });
+}
+});
