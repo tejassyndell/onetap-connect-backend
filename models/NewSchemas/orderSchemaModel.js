@@ -3,9 +3,7 @@ const mongoose = require("mongoose");
 const order_Schema = new mongoose.Schema(
     {
         user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'user',
-            required: true,
+            type: String,
         },
         company: {
             type: mongoose.Schema.Types.ObjectId,

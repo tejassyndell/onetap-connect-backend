@@ -181,3 +181,13 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 //     return next(new ErrorHandler("Failed to update cart", 500));
 //   }
 // });
+
+exports.fetchProducts = catchAsyncErrors(async (req, res, next) => {
+  const { productIds } = req.body;
+
+  const selectedProducts =  await Product.find({_id:{$in:productIds}})
+
+  res.status(200).json({
+    selectedProducts,
+  });
+});

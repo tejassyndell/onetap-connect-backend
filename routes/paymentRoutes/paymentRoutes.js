@@ -16,6 +16,7 @@ router.post('/payment/create-customer', createCustomer)
 router.post('/payment/tax', createTax) 
 router.post('/payment/subcription', createSubscription)
 router.post('/payment/switchToManualRenewal', switchToManualRenewal)
+router.post("/create-order", createOrder);
 
 
 router.post("/create-order", createOrder);

@@ -35,6 +35,7 @@ const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
+const { log } = require("console");
 dotenv.config();
 
 //--sign up step - 1 ----
@@ -3301,6 +3302,10 @@ exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
       cardExpiryYear: cardDetails.cardExpiryYear,
       brand: cardDetails.brand,
     },
+    shipping_method: {
+      type: shipping_method.type,
+      price: shipping_method.price,
+    }
   });
 
   await guestCustomer.save();

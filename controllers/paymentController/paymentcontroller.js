@@ -300,7 +300,6 @@ exports.createTax = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-
 // Creates an order
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   try {
@@ -333,7 +332,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       receipt_email: "hivete6126@ksyhtc.com",
     });
 
-    console.log(paymentIntent);
     const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id);
     const paymentStatus = confirmedPaymentIntent.status;
     const paymentDate = new Date();

@@ -54,6 +54,10 @@ const guestCustomerSchema = new mongoose.Schema(
             CVV: { type: String },
             brand: { type: String },
         },
+        shipping_method: [{
+            type: { type: String },
+            price: { type: Number }
+          }],
     },
     { timestamps: true }
 );
