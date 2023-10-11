@@ -2917,6 +2917,32 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+exports.updateUserPlanonRoleChange = catchAsyncErrors(async (req, res, next) => {
+  const { userID, subscriptionDetails } = req.body.userID;
+  try {
+    // const updatedUser = await User.findByIdAndUpdate(
+      const filter = {
+        user_id: { $in: userID }
+      };
+      
+      const update = {
+        $set: { subscription_details: subscriptionDetails }
+      };
+    // Update user subscription_details based on userIDs array
+    const updatedUser =  await UserInformation.updateMany(filter, update);
+    res.status(200).json({
+      success: true,
+      data:updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating subscription details:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating subscription details",
+    });
+  }
+});
+
 
 // exports.removeUserRole = catchAsyncErrors(async (req, res, next) => {
 //   const { userId } = req.body;
