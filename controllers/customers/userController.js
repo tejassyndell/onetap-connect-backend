@@ -795,6 +795,47 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, next) => {
+  const { emailtoauth, message } = req.body;
+  const { id, companyID } = req.user;
+  console.log(emailtoauth, "------------------------");
+  const manageremails = emailtoauth;
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  // Loop through the manageremails array and send an email to each address
+  manageremails.forEach((email) => {
+    const messageData = {
+      from: "yashpatel.syndell@gmail.com",
+      to: email, // Set the recipient email address
+      subject: "Request for Assistance",
+      text: message,
+    };
+
+    transporter.sendMail(messageData, (err, info) => {
+      if (err) {
+        console.log(err);
+        // Handle email sending error for this email address (you may choose to continue or stop on error)
+      } else {
+        console.log(info.response);
+        // Email sent successfully to this email address
+      }
+    });
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Emails sent to managers successfully",
+  });
+});
+
 // invite team member
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData } = req.body;
