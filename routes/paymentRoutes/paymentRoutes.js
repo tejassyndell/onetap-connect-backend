@@ -5,7 +5,8 @@ const {
   createCustomer,
   createSubscription,
   switchToManualRenewal,
-  createTax
+  createTax,
+  createOrder
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -16,5 +17,7 @@ router.post('/payment/tax', createTax)
 router.post('/payment/subcription', createSubscription)
 router.post('/payment/switchToManualRenewal', switchToManualRenewal)
 
+
+router.post("/create-order", createOrder);
 
 module.exports = router;

@@ -2193,7 +2193,7 @@ exports.uploadProfilePicture = async (req, res) => {
     // Assuming the upload and processing were successful, you can send a success response
     res.status(200).json({
       message: "Profile Picture uploaded successfully",
-      imagePath: uploadedFileName ,
+      imagePath: uploadedFileName,
     });
   } catch (error) {
     console.error("Error during Profile Picture upload:", error);
@@ -2265,7 +2265,7 @@ exports.uploadLogo = async (req, res) => {
     // Assuming the upload and processing were successful, you can send a success response
     res.status(200).json({
       message: "Logo uploaded successfully",
-      imagePath: uploadedFileName ,
+      imagePath: uploadedFileName,
     });
   } catch (error) {
     console.error("Error during logo upload:", error);
@@ -3316,12 +3316,22 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   try {
     // Get the user ID from the authenticated user or request data
     const userId = req.body.userId; // Assuming you have a user object in the request with an "id" property
+    const orderData = req.body.createOrderData
     console.log(userId, "order by userId");
     const {
       smartAccessories,
       totalAmount,
       tax,
     } = req.body;
+
+    
+
+
+
+
+    // else part if payment is sucessfull
+
+
 
     // Create a new order linked to the specific user
     const order = new Order({
