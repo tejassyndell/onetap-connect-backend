@@ -35,16 +35,12 @@ exports.getProductsInfo = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCartProducts = catchAsyncErrors(async (req, res, next) => {
-  // console.log( req.body.user)
   const { _id } = req.body.user;
   const userId = _id;
-  // console.log( _id,"hello user")
   const userCart = await cart.findOne({ userID: userId });
 
   if (!userCart) {
-    return
-    // next(new ErrorHandler("No cart found for the user", 404));
-    "No cart found for the user"
+    return next(new ErrorHandler("No cart found for the user", 404));
   }
 
   res.status(200).json({
@@ -181,3 +177,13 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 //     return next(new ErrorHandler("Failed to update cart", 500));
 //   }
 // });
+
+exports.fetchProducts = catchAsyncErrors(async (req, res, next) => {
+  const { productIds } = req.body;
+
+  const selectedProducts =  await Product.find({_id:{$in:productIds}})
+
+  res.status(200).json({
+    selectedProducts,
+  });
+});

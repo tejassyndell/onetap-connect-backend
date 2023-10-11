@@ -2,6 +2,7 @@ const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
+const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
 
 const productId = process.env.PLAN_PRODUCT_ID
 const monthlyProfessionalPriceID = process.env.MONTHLY_PROFESSIONAL_PLAN_PRICE_ID
@@ -295,5 +296,80 @@ exports.createTax = catchAsyncErrors(async (req, res, next) => {
 
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+// Creates an order
+exports.createOrder = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Get the user ID from the authenticated user or request data
+    const userId = req.body.userId; // Assuming you have a user object in the request with an "id" property
+    const orderData = req.body.createOrderData
+    console.log(userId, "order by userId");
+    const {
+      smartAccessories,
+      totalAmount,
+      tax,
+      billingAddress,
+      shippingAddress,
+    } = req.body;
+
+    const totalAmountInCents = Math.round(totalAmount * 100);
+    const type = (smartAccessories ? "smartAccessories" : "")
+
+    // // stripe payment starts
+    const attachedPaymentMethod = await stripe.paymentMethods.attach(orderData.paymentToken, {
+      customer: orderData.customerID,
+    });
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmountInCents,
+      currency: 'usd',
+      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+      customer: orderData.customerID,
+      description: "test description",
+      payment_method: attachedPaymentMethod.id,
+      receipt_email: "hivete6126@ksyhtc.com",
+    });
+
+    const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id);
+    const paymentStatus = confirmedPaymentIntent.status;
+    const paymentDate = new Date();
+    // res.status(200).json({ success: true, client_secret: paymentIntent.client_secret });
+
+    if (confirmedPaymentIntent.status === 'succeeded') {
+      // Payment is successful, create the order in your database
+
+      // Create a new order linked to the specific user
+      const order = new Order({
+        user: userId, // Link the order to the specific user
+        smartAccessories,
+        totalAmount,
+        tax,
+        type,
+        transactionId: paymentIntent.id,
+        paymentDate,
+        paymentStatus,
+        shippingAddress,
+        billingAddress,
+      });
+      // Save the order to the database
+      await order.save();
+      res.status(201).json({
+        success: true,
+        message: 'Order created successfully',
+        order,
+      });
+    } else {
+      // Payment confirmation failed
+      res.status(400).json({
+        success: false,
+        message: 'Payment confirmation failed',
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
