@@ -3141,8 +3141,8 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
-  const { userid, password, email, companyid } = req.body;
-  console.log(userid, password, email, companyid);
+  const { userid, password, email, companyid, firstname } = req.body;
+  console.log(userid, password, email, companyid, firstname);
 
   try {
     const user = await User.findOne({ _id: userid }).select("+password");
@@ -3168,7 +3168,7 @@ exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
     const recoveryToken = jwt.sign(
       { _id: userid },
       process.env.JWT_SECRET,
-      { expiresIn: '1m' }
+      { expiresIn: '7d' }
     );
 
     const updatedUser = await User.updateMany(
@@ -3185,10 +3185,60 @@ exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
     }
 
     const mailOptions = {
-      from: 'developersweb001@gmail.com', 
-      to: email, 
+      from: 'developersweb001@gmail.com',
+      to: email,
       subject: 'Account Recovery',
-      text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
+      // text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
+      html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstname}<br/><br/>
+            We hope this message finds you well.<br/><br/>
+            We received a request to delete your account, and we wanted to let you know that your account is scheduled for deletion. However, we understand that circumstances may change. That's why we're providing you with a 7-day window to recover your account.<br/><br/>
+            To initiate the account recovery process, simply click on the link below:<br/>
+
+            <div class="main-div-" style="display:block; margin-top: 5px; width:50%; juatify-content:center;  text-align: center;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
+                <a href="${process.env.FRONTEND_URL}/login?token=${recoveryToken}" style="display: inline-block; ; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Recover Account</a>
+            </div>
+            </div><br/>
+
+            Please note that this link is time-sensitive and will expire after 7 days. Once the link expires, you will no longer be able to recover your account.<br/>
+            <div style="margin-top: 25px;">
+            <div style="font-weight: bold;">Technical issue?</div>
+            <div style="margin-top: 5px;">
+              <span>In case you're facing any technical issue, please contact our support team </span>
+              <span style="color: #2572e6;"><a href="https://support.onetapconnect.com/">here.</a></span>
+            </div>
+            </div><br/>
+            Thank you for using our platform.<br/><br/>
+            Best regards,<br/>
+            Team OneTapConnect.<br/>
+            
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
     };
 
     await transporter.sendMail(mailOptions);
@@ -3209,8 +3259,8 @@ exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
 function scheduleTokenExpiration(token, userid, companyid) {
   const { exp } = jwt.decode(token);
 
-  const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000; 
-console.log(expirationTime,".....expiring time")
+  const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
+  console.log(expirationTime, ".....expiring time")
   setTimeout(async () => {
     try {
       const user = await User.findOne({ _id: userid });
@@ -3253,44 +3303,60 @@ console.log(expirationTime,".....expiring time")
 
 
 exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
-  const { token } = req.body;
+  const { email, password, token } = req.body;
   // console.log("tooken.....",token)
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
   try {
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userid = decoded._id;
     // console.log("iddd...",userid)
 
-    const user = await User.findOne({ _id: userid });
+    const user = await User.findOne({ _id: userid }).select("+password");
 
     if (!user) {
       return res.status(400).json({ success: false, message: 'User not found' });
     }
+
+    const checkemail = await User.findOne({ email })
+    if (!checkemail) {
+      return res.status(400).json({success: false, message: "Incorrect Email"});
+    }    
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ success: false, message: 'Incorrect Password' });
+    }
+
     const userRecoveryToken = user.recoveryToken;
     // console.log("database token........",userRecoveryToken)
-  
+
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
-          if (err.name === 'TokenExpiredError') {
-              return res.status(400).json({ success: false, message: 'Token expired' });
-          }
-          return res.status(400).json({ success: false, message: 'Invalid token' });
+        if (err.name === 'TokenExpiredError') {
+          return res.status(400).json({ success: false, message: 'Token expired' });
+        }
+        return res.status(400).json({ success: false, message: 'Invalid token' });
       }
 
       try {
-          await User.updateOne(
-              { _id: userid },
-              { $set: { delete_account_status: 'active' }, recoveryToken: null }
-          );
+        await User.updateOne(
+          { _id: userid },
+          { $set: { delete_account_status: 'active' }, recoveryToken: null }
+        );
 
-          return res.status(200).json({ success: true, message: 'Token verified and fields updated successfully' });
+        return res.status(200).json({ success: true, message: 'Token verified and fields updated successfully' });
       } catch (error) {
-          console.error(error);
-          return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
       }
-  });
+    });
 
-} catch (error) {
-  console.error(error);
-  return res.status(500).json({ success: false, message: 'Internal Server Error' });
-}
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
 });
