@@ -407,7 +407,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   }
   if (user.delete_account_status === "inactive") {
     return next(
-      new ErrorHandler("Your account has been Deleted, Please Check you Email for more Information.", 401)
+      new ErrorHandler("Your account has been deleted, please check your Email for more information.", 401)
     );
   }
   sendToken(user, 200, res);
@@ -2737,7 +2737,9 @@ exports.invitedUser = catchAsyncErrors(async (req, res, next) => {
       const data = await InvitedTeamMemberModel.findOne({
         invitationToken: token,
         invitationExpiry: { $gt: currentDate }, // Not expired
-      }).select("_id email first_name last_name companyId");
+      }).select("_id email first_name last_name companyId team");
+
+      // console.log(data, ".......................................................................")
 
       if (data) {
         res.status(200).json({
@@ -2764,7 +2766,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       });
       return; // Stop execution if the invitation is declined.
     }
-    let userdetails = ({ email, first_name, last_name, companyId } =
+    let userdetails = ({ email, first_name, last_name, companyId, team } =
       req.body.InvitedUserData);
 
     userdetails = {
