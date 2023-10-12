@@ -3371,3 +3371,23 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
+  const { _id } = req.user;
+
+  // Checking if user has given a valid user ID
+
+  if (!_id) {
+    return next(new ErrorHandler("User ID is missing in the request", 400));
+  }
+
+  const user = await User.findById(_id);
+  const userprofileimage = user.avatar ;
+  if (!user) {
+    return next(new ErrorHandler("User not found", 401));
+  }
+
+  res.status(200).json({
+    success: true,
+    userprofileimage ,
+  });
+});

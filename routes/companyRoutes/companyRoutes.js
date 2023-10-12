@@ -75,7 +75,8 @@ const {
   saveuserinfodata,
   guestcheckoutHandler,
   createOrder,
-  updateUserPlanonRoleChange
+  updateUserPlanonRoleChange,
+  getProfileimage
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -226,6 +227,7 @@ router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
 router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
 router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
+router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
 
 
 router.post("/create-order", createOrder);
