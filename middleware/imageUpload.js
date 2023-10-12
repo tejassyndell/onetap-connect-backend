@@ -301,7 +301,6 @@ exports.imageUpload = (req, res, next) => {
       let base64FileName;
       if (imageType === "profile") {
         base64FileName = await saveImageToFolder("profile", base64ImageData);
-        // ... rest of the code remains unchanged
       } else if (imageType === "logo") {
         base64FileName = await saveImageToFolder("logo", base64ImageData);
       } else if (imageType === "favicon") {
