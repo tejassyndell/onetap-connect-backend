@@ -684,7 +684,6 @@ exports.getUsers = catchAsyncErrors(async (req, res, next) => {
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
   }
-
   res.status(200).json({
     success: true,
     users,
@@ -1073,6 +1072,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
 
   for (const userData of CSVMemberData) {
     const password = generatePassword();
+    console.log()
     const { email, firstName, lastName, team } = userData;
     console.log(userData);
 
@@ -3594,9 +3594,7 @@ exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
       price: shipping_method.price,
     }
   });
-
   await guestCustomer.save();
-
   res.status(201).json({ success: true, message: 'Guest customer created successfully' });
 
 });
