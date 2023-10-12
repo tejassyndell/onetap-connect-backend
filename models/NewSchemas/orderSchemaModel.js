@@ -3,21 +3,20 @@ const mongoose = require("mongoose");
 const order_Schema = new mongoose.Schema(
     {
         user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'user',
-            required: true,
+            type: String,
         },
         company: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'company',
 
         },
-        type: [{ value: { type: String } }],
+        type: { type: String } ,
         smartAccessories: [
             {
-                smartAccessoriesId: { type: mongoose.Schema.Types.ObjectId, ref: 'product', },
+                productId: { type: mongoose.Schema.Types.ObjectId, ref: 'product', },
+                subtotal: { type: Number },
                 quantity: { type: Number },
-                amount: { type: Number },
+                price: { type: Number },
             }
         ],
         subscriptionPlan: {
@@ -32,8 +31,33 @@ const order_Schema = new mongoose.Schema(
         paymentDate: { type: Date },
         transactionId: {
             type: String,
-
         },
+        shippingAddress: [
+            {
+              address_name:{type: String, default: "Default"}, 
+              first_name:{ type: String, default: null },
+              last_name:{ type: String, default: null },
+              company_name:{ type: String, default: null },
+              line1: { type: String, default: null },
+              line2: { type: String, default: null },
+              city: { type: String, default: null },
+              state: { type: String, default: null },
+              country: { type: String, default: null },
+              postal_code: { type: String, default: null }
+          }],
+        billingAddress: [
+            {
+              address_name:{type: String, default: "Default"}, 
+              first_name:{ type: String, default: null },
+              last_name:{ type: String, default: null },
+              company_name:{ type: String, default: null },
+              line1: { type: String, default: null },
+              line2: { type: String, default: null },
+              city: { type: String, default: null },
+              state: { type: String, default: null },
+              country: { type: String, default: null },
+              postal_code: { type: String, default: null }
+          }],
     },
     { timestamps: true }
 );
