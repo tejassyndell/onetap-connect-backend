@@ -1949,9 +1949,10 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   // console.log(companyId);
   // console.log(company_url_edit_permission);
   console.log("update is hit");
+  const trimslug = companyurlslug.trim()
   try {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
-      companyurlslug: companyurlslug,
+      companyurlslug: trimslug,
       company_url_edit_permission: company_url_edit_permission,
       user_profile_edit_permission: user_profile_edit_permission,
     });
