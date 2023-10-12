@@ -79,7 +79,8 @@ const {
   createOrder,
   requestToManagerForUpdateUserInfo,
   getProfileimage,
-  updateUserPlanonRoleChange
+  updateUserPlanonRoleChange,
+  updateUserStatus
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -216,6 +217,7 @@ router.post(
 router.post("/user/teamdata", isAuthenticatedUser, getTeam);
 router.post("/update-user-information/:id", updateUserInformation);
 router.get("/get-user-information/:id", getUserinfoDetails);
+router.post("/user/updatelogin", isAuthenticatedUser, updateUserStatus);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 router.post("/user/updateplanonrolechange", isAuthenticatedUser, updateUserPlanonRoleChange);
 

@@ -1721,6 +1721,26 @@ exports.getUserinfoDetails = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+// get single team members
+exports.updateUserStatus = catchAsyncErrors(async (req, res, next) => {
+  const { _id } = req.user;
+  console.log(_id)
+  console.log("_id--------------------------------")
+  const updatedUserInfo = await User.findByIdAndUpdate(
+    _id,
+    { "first_login": false },
+    { new: true }
+  );
+  if (!updatedUserInfo) {
+    return next(new ErrorHandler("Internal Server Error", 500));
+  }
+
+  res.status(200).json({
+    success: true,
+    updatedUserInfo,
+  });
+});
+
 exports.updateCompanyDetails = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
   const { companyDetails } = req.body;
@@ -3596,7 +3616,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       tax,
     } = req.body;
 
-    
+
 
 
 
