@@ -341,15 +341,15 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
         cancel_at_period_end : false
       });
   
-      // Remove the existing item from the subscription
-      console.log(myPayment);
-      const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-      const paymentIntent = await stripe.paymentIntents.retrieve(
-        latestInvoice.payment_intent
-      );
+      // // Remove the existing item from the subscription
+      // console.log(myPayment);
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
   
       // Save payment ID and user details in your database after successful payment
-      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID: myPayment.id });
+      res.status(200).json({ success: true, client_secret: "paymentIntent.client_secret", subscriptionID: myPayment.id });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, error: error.message });
