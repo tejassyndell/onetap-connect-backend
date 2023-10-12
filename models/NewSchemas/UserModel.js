@@ -140,7 +140,10 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    
+    personlize_company_name: {type: String, default: null},
+    personlize_primary_office_number : {type: Number, default: null},
+    personlize_Website_url: {type: String, default: null},
+    personlize_Primary_activities : {type: String, default: null},
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

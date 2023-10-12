@@ -76,6 +76,8 @@ const {
   guestcheckoutHandler,
   verifypassword,
   verifyRecoveryToken,
+  createOrder,
+  requestToManagerForUpdateUserInfo
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -214,11 +216,7 @@ router.post("/update-user-information/:id", updateUserInformation);
 router.get("/get-user-information/:id", getUserinfoDetails);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
-router.post(
-  "/users/add-manual-user",
-  isAuthenticatedUser,
-  inviteTeamMembermanually
-);
+router.post( "/users/add-manual-user",isAuthenticatedUser,inviteTeamMembermanually);
 router.post("/users/image-upload", imageinviteUpload, uploadImage);
 router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
@@ -226,6 +224,7 @@ router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
 // router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
 router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
 router.post('/recover_account', verifyRecoveryToken)
+router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo); 
 
 
 module.exports = router;
