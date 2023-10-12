@@ -678,7 +678,9 @@ exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
 exports.getUsers = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
   console.log(companyID);
-  const users = await User.find({ companyID, delete_account_status: 'active' });
+  // const users = await User.find({ companyID, delete_account_status: 'active' });
+  const users = await User.find({ companyID});
+
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
   }
