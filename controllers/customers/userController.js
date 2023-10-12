@@ -796,11 +796,8 @@ exports.updateStatus = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, next) => {
-  const { emailtoauth, message } = req.body;
-  const { id, companyID } = req.user;
-  console.log(emailtoauth, "------------------------");
+  const { emailtoauth, message, requestedUserEmail } = req.body;
   const manageremails = emailtoauth;
-
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     port: 587,
@@ -812,11 +809,50 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
 
   // Loop through the manageremails array and send an email to each address
   manageremails.forEach((email) => {
+    // const messageData = {
+    //   from: "yashpatel.syndell@gmail.com",
+    //   to: email, // Set the recipient email address
+    //   subject: "Request for Assistance",
+    //   text: message,
+    // };
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const messageData = {
       from: "yashpatel.syndell@gmail.com",
       to: email, // Set the recipient email address
       subject: "Request for Assistance",
-      text: message,
+      html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </head>
+      <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <!-- Insert your company logo here -->
+            <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <h3>Request to Update User Information</h3>
+            <p>User with email: ${requestedUserEmail} has requested an update to their user information. Here is their request:</p>
+            <p>${message}</p>
+            <p>Please review the request and take appropriate action. If you have any questions or need further information, please respond to this email.</p>
+            <h5>Technical Issue?</h5>
+            <p>If you are facing any technical issues, please contact our support team <a href="[support_team_link]">here</a>.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
     };
 
     transporter.sendMail(messageData, (err, info) => {
@@ -862,11 +898,9 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
     // Check if email is already in use
     const existingUser = await InvitedTeamMemberModel.findOne({ email });
-    if (existingUser) {
-      return next(new ErrorHandler(`Email is already exists`, 400));
-    }
+  
 
-    if (!email || !first_name || !last_name || !team) {
+    if (!email || !first_name || !last_name ) {
       if (!email) {
         return next(new ErrorHandler("Please Enter Email", 400));
       }
