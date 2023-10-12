@@ -74,6 +74,8 @@ const {
   checkoutHandlerFree,
   saveuserinfodata,
   guestcheckoutHandler,
+  verifypassword,
+  verifyRecoveryToken,
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -221,7 +223,9 @@ router.post("/users/image-upload", imageinviteUpload, uploadImage);
 router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
 router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
-router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
+// router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
+router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
+router.post('/recover_account', verifyRecoveryToken)
 
 
 module.exports = router;
