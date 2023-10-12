@@ -44,7 +44,7 @@ const invitedTeamMemberSchema = new mongoose.Schema({
     required: true,
   },
   team : {
-    type:String
+    type: mongoose.Types.ObjectId,
   },
   status:{type:String,default:'pending'}
 

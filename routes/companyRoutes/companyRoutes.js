@@ -74,7 +74,13 @@ const {
   checkoutHandlerFree,
   saveuserinfodata,
   guestcheckoutHandler,
-  createOrder
+  verifypassword,
+  verifyRecoveryToken,
+  createOrder,
+  requestToManagerForUpdateUserInfo,
+  getProfileimage,
+  updateUserPlanonRoleChange,
+  updateUserStatus
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -91,7 +97,7 @@ router.post("/register/step-2/:token", signUP2);
 router.post("/google-sign-up", googleSignUP);
 router.post("/google-login", googleLogin);
 router.post("/checkout", isAuthenticatedUser, checkoutHandler);
-router.post("/guest_checkout", isAuthenticatedUser, guestcheckoutHandler);
+router.post("/guest_checkout", guestcheckoutHandler);
 router.post("/checkout/free", isAuthenticatedUser, checkoutHandlerFree);
 router.post("/login", login);
 router.post("/logout", logout);
@@ -211,19 +217,22 @@ router.post(
 router.post("/user/teamdata", isAuthenticatedUser, getTeam);
 router.post("/update-user-information/:id", updateUserInformation);
 router.get("/get-user-information/:id", getUserinfoDetails);
+router.post("/user/updatelogin", isAuthenticatedUser, updateUserStatus);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
+router.post("/user/updateplanonrolechange", isAuthenticatedUser, updateUserPlanonRoleChange);
+
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
-router.post(
-  "/users/add-manual-user",
-  isAuthenticatedUser,
-  inviteTeamMembermanually
-);
+router.post( "/users/add-manual-user",isAuthenticatedUser,inviteTeamMembermanually);
 router.post("/users/image-upload", imageinviteUpload, uploadImage);
 router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
 router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
-router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
+// router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
+router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
+router.post('/recover_account', verifyRecoveryToken)
+router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo); 
+// router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
+router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
 
 
-router.post("/create-order", createOrder);
 module.exports = router;

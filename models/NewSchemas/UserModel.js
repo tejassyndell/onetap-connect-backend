@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
         message: "First name cannot be empty",
       },
     },
-    team: { type: mongoose.Schema.Types.ObjectId, require:false, set: v => v === '' ? null : v  },
+    team: { type: mongoose.Schema.Types.ObjectId, require: false, set: v => v === '' ? null : v },
     // team: {
     //   type: mongoose.Schema.Types.ObjectId,
     //   default: null,
@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema(
     //     message: "Team must be a valid ObjectId, null, or an empty string",
     //   },
     // },
+    first_login: {
+      type: Boolean, default: true,
+    },
     last_name: {
       type: String,
     },
@@ -112,6 +115,8 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     status: { type: String, default: "active" },
+    delete_account_status:{ type: String, default: "active" },
+    recoveryToken: String,
     statusChangeDate: { type: Date },
     isIndividual: {
       type: Boolean,
@@ -138,7 +143,10 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    
+    personlize_company_name: {type: String, default: null},
+    personlize_primary_office_number : {type: Number, default: null},
+    personlize_Website_url: {type: String, default: null},
+    personlize_Primary_activities : {type: String, default: null},
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
