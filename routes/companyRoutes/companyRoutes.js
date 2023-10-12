@@ -77,7 +77,9 @@ const {
   verifypassword,
   verifyRecoveryToken,
   createOrder,
-  requestToManagerForUpdateUserInfo
+  requestToManagerForUpdateUserInfo,
+  getProfileimage,
+  updateUserPlanonRoleChange
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -215,6 +217,8 @@ router.post("/user/teamdata", isAuthenticatedUser, getTeam);
 router.post("/update-user-information/:id", updateUserInformation);
 router.get("/get-user-information/:id", getUserinfoDetails);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
+router.post("/user/updateplanonrolechange", isAuthenticatedUser, updateUserPlanonRoleChange);
+
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
 router.post( "/users/add-manual-user",isAuthenticatedUser,inviteTeamMembermanually);
 router.post("/users/image-upload", imageinviteUpload, uploadImage);
@@ -225,6 +229,8 @@ router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
 router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
 router.post('/recover_account', verifyRecoveryToken)
 router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo); 
+// router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
+router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
 
 
 module.exports = router;

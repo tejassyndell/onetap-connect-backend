@@ -2998,6 +2998,32 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+exports.updateUserPlanonRoleChange = catchAsyncErrors(async (req, res, next) => {
+  const { userID, subscriptionDetails } = req.body.userID;
+  try {
+    // const updatedUser = await User.findByIdAndUpdate(
+      const filter = {
+        user_id: { $in: userID }
+      };
+      
+      const update = {
+        $set: { subscription_details: subscriptionDetails }
+      };
+    // Update user subscription_details based on userIDs array
+    const updatedUser =  await UserInformation.updateMany(filter, update);
+    res.status(200).json({
+      success: true,
+      data:updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating subscription details:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating subscription details",
+    });
+  }
+});
+
 
 // exports.removeUserRole = catchAsyncErrors(async (req, res, next) => {
 //   const { userId } = req.body;
@@ -3600,3 +3626,23 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 });
 
 
+exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
+  const { _id } = req.user;
+
+  // Checking if user has given a valid user ID
+
+  if (!_id) {
+    return next(new ErrorHandler("User ID is missing in the request", 400));
+  }
+
+  const user = await User.findById(_id);
+  const userprofileimage = user.avatar ;
+  if (!user) {
+    return next(new ErrorHandler("User not found", 401));
+  }
+
+  res.status(200).json({
+    success: true,
+    userprofileimage ,
+  });
+});
