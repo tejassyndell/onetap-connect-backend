@@ -2107,6 +2107,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.contact = userData.contact;
   user.email = userData.email;
   user.address = billingdata;
+  user.first_login = true;
 
   const company = await Company.findById(companyID);
   company.address = billingdata;
