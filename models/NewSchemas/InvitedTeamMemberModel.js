@@ -43,11 +43,8 @@ const invitedTeamMemberSchema = new mongoose.Schema({
     ref: 'company',
     required: true,
   },
-  team : {
-    type: mongoose.Types.ObjectId,
-  },
+  team: { type: mongoose.Schema.Types.ObjectId, require: false, set: v => v === '' ? null : v },
   status:{type:String,default:'pending'}
-
 }, { timestamps: true } );
 
 module.exports = mongoose.model('invited_team_members', invitedTeamMemberSchema);
