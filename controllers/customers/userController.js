@@ -2180,7 +2180,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       shipping_address: [shippingData],
     });
   } else {
-    shippingAddressFind.shipping_address.push(shippingData);
+    shippingAddressFind.shipping_address = [shippingData];
   }
 
   const card = await Cards.create(cardData);
@@ -2275,7 +2275,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
       shipping_address: [shippingData],
     });
   } else {
-    shippingAddressFind.shipping_address.push(shippingData);
+    shippingAddressFind.shipping_address = [shippingData];
   }
 
   // const card = await Cards.create(cardData);
