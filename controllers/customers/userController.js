@@ -230,7 +230,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
 
-  if (company_name) {
+  if (company_name ==="" || company_name ) {
     const newCompany = await Company.create({
       primary_account: user._id,
       primary_manager: user._id,
