@@ -169,11 +169,39 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     password,
     googleId,
   } = req.body.signupData;
-  console.log("google", googleId);
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
   const email = decodedData.email;
   let user;
+
+  const trimedString = company_name.trim().replace(/\s+/g, " ").toLowerCase();
+
+  const company = await Company.find();
+
+  // checking if company already exists
+  const companyExists = company.some(item => {
+    const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
+    return trimmedExistingName === trimedString;
+  });
+
+  if (companyExists) {
+    return next(new ErrorHandler("Company Already Exists.", 400));
+  }
+
+  // Check if company name is provided
+  // if (company_name) {
+  //   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
+
+  //   // Check if company with the same name already exists
+  //   const existingCompany = await Company.findOne({
+  //     company_name: { $regex: new RegExp(trimedString, "i") }
+  //   });
+
+  //   if (existingCompany) {
+  //     return res.status(400).json({ message: "Company Already Exists." });
+  //   }
+  // }
+
   if (password === undefined) {
     user = await User.create({
       email,
@@ -193,55 +221,128 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       password,
     });
   }
+
   if (!user) {
-    return next(
-      new ErrorHandler("Something went wrong please try again.", 400)
-    );
+    return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
-  if (company_name != "") {
-    const trimedString = company_name.replace(/\s/g, "").toLowerCase();
 
-    const company = await Company.find();
-
-    // checking if compnay already exists
-    company.map((item) => {
-      if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
-        console.log(item.company_name);
-        return next(new ErrorHandler("Company Already Exists. ", 400));
-      }
+  if (company_name) {
+    const newCompany = await Company.create({
+      primary_account: user._id,
+      primary_manager: user._id,
+      primary_billing: user._id,
+      company_name,
+      industry,
+      contact,
+      team_size,
     });
+
+    user.companyID = newCompany._id;
+    user.isVerfied = true;
+
+    const companySettingSchema = await CompanyShareReferralModel.create({
+      companyID: newCompany._id,
+    });
+
+    await user.save({ validateBeforeSave: true });
+
+    const userInfo = await UserInformation.create({
+      user_id: user._id,
+      // Add any other fields you want to store in userinfo
+    });
+
+    await userInfo.save();
   }
-
-  const newCompany = await Company.create({
-    primary_account: user._id,
-    primary_manager: user._id,
-    primary_billing: user._id,
-    company_name,
-    industry,
-    contact,
-    team_size,
-  });
-
-  user.companyID = newCompany._id;
-  user.isVerfied = true;
-  const companySettingSchema = await CompanyShareReferralModel.create({
-    companyID: newCompany._id,
-  });
-  await user.save({ validateBeforeSave: true });
-
-  const userInfo = await UserInformation.create({
-    user_id: user._id,
-    // Add any other fields you want to store in userinfo
-  });
-  await userInfo.save();
-
-  // res.status(200).json({
-  //   message: "user saved successfully",
-  //   user
-  // })
 
   sendToken(user, 200, res);
 });
+
+// exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
+//   const { token } = req.params;
+//   const {
+//     first_name,
+//     last_name,
+//     contact,
+//     isCompany,
+//     industry,
+//     company_name,
+//     team_size,
+//     password,
+//     googleId,
+//   } = req.body.signupData;
+//   console.log("google", googleId);
+
+//   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+//   const email = decodedData.email;
+//   let user;
+//   if (password === undefined) {
+//     user = await User.create({
+//       email,
+//       first_name,
+//       last_name,
+//       contact,
+//       isIndividual: !isCompany,
+//       googleId,
+//     });
+//   } else {
+//     user = await User.create({
+//       email,
+//       first_name,
+//       last_name,
+//       contact,
+//       isIndividual: !isCompany,
+//       password,
+//     });
+//   }
+//   if (!user) {
+//     return next(
+//       new ErrorHandler("Something went wrong please try again.", 400)
+//     );
+//   }
+//   if (company_name != "") {
+//     const trimedString = company_name.replace(/\s/g, "").toLowerCase();
+
+//     const company = await Company.find();
+
+//     // checking if compnay already exists
+//     company.map((item) => {
+//       if (item.company_name.replace(/\s/g, "").toLowerCase() === trimedString) {
+//         console.log(item.company_name);
+//         return next(new ErrorHandler("Company Already Exists. ", 400));
+//       }
+//     });
+//   }
+
+//   const newCompany = await Company.create({
+//     primary_account: user._id,
+//     primary_manager: user._id,
+//     primary_billing: user._id,
+//     company_name,
+//     industry,
+//     contact,
+//     team_size,
+//   });
+
+//   user.companyID = newCompany._id;
+//   user.isVerfied = true;
+//   const companySettingSchema = await CompanyShareReferralModel.create({
+//     companyID: newCompany._id,
+//   });
+//   await user.save({ validateBeforeSave: true });
+
+//   const userInfo = await UserInformation.create({
+//     user_id: user._id,
+//     // Add any other fields you want to store in userinfo
+//   });
+//   await userInfo.save();
+
+//   // res.status(200).json({
+//   //   message: "user saved successfully",
+//   //   user
+//   // })
+
+//   sendToken(user, 200, res);
+// });
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   const {
@@ -678,8 +779,8 @@ exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
 exports.getUsers = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
   console.log(companyID);
-  // const users = await User.find({ companyID, delete_account_status: 'active' });
-  const users = await User.find({ companyID});
+  const users = await User.find({ companyID, delete_account_status: 'active' });
+  // const users = await User.find({ companyID});
 
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
@@ -853,13 +954,13 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
       </body>
       </html>
     `,
-    attachments: [
-      {
-        filename: "Logo.png",
-        path: uploadsDirectory,
-        cid: "logo",
-      },
-    ],
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
     };
 
     transporter.sendMail(messageData, (err, info) => {
@@ -905,9 +1006,9 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
     // Check if email is already in use
     const existingUser = await InvitedTeamMemberModel.findOne({ email });
-  
 
-    if (!email || !first_name || !last_name ) {
+
+    if (!email || !first_name || !last_name) {
       if (!email) {
         return next(new ErrorHandler("Please Enter Email", 400));
       }
@@ -2965,6 +3066,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
+
   const { id } = req.user;
 
   const userInfo = await UserInformation.find({ user_id: id });
@@ -3027,18 +3129,18 @@ exports.updateUserPlanonRoleChange = catchAsyncErrors(async (req, res, next) => 
   const { userID, subscriptionDetails } = req.body.userID;
   try {
     // const updatedUser = await User.findByIdAndUpdate(
-      const filter = {
-        user_id: { $in: userID }
-      };
-      
-      const update = {
-        $set: { subscription_details: subscriptionDetails }
-      };
+    const filter = {
+      user_id: { $in: userID }
+    };
+
+    const update = {
+      $set: { subscription_details: subscriptionDetails }
+    };
     // Update user subscription_details based on userIDs array
-    const updatedUser =  await UserInformation.updateMany(filter, update);
+    const updatedUser = await UserInformation.updateMany(filter, update);
     res.status(200).json({
       success: true,
-      data:updatedUser
+      data: updatedUser
     });
   } catch (error) {
     console.error("Error updating subscription details:", error);
@@ -3510,8 +3612,8 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
 
     const checkemail = await User.findOne({ email })
     if (!checkemail) {
-      return res.status(400).json({success: false, message: "Incorrect Email"});
-    }    
+      return res.status(400).json({ success: false, message: "Incorrect Email" });
+    }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
@@ -3659,13 +3761,13 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
   }
 
   const user = await User.findById(_id);
-  const userprofileimage = user.avatar ;
+  const userprofileimage = user.avatar;
   if (!user) {
     return next(new ErrorHandler("User not found", 401));
   }
 
   res.status(200).json({
     success: true,
-    userprofileimage ,
+    userprofileimage,
   });
 });
