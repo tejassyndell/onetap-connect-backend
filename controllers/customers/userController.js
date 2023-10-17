@@ -2147,6 +2147,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     shipping_method,
     planData,
     cardDetails,
+    saveAddress,
+    selectedEditAddress
   } = req.body;
 
   const cardData = {
@@ -2181,10 +2183,25 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!shippingAddressFind) {
     shippingAddressFind = new shippingAddress({
       userId: user._id,
-      shipping_address: [shippingData],
-    });
-  } else {
-    shippingAddressFind.shipping_address = [shippingData];
+      shipping_address: [],
+    }); 
+  } 
+  // if(saveAddress) {
+  //   shippingAddressFind.shipping_address.push(shippingData);
+  // }
+  if (saveAddress) {
+    if (selectedEditAddress) {
+      const index = shippingAddressFind.shipping_address.findIndex(
+        (address) => address._id.toString() === selectedEditAddress._id.toString()
+      );
+      if (index !== -1) {
+        // Replace the existing address with the updated address
+        shippingAddressFind.shipping_address[index] = shippingData;
+      }
+    } else {
+      // Add a new address
+      shippingAddressFind.shipping_address.push(shippingData);
+    }
   }
 
   const card = await Cards.create(cardData);
@@ -2243,6 +2260,8 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
     shipping_method,
     planData,
     // cardDetails,
+    saveAddress,
+    selectedEditAddress
   } = req.body;
 
   // const cardData = {
@@ -2277,10 +2296,25 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   if (!shippingAddressFind) {
     shippingAddressFind = new shippingAddress({
       userId: user._id,
-      shipping_address: [shippingData],
-    });
-  } else {
-    shippingAddressFind.shipping_address = [shippingData];
+      shipping_address: [],
+    }); 
+  } 
+  // if(saveAddress) {
+  //   shippingAddressFind.shipping_address.push(shippingData);
+  // }
+  if (saveAddress) {
+    if (selectedEditAddress) {
+      const index = shippingAddressFind.shipping_address.findIndex(
+        (address) => address._id.toString() === selectedEditAddress._id.toString()
+      );
+      if (index !== -1) {
+        // Replace the existing address with the updated address
+        shippingAddressFind.shipping_address[index] = shippingData;
+      }
+    } else {
+      // Add a new address
+      shippingAddressFind.shipping_address.push(shippingData);
+    }
   }
 
   // const card = await Cards.create(cardData);
