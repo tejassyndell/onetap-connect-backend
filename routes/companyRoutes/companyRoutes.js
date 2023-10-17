@@ -80,7 +80,8 @@ const {
   requestToManagerForUpdateUserInfo,
   getProfileimage,
   updateUserPlanonRoleChange,
-  updateUserStatus
+  updateUserStatus,
+  generateotp
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -233,6 +234,6 @@ router.post('/recover_account', verifyRecoveryToken)
 router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo); 
 // router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
 router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
-
+router.post('/generate-otp', isAuthenticatedUser, generateotp )
 
 module.exports = router;

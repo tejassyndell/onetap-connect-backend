@@ -36,6 +36,7 @@ const UserInformation = require("../../models/NewSchemas/users_informationModel.
 const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
 const { log } = require("console");
+const { getMaxListeners } = require("events");
 dotenv.config();
 
 //--sign up step - 1 ----
@@ -178,19 +179,19 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
   const company = await Company.find();
 
-  if(company_name !== ""){
-     // checking if company already exists
-  const companyExists = company.some(item => {
-    const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
-    return trimmedExistingName === trimedString;
-  });
+  if (company_name !== "") {
+    // checking if company already exists
+    const companyExists = company.some(item => {
+      const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
+      return trimmedExistingName === trimedString;
+    });
 
-  if (companyExists) {
-    return next(new ErrorHandler("Company Already Exists.", 400));
+    if (companyExists) {
+      return next(new ErrorHandler("Company Already Exists.", 400));
+    }
   }
-  }
-  
- 
+
+
 
   // Check if company name is provided
   // if (company_name) {
@@ -230,7 +231,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
 
-  if (company_name ==="" || company_name ) {
+  if (company_name === "" || company_name) {
     const newCompany = await Company.create({
       primary_account: user._id,
       primary_manager: user._id,
@@ -3487,6 +3488,7 @@ exports.verifypassword = catchAsyncErrors(async (req, res, next) => {
 
     const mailOptions = {
       from: 'developersweb001@gmail.com',
+      // to: email,
       to: email,
       subject: 'Account Recovery',
       // text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
@@ -3781,3 +3783,51 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
     userprofileimage,
   });
 });
+
+exports.generateotp = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.body;
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationToken = jwt.sign(
+    { otp, email },
+    process.env.JWT_SECRET,
+    { expiresIn: '10m' }
+  );
+
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      { email: email },
+      { $set: { otp: verificationToken } },
+      { new: true }
+    );
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    sendOtpEmail(email, otp);
+    return res.status(200).json({ success: true, message: 'OTP sent successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error.' });
+  }
+});
+const sendOtpEmail = (email, otp) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+  const mailOptions = {
+    from: 'developersweb001@gmail.com',
+    to: email,
+    subject: 'Your OTP for Account Deletion',
+    text: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error(error);
+    } else {
+      console.log('OTP email sent successfully:', info.response);
+    }
+  });
+};
