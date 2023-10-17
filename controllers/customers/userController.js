@@ -3776,3 +3776,33 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
     userprofileimage,
   });
 });
+
+
+// exports.trimUserIndex = catchAsyncErrors(async (req, res, next) => {
+//   const { companyID } = req.user;
+//   const { index } = req.body;
+
+//   try {
+//     // Step 1: Find all users with the same company_id
+//     const users = await User.find({ company_id: companyID });
+
+//     // Step 2: Update custom_fields for each user
+//     const userIds = users.map((user) => user._id);
+
+//     // Update custom_fields for each user
+//     const updatePromises = userIds.map(async (userId) => {
+//       await UserInformation.updateOne(
+//         { user_id: userId },
+//         { $pull: { custom_fields : index } } // Use index directly to remove the item
+//       );
+//     });
+
+//     // Wait for all updates to complete
+//     await Promise.all(updatePromises);
+
+//     res.status(200).json({ success: true, message: 'Custom field removed for all users' });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     res.status(500).json({ success: false, message: 'Internal Server Error' });
+//   }
+// });

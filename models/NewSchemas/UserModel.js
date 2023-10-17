@@ -41,6 +41,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       validate: [validator.isEmail, "Please enter valid Email"],
     },
+    businessemail: {
+      type: String,
+    },
     password: {
       type: String,
       minLength: [8, "Minimum 8 character"],
