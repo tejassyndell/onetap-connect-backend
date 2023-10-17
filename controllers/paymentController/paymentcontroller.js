@@ -3,6 +3,7 @@ require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
+const UserModel = require("../../models/NewSchemas/UserModel");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
