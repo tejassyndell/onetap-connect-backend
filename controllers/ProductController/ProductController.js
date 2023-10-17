@@ -26,7 +26,7 @@ exports.getProductsInfo = catchAsyncErrors(async (req, res, next) => {
   // const products = await Product.findOne({ name: productName }); // Find the product by name
 
   const { id } = req.params;
-  console.log(id,"hereeeeeeeeeee")
+  console.log(id, "hereeeeeeeeeee")
   const products = await Product.findById(id); // Find the product by id
 
   if (!products) {
@@ -53,6 +53,75 @@ exports.getCartProducts = catchAsyncErrors(async (req, res, next) => {
 
 
 
+// exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
+//   const userId = req.body.user._id;
+
+//   try {
+//     // Check if a cart exists for the user ID
+//     let userCart = await cart.findOne({ userID: userId });
+
+//     // If no cart exists for the user, create a new cart
+//     if (!userCart) {
+//       userCart = new cart({
+//         userID: userId,
+//         products: [],
+//       });
+//       // Iterate through addedProducts array
+//       for (const addedProduct of req.body.addedProducts) {
+//         const { product, quantity, variation } = addedProduct;
+
+//         // Check if the product is already in the cart
+//         const existingCartItemIndex = userCart.products.findIndex(
+//           (item) => item.product._id.toString() === product._id.toString()
+//         );
+
+//         if (existingCartItemIndex !== -1) {
+//           // If the product is already in the cart, update the quantity
+//           userCart.products[existingCartItemIndex].quantity = quantity;
+//         } else {
+//           // If the product is not in the cart, add it as a new item
+//           userCart.products.push({
+//             product: product,
+//             quantity: quantity,
+//             variation: variation,
+//           });
+//         }
+//       }
+//     } else {
+//       // Iterate through addedProducts array
+//       for (const addedProduct of req.body.addedProducts) {
+//         const { product, quantity, variation } = addedProduct;
+
+//         // Check if the product is already in the cart
+//         const existingCartItemIndex = userCart.products.findIndex(
+//           (item) => item.product._id.toString() === product._id.toString()
+//         );
+
+//         if (existingCartItemIndex !== -1) {
+//           // If the product is already in the cart, update the quantity
+//           userCart.products[existingCartItemIndex].quantity = quantity;
+//         } else {
+//           // If the product is not in the cart, add it as a new item
+//           userCart.products.push({
+//             product: product,
+//             quantity: quantity,
+//             variation: variation,
+//           });
+//         }
+//       }
+//     }
+//     // Save the updated cart
+//     await userCart.save();
+
+//     res.status(200).json({
+//       message: "Cart updated successfully",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return next(new ErrorHandler("Failed to update cart", 500));
+//   }
+// });
+
 exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
   const userId = req.body.user._id;
 
@@ -68,45 +137,54 @@ exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
       });
       // Iterate through addedProducts array
       for (const addedProduct of req.body.addedProducts) {
-        const { product, quantity } = addedProduct;
+        const { product, quantity, variation } = addedProduct;
 
-        // Check if the product is already in the cart
-        const existingCartItemIndex = userCart.products.findIndex(
-          (item) => item.product._id.toString() === product._id.toString()
+        // Check if the product with the same variation is already in the cart
+        const existingCartItem = userCart.products.find(
+          (item) => (
+            item.product._id.toString() === product._id.toString() &&
+            item.variation === variation
+          )
         );
 
-        if (existingCartItemIndex !== -1) {
-          // If the product is already in the cart, update the quantity
-          userCart.products[existingCartItemIndex].quantity = quantity;
+        if (existingCartItem) {
+          // If the product with the same variation is already in the cart, update the quantity
+          existingCartItem.quantity = quantity;
         } else {
-          // If the product is not in the cart, add it as a new item
+          // If the product with the same variation is not in the cart, add it as a new item
           userCart.products.push({
             product: product,
             quantity: quantity,
+            variation: variation,
           });
         }
       }
     } else {
       // Iterate through addedProducts array
       for (const addedProduct of req.body.addedProducts) {
-        const { product, quantity } = addedProduct;
+        const { product, quantity, variation } = addedProduct;
 
-        // Check if the product is already in the cart
-        const existingCartItemIndex = userCart.products.findIndex(
-          (item) => item.product._id.toString() === product._id.toString()
+        // Check if the product with the same variation is already in the cart
+        const existingCartItem = userCart.products.find(
+          (item) => (
+            item.product._id.toString() === product._id.toString() &&
+            item.variation === variation
+          )
         );
 
-        if (existingCartItemIndex !== -1) {
-          // If the product is already in the cart, update the quantity
-          userCart.products[existingCartItemIndex].quantity = quantity;
+        if (existingCartItem) {
+          // If the product with the same variation is already in the cart, update the quantity
+          existingCartItem.quantity = quantity;
         } else {
-          // If the product is not in the cart, add it as a new item
+          // If the product with the same variation is not in the cart, add it as a new item
           userCart.products.push({
             product: product,
             quantity: quantity,
+            variation: variation,
           });
         }
       }
+
     }
     // Save the updated cart
     await userCart.save();
@@ -119,6 +197,7 @@ exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Failed to update cart", 500));
   }
 });
+
 
 
 // delete product from cart
@@ -185,7 +264,7 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 exports.fetchProducts = catchAsyncErrors(async (req, res, next) => {
   const { productIds } = req.body;
 
-  const selectedProducts =  await Product.find({_id:{$in:productIds}})
+  const selectedProducts = await Product.find({ _id: { $in: productIds } })
 
   res.status(200).json({
     selectedProducts,
