@@ -179,19 +179,19 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
   const company = await Company.find();
 
-  if (company_name !== "") {
-    // checking if company already exists
-    const companyExists = company.some(item => {
-      const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
-      return trimmedExistingName === trimedString;
-    });
+  if(company_name !== ""){
+     // checking if company already exists
+  const companyExists = company.some(item => {
+    const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
+    return trimmedExistingName === trimedString;
+  });
 
-    if (companyExists) {
-      return next(new ErrorHandler("Company Already Exists.", 400));
-    }
+  if (companyExists) {
+    return next(new ErrorHandler("Company Already Exists.", 400));
   }
-
-
+  }
+  
+ 
 
   // Check if company name is provided
   // if (company_name) {
@@ -231,7 +231,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
 
-  if (company_name === "" || company_name) {
+  if (company_name ==="" || company_name ) {
     const newCompany = await Company.create({
       primary_account: user._id,
       primary_manager: user._id,
