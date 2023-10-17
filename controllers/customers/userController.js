@@ -2885,6 +2885,11 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
     };
 
     const user = await User.create(userdetails);
+    const userInfo = await UserInformation.create({
+      user_id: user._id,
+      // Add any other fields you want to store in userinfo
+    });
+    await userInfo.save();
     const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(
       _id
     );
