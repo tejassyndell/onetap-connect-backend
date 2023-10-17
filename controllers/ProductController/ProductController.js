@@ -212,10 +212,11 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 
     // Iterate through addedProducts array and add the new products
     for (const addedProduct of req.body.addedProducts) {
-      const { product, quantity } = addedProduct;
+      const { product, quantity,variation } = addedProduct;
       userCart.products.push({
         product: product,
         quantity: quantity,
+        variation: variation,
       });
     }
 
