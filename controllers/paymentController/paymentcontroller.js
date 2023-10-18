@@ -88,9 +88,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         },
         expand: ['tax']
       });
-      console.log("----------------------------------------------------------")
       console.log(customer)
-      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
     } else {
       console.log("called2")
@@ -123,9 +121,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         },
         expand: ['tax']
       });
-      console.log("----------------------------------------------------------")
       console.log(customer)
-      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
     }
   } catch (error) {
@@ -136,7 +132,6 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
 
 exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   console.log(req.body)
-  console.log("kjhaasdkjfadkfjksdlafjndklfjnjdkfjnf")
   const Address = req.body.billingAddress;
 
   const myPayment = await stripe.paymentIntents.create({
@@ -203,7 +198,6 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
         collection_method: "charge_automatically",
       });
   
-      console.log(myPayment.id);
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
@@ -303,14 +297,34 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
 
     try {
       const proration_date = Math.floor(Date.now() / 1000);
-      const { paymentToken, customerID, subscriptionId, plandata } = req.body;
+      const { paymentToken, customerID, subscriptionId, plandata, card } = req.body;
       const { type, planName } = plandata;
+      const {last4, brand} = card;
+      let paymentMethodID = ""
   
       const productID = type === 'monthly'
         ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
         : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
+
+        const paymentMethods = await stripe.paymentMethods.list({
+          customer: "cus_OlHXMhDxSJcay2",
+          type: 'card', 
+        });
+
+        const duplicateCard = paymentMethods.data.find((method) => method.card.last4 === last4);
+
+        if (duplicateCard) {
+          // Use the existing duplicate card
+          const paymentMethodId = duplicateCard.id;
+          console.log('Using existing card with paymentMethodId:', paymentMethodId);
+          paymentMethodID = paymentMethodId;
+        } else {
+          console.log("new cards")
+          paymentMethodID = paymentToken
+        }
+
   
-      const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+      const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentMethodID, {
         customer: customerID,
       });
       console.log(productID)
@@ -342,13 +356,12 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
       });
   
       // // Remove the existing item from the subscription
-      // console.log(myPayment);
+      console.log(myPayment);
       // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       // const paymentIntent = await stripe.paymentIntents.retrieve(
       //   latestInvoice.payment_intent
       // );
   
-      // Save payment ID and user details in your database after successful payment
       res.status(200).json({ success: true, client_secret: "paymentIntent.client_secret", subscriptionID: myPayment.id });
     } catch (error) {
       console.error(error);
@@ -488,3 +501,27 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
+  const { customerID } = req.body
+  console.log(req.body)
+  const paymentMethods = await stripe.paymentMethods.list({
+    customer: customerID,
+    type: 'card', 
+  });
+  // Iterate through the payment methods and find the default one
+let defaultPaymentMethod = null;
+for (const paymentMethod of paymentMethods.data) {
+  if (paymentMethod.default) {
+    defaultPaymentMethod = paymentMethod;
+    break;  // Stop iterating once you find the default payment method
+  }
+}
+
+if (defaultPaymentMethod) {
+  console.log('Default payment method:', defaultPaymentMethod);
+} else {
+  console.log('No default payment method found.');
+}
+res.send(paymentMethods)
+})
