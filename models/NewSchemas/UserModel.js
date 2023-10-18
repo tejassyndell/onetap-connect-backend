@@ -143,7 +143,7 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
-    otp:{type: String, default: null},
+    otptoken:{type: String, default: null},
     personlize_company_name: {type: String, default: null},
     personlize_primary_office_number : {type: Number, default: null},
     personlize_Website_url: {type: String, default: null},
