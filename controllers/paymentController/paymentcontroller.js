@@ -489,3 +489,15 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
+  const { customerID } = req.body
+  console.log(req.body)
+  const paymentMethods = await stripe.paymentMethods.list({
+    customer: customerID,
+    type: 'card', 
+  });
+res.send(paymentMethods)
+})
+
+

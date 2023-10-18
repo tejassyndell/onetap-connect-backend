@@ -2152,6 +2152,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     selectedEditAddress
   } = req.body;
 
+  const existingCards = await Cards.find({ userID: id });
+
   const cardData = {
     cardNumber: cardDetails.cardNumber,
     brand: cardDetails.brand,
@@ -2159,7 +2161,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     cardExpiryMonth: cardDetails.cardExpiryMonth,
     cardExpiryYear: cardDetails.cardExpiryYear,
     // CVV: cardDetails.cardCVV,
-    status: "primary",
+    status: existingCards.length === 0 ? "primary" : "active",
   };
 
   const user = await User.findById(id);

@@ -9,7 +9,8 @@ const {
   createOrder,
   switchPlan,
   isActive,
-  cancelPlan
+  cancelPlan,
+  fetchCards
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -23,6 +24,8 @@ router.post("/create-order", createOrder);
 router.post('/payment/change-plan', switchPlan)
 router.get('/payment/isactive' ,isAuthenticatedUser, isActive)
 router.get('/payment/test' ,isAuthenticatedUser, cancelPlan)
+router.post('/payment/get-saved-cards', fetchCards)
+
 
 
 router.post("/create-order", createOrder);
