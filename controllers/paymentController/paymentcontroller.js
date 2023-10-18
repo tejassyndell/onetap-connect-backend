@@ -89,9 +89,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         },
         expand: ['tax']
       });
-      console.log("----------------------------------------------------------")
       console.log(customer)
-      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
     } else {
       console.log("called2")
@@ -124,9 +122,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         },
         expand: ['tax']
       });
-      console.log("----------------------------------------------------------")
       console.log(customer)
-      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
     }
   } catch (error) {
@@ -137,7 +133,6 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
 
 exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   console.log(req.body)
-  console.log("kjhaasdkjfadkfjksdlafjndklfjnjdkfjnf")
   const Address = req.body.billingAddress;
 
   const myPayment = await stripe.paymentIntents.create({
@@ -183,41 +178,40 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   });
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
-    currency: 'usd',
-    unit_amount: req.body.amount * 100,
-    product: productID,
-    tax_behavior: 'exclusive',
-    recurring: {
-      interval: type === "monthly" ? "month" : "year",
-      interval_count: 1
-    },
-  });
-  try {
-    const myPayment = await stripe.subscriptions.create({
-      description: 'Test description',
-      metadata: {
-        company: req.body.company_name,
-      },
-      customer: customerID,
-      default_payment_method: attachedPaymentMethod.id,
-      items: [{ price: price.id }],
-      collection_method: "charge_automatically",
-    });
-
-    console.log(myPayment.id);
-    const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      latestInvoice.payment_intent
-    );
-    console.log(paymentIntent)
-
-    // Save payment ID and user details in your database after successful payment
-
-    res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID: myPayment.id });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+        currency: 'usd', 
+        unit_amount: req.body.amount * 100, 
+        product: productID, 
+        tax_behavior: 'exclusive',
+        recurring : {
+        interval : type === "monthly" ? "month" : "year" ,
+        interval_count : 1
+  },
+});
+    try {
+      const myPayment = await stripe.subscriptions.create({
+        description: 'Test description', 
+        metadata: {
+          company: req.body.company_name,
+        },
+        customer: customerID,
+        default_payment_method: attachedPaymentMethod.id,
+        items: [{ price: price.id }],
+        collection_method: "charge_automatically",
+      });
+  
+      const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      const paymentIntent = await stripe.paymentIntents.retrieve(
+        latestInvoice.payment_intent
+      );
+      console.log(paymentIntent)
+  
+      // Save payment ID and user details in your database after successful payment
+  
+      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
@@ -356,8 +350,16 @@ let myPayment;
         proration_date: proration_date,
         cancel_at_period_end: false
       });
-    }
 
+  
+      // Remove the existing item from the subscription
+      console.log(myPayment);
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
+  
+    
  
 
     // // Remove the existing item from the subscription
@@ -369,6 +371,7 @@ let myPayment;
 
     // Save payment ID and user details in your database after successful payment
     res.status(200).json({ success: true, client_secret: "paymentIntent.client_secret", subscriptionID: myPayment.id });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
