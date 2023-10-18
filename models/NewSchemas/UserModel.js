@@ -41,6 +41,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       validate: [validator.isEmail, "Please enter valid Email"],
     },
+    businessemail: {
+      type: String,
+    },
     password: {
       type: String,
       minLength: [8, "Minimum 8 character"],
@@ -143,6 +146,7 @@ const userSchema = new mongoose.Schema(
       ref: "company",
       default: null,
     },
+    otptoken:{type: String, default: null},
     personlize_company_name: {type: String, default: null},
     personlize_primary_office_number : {type: Number, default: null},
     personlize_Website_url: {type: String, default: null},

@@ -12,6 +12,7 @@ const Cart_Schema = new mongoose.Schema(
                 // Define the structure of each product object in the array
                 product: Object,
                 quantity: Number,
+                variation: String,
             },
         ],
 
