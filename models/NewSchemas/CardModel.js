@@ -49,7 +49,7 @@ const Card_Schema = new mongoose.Schema(
           status: {
             type: String,
             enum: ['expired', 'active','primary'],
-            default: 'primary',
+            default: 'active',
           },
           userID: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     },
