@@ -216,6 +216,7 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
       userCart.products.push({
         product: product,
         quantity: quantity,
+        variation:variation
       });
     }
 
