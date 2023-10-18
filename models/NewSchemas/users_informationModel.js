@@ -62,8 +62,9 @@ const users_information = new mongoose.Schema(
           ],
         other_links: [
             {
-              name: { type: String, default: null },
-              link: { type: String, default: null },
+                icon: { type: String, default: "" },
+                name: { type: String, default: "" },
+                link: { type: String, default: "" },
             },
           ],
         custom_fields: [

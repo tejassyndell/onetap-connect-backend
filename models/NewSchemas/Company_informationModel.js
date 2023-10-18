@@ -49,16 +49,16 @@ const Company_information = new mongoose.Schema(
     booking_link: { type: String, default: "" },
     other_links: [
         {
-          icon: { type: String, default: null },
-            name: { type: String, default: null },
-            link: { type: String, default: null },
+            icon: { type: String, default: "" },
+            name: { type: String, default: "" },
+            link: { type: String, default: "" },
             permission: { type: Boolean, default: false },
         },
     ],
     custom_fields: [
         {
-            name: { type: String, default: null },
-            value: { type: String, default: null },
+            name: { type: String, default: "" },
+            value: { type: String, default: "" },
             permission: { type: Boolean, default: false },
         },
     ],

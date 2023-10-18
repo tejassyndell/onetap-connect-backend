@@ -3,6 +3,7 @@ require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
+const UserModel = require("../../models/NewSchemas/UserModel");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -88,9 +89,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         },
         expand: ['tax']
       });
-      console.log("----------------------------------------------------------")
       console.log(customer)
-      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
     } else {
       console.log("called2")
@@ -123,9 +122,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         },
         expand: ['tax']
       });
-      console.log("----------------------------------------------------------")
       console.log(customer)
-      console.log("----------------------------------------------------------")
       res.status(200).json({ success: true, customer });
     }
   } catch (error) {
@@ -136,7 +133,6 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
 
 exports.processPayment = catchAsyncErrors(async (req, res, next) => {
   console.log(req.body)
-  console.log("kjhaasdkjfadkfjksdlafjndklfjnjdkfjnf")
   const Address = req.body.billingAddress;
 
   const myPayment = await stripe.paymentIntents.create({
@@ -166,20 +162,20 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-  exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
-    // const paymentintentID  = req.body.id
-    const paymentToken = req.body.paymentToken;
-    const customerID = req.body.customerID;
-    const Address = req.body.billingAddress;
-    const taxID = req.body.taxId;
-    const { type, planName } = req.body.plandata;
-    const productID = type === 'monthly'
-  ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
-  : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
-  
-    const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
-      customer: customerID,
-    });
+exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
+  // const paymentintentID  = req.body.id
+  const paymentToken = req.body.paymentToken;
+  const customerID = req.body.customerID;
+  const Address = req.body.billingAddress;
+  const taxID = req.body.taxId;
+  const { type, planName } = req.body.plandata;
+  const productID = type === 'monthly'
+    ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
+    : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
+
+  const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+    customer: customerID,
+  });
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
         currency: 'usd', 
@@ -203,7 +199,6 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
         collection_method: "charge_automatically",
       });
   
-      console.log(myPayment.id);
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
@@ -248,172 +243,199 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
       console.log('Updated user information:', updatedUserInfo);
       res.status(200).json({ success: true, message: 'Switched to automatic renewal.' });
     }
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 
-  exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
-    try {
-      const proration_date = Math.floor(Date.now() / 1000);
-      const subscriptionId = 'sub_1O0K0XHsjFNmmZSiWX5nfGVU';
-      
-      const deleted = await stripe.subscriptions.cancel(subscriptionId,{
-        prorate : true
-      });
+exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const proration_date = Math.floor(Date.now() / 1000);
+    const subscriptionId = 'sub_1O0K0XHsjFNmmZSiWX5nfGVU';
 
-      res.status(200).json({ success: true, message: deleted});
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+    const deleted = await stripe.subscriptions.cancel(subscriptionId, {
+      prorate: true
+    });
+
+    res.status(200).json({ success: true, message: deleted });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 
-  exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
-      // const subscription = await stripe.subscriptions.retrieve("sub_1NxkyOHsjFNmmZSijLOO4bk1");
-      const proration_date = Math.floor(Date.now() / 1000);
-      const subscription = await stripe.subscriptions.retrieve('sub_1Ny8rmHsjFNmmZSiEt08fWBz');
+exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
+  // const subscription = await stripe.subscriptions.retrieve("sub_1NxkyOHsjFNmmZSijLOO4bk1");
+  const proration_date = Math.floor(Date.now() / 1000);
+  const subscription = await stripe.subscriptions.retrieve('sub_1Ny8rmHsjFNmmZSiEt08fWBz');
 
-      // const price = await stripe.prices.create({
-      //       currency: 'usd',
-      //       unit_amount: 1200 * 100,
-      //       product: "prod_OkshJOVc9kLQNr",
-      //       recurring: {
-      //         interval: "year",
-      //         interval_count: 1
-      //       },
-      //     });
+  // const price = await stripe.prices.create({
+  //       currency: 'usd',
+  //       unit_amount: 1200 * 100,
+  //       product: "prod_OkshJOVc9kLQNr",
+  //       recurring: {
+  //         interval: "year",
+  //         interval_count: 1
+  //       },
+  //     });
 
-      // const items = [{
-      //   id: subscription.items.data[0].id,
-      //   price: price.id, 
-      // }];
-      // const invoice = await stripe.invoices.retrieveUpcoming({
-      //   subscription: 'sub_1Ny8rmHsjFNmmZSiEt08fWBz',
-      //   subscription_items: items,
-      //   subscription_proration_date: proration_date,
-      // });
-      // const invoice22 = await stripe.invoices.retrieve(
-      //   invoice.lines.data[0].proration_details.credited_items.invoice
-      // );
-      // res.status(200).json({ success: true, message: invoice22});
+  // const items = [{
+  //   id: subscription.items.data[0].id,
+  //   price: price.id, 
+  // }];
+  // const invoice = await stripe.invoices.retrieveUpcoming({
+  //   subscription: 'sub_1Ny8rmHsjFNmmZSiEt08fWBz',
+  //   subscription_items: items,
+  //   subscription_proration_date: proration_date,
+  // });
+  // const invoice22 = await stripe.invoices.retrieve(
+  //   invoice.lines.data[0].proration_details.credited_items.invoice
+  // );
+  // res.status(200).json({ success: true, message: invoice22});
 
-    try {
-      const proration_date = Math.floor(Date.now() / 1000);
-      const { paymentToken, customerID, subscriptionId, plandata } = req.body;
-      const { type, planName } = plandata;
-  
-      const productID = type === 'monthly'
-        ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
-        : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
-  
-      const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+  try {
+    const proration_date = Math.floor(Date.now() / 1000);
+    const { paymentToken, customerID, subscriptionId, plandata, selectedCard } = req.body;
+    const { type, planName } = plandata;
+
+    const productID = type === 'monthly'
+      ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
+      : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
+      let attachedPaymentMethod;
+    if (!selectedCard) {
+       attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
         customer: customerID,
       });
-      console.log(productID)
-  
-      const price = await stripe.prices.create({
-        currency: 'usd',
-        unit_amount: req.body.amount * 100,
-        product: productID,
-        recurring: {
-          interval: type === "monthly" ? "month" : "year",
-          interval_count: 1
-        },
-      });
-      console.log(price)
-  
-      console.log("called0")
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      console.log("called1")
-      
-      // Add the new item to the subscription
-      const myPayment =  await stripe.subscriptions.update(subscriptionId, {
+    }
+
+    console.log(productID)
+
+    const price = await stripe.prices.create({
+      currency: 'usd',
+      unit_amount: req.body.amount * 100,
+      product: productID,
+      recurring: {
+        interval: type === "monthly" ? "month" : "year",
+        interval_count: 1
+      },
+    });
+    console.log(price)
+
+    console.log("called0")
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log("called1")
+
+    // Add the new item to the subscription
+let myPayment;
+    if(selectedCard){
+       myPayment = await stripe.subscriptions.update(subscriptionId, {
         items: [{
-          id : subscription.items.data[0].id,
+          id: subscription.items.data[0].id,
+          price: price.id
+        }],
+        default_payment_method: paymentToken,
+        proration_date: proration_date,
+        cancel_at_period_end: false
+      });
+    }else{
+       myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
           price: price.id
         }],
         default_payment_method: attachedPaymentMethod.id,
         proration_date: proration_date,
-        cancel_at_period_end : false
+        cancel_at_period_end: false
       });
+
   
-      // // Remove the existing item from the subscription
-      // console.log(myPayment);
+      // Remove the existing item from the subscription
+      console.log(myPayment);
       // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       // const paymentIntent = await stripe.paymentIntents.retrieve(
       //   latestInvoice.payment_intent
       // );
   
-      // Save payment ID and user details in your database after successful payment
-      res.status(200).json({ success: true, client_secret: "paymentIntent.client_secret", subscriptionID: myPayment.id });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, error: error.message });
+    
+ 
+
+    // // Remove the existing item from the subscription
+    // console.log(myPayment);
+    // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+    // const paymentIntent = await stripe.paymentIntents.retrieve(
+    //   latestInvoice.payment_intent
+    // );
+
+    // Save payment ID and user details in your database after successful payment
+    res.status(200).json({ success: true, client_secret: "paymentIntent.client_secret", subscriptionID: myPayment.id });
     }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 
 
-  exports.createTax = catchAsyncErrors(async (req, res, next) => {
-    const { shippingAddress } = req.body;
-  
-    console.log(shippingAddress); 
-  
-    try {
-      const calculation = await stripe.tax.calculations.create({
-        currency: 'usd',
-        line_items: [
-          {
-            amount: 0,
-            reference: 'L1',
-          },
-        ],
-        customer_details: {
-          address: {
-            line1: shippingAddress.Sstreet1,
-            city: shippingAddress.Scity,
-            state: shippingAddress.Sstate,
-            postal_code: shippingAddress.SpostalCode,
-            country: shippingAddress.Scountry,
-          },
-          address_source: 'shipping',
+exports.createTax = catchAsyncErrors(async (req, res, next) => {
+  const { shippingAddress } = req.body;
+
+  console.log(shippingAddress);
+
+  try {
+    const calculation = await stripe.tax.calculations.create({
+      currency: 'usd',
+      line_items: [
+        {
+          amount: 0,
+          reference: 'L1',
         },
-        expand: ['line_items.data.tax_breakdown'],
-      });
-      res.status(200).json({ success: true, calculation });
-  
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+      ],
+      customer_details: {
+        address: {
+          line1: shippingAddress.Sstreet1,
+          city: shippingAddress.Scity,
+          state: shippingAddress.Sstate,
+          postal_code: shippingAddress.SpostalCode,
+          country: shippingAddress.Scountry,
+        },
+        address_source: 'shipping',
+      },
+      expand: ['line_items.data.tax_breakdown'],
+    });
+    res.status(200).json({ success: true, calculation });
 
-  exports.isActive = catchAsyncErrors(async (req, res, next) => {
-    try {
-      if(!req.user._id){
-        return next(new ErrorHandler("No user found", 400));
-      }
-      const  userInformation = await UserInformation.findOne({ user_id: req.user._id });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
-      if(!userInformation){
-        return next(new ErrorHandler("No user data found", 400));
-      }
-      const subscription = await stripe.subscriptions.retrieve(userInformation.subscription_details.subscription_id);
-      if (!subscription) {
-        return next(new ErrorHandler("Subscription not found", 400));
-      }
-      if (subscription.status === 'active') {
-        res.status(200).json({ success: true, msg: "Subscription is Active" });
-      } else {
-        res.status(500).json({ success: false, msg: "Subscription is InActive" });
-      }
-    } catch (error) {
-      res.status(500).json({ success: false, error : error });
+exports.isActive = catchAsyncErrors(async (req, res, next) => {
+  try {
+    if (!req.user._id) {
+      return next(new ErrorHandler("No user found", 400));
     }
-  });
+    const userInformation = await UserInformation.findOne({ user_id: req.user._id });
+
+    if (!userInformation) {
+      return next(new ErrorHandler("No user data found", 400));
+    }
+    const subscription = await stripe.subscriptions.retrieve(userInformation.subscription_details.subscription_id);
+    if (!subscription) {
+      return next(new ErrorHandler("Subscription not found", 400));
+    }
+    if (subscription.status === 'active') {
+      res.status(200).json({ success: true, msg: "Subscription is Active" });
+    } else {
+      res.status(500).json({ success: false, msg: "Subscription is InActive" });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error });
+  }
+});
 
 
 // Creates an order
@@ -444,16 +466,16 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       customer: orderData.customerID,
       description: "test description",
-      payment_method: attachedPaymentMethod.id,
+      payment_method: orderData.paymentToken,
       receipt_email: "hivete6126@ksyhtc.com",
     });
 
-    const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id);
-    const paymentStatus = confirmedPaymentIntent.status;
+
+
     const paymentDate = new Date();
     // res.status(200).json({ success: true, client_secret: paymentIntent.client_secret });
 
-    if (confirmedPaymentIntent.status === 'succeeded') {
+    if (paymentIntent) {
       // Payment is successful, create the order in your database
 
       // Create a new order linked to the specific user
@@ -465,7 +487,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         type,
         transactionId: paymentIntent.id,
         paymentDate,
-        paymentStatus,
         shippingAddress,
         billingAddress,
       });
@@ -475,6 +496,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         success: true,
         message: 'Order created successfully',
         order,
+        clientSecret : paymentIntent.client_secret
       });
     } else {
       // Payment confirmation failed
@@ -488,3 +510,15 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
+  const { customerID } = req.body
+  console.log(req.body)
+  const paymentMethods = await stripe.paymentMethods.list({
+    customer: customerID,
+    type: 'card', 
+  });
+res.send(paymentMethods)
+})
+
+

@@ -80,7 +80,10 @@ const {
   requestToManagerForUpdateUserInfo,
   getProfileimage,
   updateUserPlanonRoleChange,
-  updateUserStatus
+  updateUserStatus,
+  generateotp,
+  verifyotp,
+  google_verify_recover_account
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -228,11 +231,12 @@ router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
 router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
 // router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
-router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
+// router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
 router.post('/recover_account', verifyRecoveryToken)
 router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo); 
 // router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
 router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
-
-
+router.post('/generate-otp', isAuthenticatedUser, generateotp )
+router.post('/verify-otp',  verifyotp) 
+router.post('/google_acc_recover',google_verify_recover_account)
 module.exports = router;
