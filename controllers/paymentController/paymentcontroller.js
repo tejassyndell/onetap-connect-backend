@@ -167,15 +167,19 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   const paymentToken = req.body.paymentToken;
   const customerID = req.body.customerID;
   const Address = req.body.billingAddress;
+  const selectedCard = req.body.selectedCard;
   const taxID = req.body.taxId;
   const { type, planName } = req.body.plandata;
   const productID = type === 'monthly'
     ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
     : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
-
-  const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+    let attachedPaymentMethod;
+if(!selectedCard){
+   attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
     customer: customerID,
   });
+}
+
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
         currency: 'usd', 
@@ -188,16 +192,31 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   },
 });
     try {
-      const myPayment = await stripe.subscriptions.create({
-        description: 'Test description', 
-        metadata: {
-          company: req.body.company_name,
-        },
-        customer: customerID,
-        default_payment_method: attachedPaymentMethod.id,
-        items: [{ price: price.id }],
-        collection_method: "charge_automatically",
-      });
+      let myPayment;
+      if(selectedCard){
+         myPayment = await stripe.subscriptions.create({
+          description: 'Test description', 
+          metadata: {
+            company: req.body.company_name,
+          },
+          customer: customerID,
+          default_payment_method: paymentToken,
+          items: [{ price: price.id }],
+          collection_method: "charge_automatically",
+        });
+      }else{
+         myPayment = await stripe.subscriptions.create({
+          description: 'Test description', 
+          metadata: {
+            company: req.body.company_name,
+          },
+          customer: customerID,
+          default_payment_method: attachedPaymentMethod.id,
+          items: [{ price: price.id }],
+          collection_method: "charge_automatically",
+        });
+
+      }
   
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       const paymentIntent = await stripe.paymentIntents.retrieve(
@@ -371,7 +390,7 @@ let myPayment;
 
     // Save payment ID and user details in your database after successful payment
   }
-    res.status(200).json({ success: true, client_secret: "paymentIntent.client_secret", subscriptionID: myPayment.id });
+    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
@@ -451,6 +470,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       tax,
       billingAddress,
       shippingAddress,
+      selectedCard
     } = req.body;
     const totalAmountInCents = Math.round(totalAmount * 100);
     const type = (smartAccessories ? "smartAccessories" : "")
@@ -460,6 +480,13 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       customer: orderData.customerID,
     });
 
+    let payment_method
+    if(selectedCard){
+// payment_method = 
+    }else{
+
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmountInCents,
       currency: 'usd',
@@ -467,6 +494,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       customer: orderData.customerID,
       description: "test description",
       payment_method: orderData.paymentToken,
+      // payment_method: attachedPaymentMethod.id, // when new card is used
       receipt_email: "hivete6126@ksyhtc.com",
     });
 
