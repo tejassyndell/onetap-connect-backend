@@ -84,6 +84,7 @@ const users_information = new mongoose.Schema(
             //   ref: "Subscription",
             // },
             subscription_id : {type : String , default : null},
+            customer_id : {type : String , default : null},
             addones: [{type: mongoose.Schema.Types.ObjectId}],
             userCount: { type : Number},
             total_amount: { type: Number },
