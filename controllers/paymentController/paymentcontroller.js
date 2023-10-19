@@ -4,6 +4,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
 const UserModel = require("../../models/NewSchemas/UserModel");
+const ErrorHandler = require("../../utils/errorHandler.js");
+
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -47,7 +49,6 @@ const monthlyTeamPriceID = process.env.MONTHLY_TEAM_PLAN_PRICE_ID
 
 exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
   const { user } = req.body;
-
   try {
 
     const existingCustomer = await stripe.customers.list({
@@ -123,6 +124,19 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         expand: ['tax']
       });
       console.log(customer)
+      fetchCustomerID = await UserModel.findOne({'email' : user.email})
+      console.log("fetchCustomerID")
+      console.log(fetchCustomerID)
+      console.log("fetchCustomerID")
+
+      const updatedUserInfo = await UserInformation.findOneAndUpdate(
+        { user_id: fetchCustomerID._id},
+        { $set: { 'subscription_details.customer_id': customer.id } },
+        { new: true }
+      );
+      if(!updatedUserInfo){
+      return next(new ErrorHandler("Internal server Error", 501));
+      }
       res.status(200).json({ success: true, customer });
     }
   } catch (error) {
