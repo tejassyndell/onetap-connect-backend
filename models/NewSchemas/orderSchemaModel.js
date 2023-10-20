@@ -14,6 +14,7 @@ const order_Schema = new mongoose.Schema(
         smartAccessories: [
             {
                 productId: { type: mongoose.Schema.Types.ObjectId, ref: 'product', },
+                variationId: { type: String},
                 subtotal: { type: Number },
                 quantity: { type: Number },
                 price: { type: Number },
