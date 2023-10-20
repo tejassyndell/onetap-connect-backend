@@ -490,9 +490,9 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     const type = (smartAccessories ? "smartAccessories" : "")
 
     // // stripe payment starts
-    const attachedPaymentMethod = await stripe.paymentMethods.attach(orderData.paymentToken, {
-      customer: orderData.customerID,
-    });
+    // const attachedPaymentMethod = await stripe.paymentMethods.attach(orderData.paymentToken, {
+    //   customer: orderData.customerID,
+    // });
 
     let payment_method
     if(selectedCard){
