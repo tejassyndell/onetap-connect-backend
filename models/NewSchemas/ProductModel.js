@@ -37,8 +37,8 @@ const productSchema = new mongoose.Schema(
       ref: "ProductCategory", // Assuming you have a "productCategories" collection
     },
     Description: {
-        type: [String],
-      },
+      type: [String],
+    },
     Tags: {
       type: [String],
     },
@@ -62,12 +62,13 @@ const productSchema = new mongoose.Schema(
     shortDescription: {
       tagline: String,
       shortdescription: String
-    },    
+    },
     description: {
       type: String,
     },
     variations: [
       {
+       
         Type: {
           type: String,
           required: true,

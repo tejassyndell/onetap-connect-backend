@@ -5,7 +5,7 @@ const ProductCategory = require("../../models/NewSchemas/ProductCategoryModel.js
 const cart = require("../../models/NewSchemas/cartModel.js");
 
 exports.testAPI = catchAsyncErrors(async (req, res, next) => {
-  // res.send("called");
+  res.send("called");
 });
 
 exports.getProducts = catchAsyncErrors(async (req, res, next) => {
@@ -212,11 +212,11 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 
     // Iterate through addedProducts array and add the new products
     for (const addedProduct of req.body.addedProducts) {
-      const { product, quantity } = addedProduct;
+      const { product, quantity,variation } = addedProduct;
       userCart.products.push({
         product: product,
         quantity: quantity,
-        variation:variation
+        variation: variation,
       });
     }
 
