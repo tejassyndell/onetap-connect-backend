@@ -7,6 +7,7 @@ const companyRoutes = require("./routes/companyRoutes/companyRoutes.js");
 const paymentRoutes = require("./routes/paymentRoutes/paymentRoutes.js");
 const productRoutes = require("./routes/ProductRoutes/ProductRoutes.js");
 const SuperAdminRoutes = require("./routes/SuperAdminRoutes/superAdminRoutes.js");
+const OTCAdminRoutes = require("./routes/OTC-AdminRoutes/adminRoutes.js")
 const AccountRoutes = require("./routes/accountSwitch/accountRoutes.js");
 const errorMiddleware = require("./middleware/error.js");
 const app = express();
@@ -68,6 +69,9 @@ app.get("/api/v1/favicon/img/:filename", (req, res) => {
   res.sendFile(filePath);
 });
 connectDatabase();
+
+// OTC-Admin
+app.use("/api/v1", OTCAdminRoutes);
 
 app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
