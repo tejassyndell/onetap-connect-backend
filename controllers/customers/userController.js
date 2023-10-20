@@ -1016,6 +1016,8 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
     // Check if email is already in use
     const existingUser = await InvitedTeamMemberModel.findOne({ email });
+    const existingUserinusers = await User.findOne({ email });
+
 
 
     if (!email || !first_name || !last_name) {
@@ -1036,6 +1038,9 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
       if (emailPattern.test(email) === false) {
         return next(new ErrorHandler("Please enter valid email"));
       }
+    }
+    if(existingUserinusers || existingUser){
+      return next(new ErrorHandler("This email is already in use."));
     }
 
     let invitationToken = crypto.randomBytes(20).toString("hex");
