@@ -83,7 +83,8 @@ const {
   updateUserStatus,
   generateotp,
   verifyotp,
-  google_verify_recover_account
+  google_verify_recover_account,
+  accountSetupsteps
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -239,4 +240,5 @@ router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
 router.post('/generate-otp', isAuthenticatedUser, generateotp )
 router.post('/verify-otp',  verifyotp) 
 router.post('/google_acc_recover',google_verify_recover_account)
+router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
 module.exports = router;
