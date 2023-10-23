@@ -35,9 +35,11 @@ const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
+const parmalinkSlug = require('../../models/NewSchemas/parmalink_slug.js');
 const { log } = require("console");
 const { getMaxListeners } = require("events");
 dotenv.config();
+const usedCodes = new Set();
 
 //--sign up step - 1 ----
 exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
@@ -156,6 +158,20 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+function generateUniqueCode() {
+  let code;
+  const alphanumeric = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  do {
+    code = '';
+    for (let i = 0; i < 6; i++) {
+      const randomIndex = Math.floor(Math.random() * alphanumeric.length);
+      code += alphanumeric[randomIndex];
+    }
+  } while (usedCodes.has(code));
+  usedCodes.add(code);
+  return code;
+}
+
 //sign-up step-2
 exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.params;
@@ -206,7 +222,6 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   //     return res.status(400).json({ message: "Company Already Exists." });
   //   }
   // }
-
   if (password === undefined) {
     user = await User.create({
       email,
@@ -226,6 +241,13 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       password,
     });
   }
+  const generatedCode = generateUniqueCode();
+  // user.unique_slug = generatedCode;
+  // await user.save();
+  // await parmalinkSlug.create({
+  //   unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+  // });
+
 
   if (!user) {
     return next(new ErrorHandler("Something went wrong please try again.", 400));
@@ -255,10 +277,18 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       user_id: user._id,
       // Add any other fields you want to store in userinfo
     });
-
     await userInfo.save();
-  }
 
+    const user_parmalink = await parmalinkSlug.create({
+      user_id: user._id,
+      companyID: newCompany._id,
+      unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+      userurlslug: generatedCode,
+    })
+    await user_parmalink.save();
+    user.userurlslug = generatedCode;
+    await user.save();
+  }
   sendToken(user, 200, res);
 });
 
@@ -386,6 +416,12 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   };
 
   const company = await Company.create(companyData);
+  const companyurlslug = company.companyurlslug;
+  const permalinkSlugDoc = await parmalinkSlug.findOne({ companyID: company._id });
+  if (permalinkSlugDoc) {
+    permalinkSlugDoc.companyurlslug = companyurlslug;
+    await permalinkSlugDoc.save();
+  }
 
   user.companyID = company._id;
   user.save();
@@ -548,6 +584,15 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
   if (!user) {
     return next(new ErrorHandler("user not found", 401));
+  }
+  if (user.delete_account_status === "inactive") {
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+    return next(
+      new ErrorHandler("Your account has been deleted, please check your Email for more information.", 401)
+    );
   }
 
   res.status(200).json({
@@ -795,6 +840,7 @@ exports.getUsers = catchAsyncErrors(async (req, res, next) => {
   if (!users) {
     return next(new ErrorHandler("No company details Found", 404));
   }
+
   res.status(200).json({
     success: true,
     users,
@@ -992,12 +1038,25 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
 
 // invite team member
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-  const { memberData } = req.body;
+  const { memberData, manage_superadmin } = req.body;
   const { companyID } = req.user;
+  console.log(manage_superadmin, "*****************************")
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(memberData) || memberData.length === 0) {
     return next(new ErrorHandler("No user data provided", 400));
+  }
+
+  let accountManager = {};
+  const manager = manage_superadmin.find(user => user.role === 'manager');
+
+  if (manager) {
+    accountManager.name = manager.first_name;
+    accountManager.email = manager.email;
+  } else {
+    const superadmin = manage_superadmin.find(user => user.role === 'superadmin');
+    accountManager.name = superadmin.first_name;
+    accountManager.email = superadmin.email;
   }
 
   const transporter = nodemailer.createTransport({
@@ -1089,7 +1148,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
         </div> <br/>
-          <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
+          <p>If you have any question about this invitation, please contact your company account manager ${accountManager.name} at ${accountManager.email}.</p>
           <h5>Technical issue?</h5>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
       </div>
@@ -1806,6 +1865,16 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     user.set(updatedUserDetails);
     await user.save();
 
+    const userurlslug = user.userurlslug;
+    await parmalinkSlug.updateOne(
+      { user_id: id }, 
+      { $push: { unique_slugs: { $each: [{ value: userurlslug}] } } } ,
+    );
+    await parmalinkSlug.updateOne(
+      { user_id: id },
+      { userurlslug: userurlslug }
+    );
+
     res.status(200).json({
       success: true,
       message: "User details updated successfully",
@@ -2056,9 +2125,9 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
       .json({ message: "companyurlslug is already taken." });
   }
 
-  const existinguserurlslug = await User.findOne({
-    _id: { $ne: currentUserId },
-    userurlslug,
+  const existinguserurlslug = await parmalinkSlug.findOne({
+    user_id: { $ne: currentUserId },
+    "unique_slugs.value": userurlslug,
   });
 
   if (existinguserurlslug) {
@@ -2066,9 +2135,9 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
   }
 
   // Check case-sensitive duplicates
-  const caseSensitiveuserurlslug = await User.findOne({
-    _id: { $ne: currentUserId }, // Exclude the current company by ID
-    userurlslug: new RegExp(`^${userurlslug}$`, "i"),
+  const caseSensitiveuserurlslug = await parmalinkSlug.findOne({
+    user_id: { $ne: currentUserId }, // Exclude the current company by ID
+    "unique_slugs.value": new RegExp(`^${userurlslug}$`, "i"),
   });
 
   if (caseSensitiveuserurlslug) {
@@ -3888,11 +3957,13 @@ const sendOtpEmail = (email, otp, firstname) => {
       pass: process.env.NODEMAILER_PASS,
     },
   });
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
     from: 'developersweb001@gmail.com',
     to: email,
     // to: "tarun.syndell@gmail.com",
-    subject: 'One-Time Password (OTP) for Account Deletion',
+    subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
     // text: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
     html: `
     <!DOCTYPE html>
@@ -3906,7 +3977,7 @@ const sendOtpEmail = (email, otp, firstname) => {
       <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
           <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
               <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-              <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+              <img src="cid:logo">
               
               </div>
               <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -3916,7 +3987,7 @@ const sendOtpEmail = (email, otp, firstname) => {
               We have received a request to delete your account. To proceed with this request, we need to verify your identity.<br/><br/>
               Please use the following One-Time Password (OTP) within the next [10 minutes] to confirm the deletion of your account:<br/><br/>
   
-              <div style="font-weight: bold;">OTP:<div/>${otp}<br/>
+              <span style="font-weight: bold;">OTP:</span>&nbsp; ${otp}<br/>
   
               <div style="margin-top: 25px;">
                <div style="font-weight: bold;">Technical issue?</div>
@@ -3932,6 +4003,13 @@ const sendOtpEmail = (email, otp, firstname) => {
       </body>
     </html>
   `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
   };
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
@@ -3984,11 +4062,14 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       if (!updatedUser) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
+
+      const rootDirectory = process.cwd();
+      const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
         from: 'developersweb001@gmail.com',
         to: email,
         // to: "tarun.syndell@gmail.com",
-        subject: 'Account Recovery',
+        subject: 'OneTap Connect Account Recovery',
         // text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
         html: `
       <!DOCTYPE html>
@@ -4003,7 +4084,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       
           <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
               <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-              <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
+              <img src="cid:logo">
               
               </div>
               <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
@@ -4035,6 +4116,13 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       </body>
       </html>
     `,
+        attachments: [
+          {
+            filename: "Logo.png",
+            path: uploadsDirectory,
+            cid: "logo",
+          },
+        ],
       };
       await transporter.sendMail(mailOptions);
       res.cookie("token", null, {
@@ -4161,4 +4249,20 @@ exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) 
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+});
+
+exports.getunique_slug = catchAsyncErrors(async (req, res, next) => {
+  const { _id } = req.user;
+  console.log(_id);
+  const users_slug = await parmalinkSlug.find({ user_id: _id });
+  console.log(users_slug)
+
+  if (!users_slug) {
+    return next(new ErrorHandler("No slug details Found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    users_slug,
+  });
 });
