@@ -331,21 +331,19 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
 
   try {
     const proration_date = Math.floor(Date.now() / 1000);
-    const { paymentToken, customerID, subscriptionId, plandata, selectedCard } = req.body;
+    const { paymentToken, customerID, subscriptionId, plandata, selectedCard, existingcard } = req.body;
     const { type, planName } = plandata;
-
     const productID = type === 'monthly'
       ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
       : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
       let attachedPaymentMethod;
-    if (!selectedCard) {
+    if (!selectedCard && existingcard === false) {
        attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
         customer: customerID,
       });
     }
 
     console.log(productID)
-
     const price = await stripe.prices.create({
       currency: 'usd',
       unit_amount: req.body.amount * 100,
@@ -373,7 +371,18 @@ let myPayment;
         proration_date: proration_date,
         cancel_at_period_end: false
       });
-    }else{
+    }else if(existingcard){ 
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }],
+        default_payment_method: paymentToken,
+        proration_date: proration_date,
+        cancel_at_period_end: false
+      });
+    }
+      else{
        myPayment = await stripe.subscriptions.update(subscriptionId, {
         items: [{
           id: subscription.items.data[0].id,
@@ -484,7 +493,8 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       tax,
       billingAddress,
       shippingAddress,
-      selectedCard
+      selectedCard,
+      existingcard
     } = req.body;
     const totalAmountInCents = Math.round(totalAmount * 100);
     const type = (smartAccessories ? "smartAccessories" : "")
@@ -494,23 +504,49 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     //   customer: orderData.customerID,
     // });
 
-    let payment_method
-    if(selectedCard){
-// payment_method = 
-    }else{
+//     let payment_method
+// //     if(selectedCard){
+// // // payment_method = 
+// //     }else{
 
-    }
+// //     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmountInCents,
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-      customer: orderData.customerID,
-      description: "test description",
-      payment_method: orderData.paymentToken,
-      // payment_method: attachedPaymentMethod.id, // when new card is used
-      receipt_email: "hivete6126@ksyhtc.com",
-    });
+console.log(orderData.paymentToken,"......................")
+
+    let attachedPaymentMethod;
+    if (!selectedCard && existingcard === false) {
+      console.log("for new card........................")
+      attachedPaymentMethod = await stripe.paymentMethods.attach(orderData.paymentToken, {
+       customer: orderData.customerID,
+     });
+   }
+   let paymentIntent;
+if(!selectedCard && existingcard === false){
+  console.log("old card........................")
+   paymentIntent = await stripe.paymentIntents.create({
+    amount: totalAmountInCents,
+    currency: 'usd',
+    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    customer: orderData.customerID,
+    description: "test description",
+    // payment_method: orderData.paymentToken,
+    payment_method: attachedPaymentMethod.id, // when new card is used
+    receipt_email: "hivete6126@ksyhtc.com",
+  });
+}else{
+  console.log("new card........................")
+   paymentIntent = await stripe.paymentIntents.create({
+    amount: totalAmountInCents,
+    currency: 'usd',
+    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    customer: orderData.customerID,
+    description: "test description",
+    payment_method: orderData.paymentToken,
+    // payment_method: attachedPaymentMethod.id, // when new card is used
+    receipt_email: "hivete6126@ksyhtc.com",
+  });
+
+}
 
 
 
@@ -552,7 +588,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
+ 
 exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
   const { customerID } = req.body
   console.log(req.body)
