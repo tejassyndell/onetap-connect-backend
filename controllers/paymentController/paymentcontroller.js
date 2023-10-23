@@ -415,7 +415,7 @@ let myPayment;
 
     // Save payment ID and user details in your database after successful payment
   }
-    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id });
+    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status : "true" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
