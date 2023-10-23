@@ -236,11 +236,13 @@ if(!selectedCard){
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
+      console.log("paymentIntent")
       console.log(paymentIntent)
+      console.log("paymentIntent")
   
       // Save payment ID and user details in your database after successful payment
   
-      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id });
+      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status  });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, error: error.message });
@@ -508,8 +510,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       customer: orderData.customerID,
       description: "test description",
       payment_method: orderData.paymentToken,
-      // payment_method: attachedPaymentMethod.id, // when new card is used
-      receipt_email: "hivete6126@ksyhtc.com",
     });
 
 
@@ -561,6 +561,34 @@ exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
     type: 'card', 
   });
 res.send(paymentMethods)
+})
+
+
+exports.updateCards = catchAsyncErrors(async (req, res, next) => {
+  const { paymentData } = req.body;
+  const {type} = paymentData;
+  if(type === 'create'){
+    const {customerID, paymentID } = paymentData;
+       const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+         customer: customerID,
+       });
+       res.status(200).json({
+         success: true,
+         paymentData: attachedPaymentMethod,
+       });
+  }else if(type === 'delete'){
+    const { paymentID } = paymentData;
+    const deletePaymentMethod = await stripe.paymentMethods.detach(paymentID);
+    res.status(200).json({
+      success: true,
+      message: "Payment Method Deleted successfully",
+    });
+  }else{
+    res.status(501).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 })
 
 
