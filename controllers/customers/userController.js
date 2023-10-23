@@ -160,14 +160,14 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
 
 function generateUniqueCode() {
   let code;
-  const alphanumeric = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'; 
+  const alphanumeric = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   do {
-    code = ''; 
+    code = '';
     for (let i = 0; i < 6; i++) {
       const randomIndex = Math.floor(Math.random() * alphanumeric.length);
       code += alphanumeric[randomIndex];
     }
-  } while (usedCodes.has(code)); 
+  } while (usedCodes.has(code));
   usedCodes.add(code);
   return code;
 }
@@ -278,14 +278,16 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       // Add any other fields you want to store in userinfo
     });
     await userInfo.save();
-    
+
     const user_parmalink = await parmalinkSlug.create({
       user_id: user._id,
       companyID: newCompany._id,
       unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
-      userurlslug:user.userurlslug,
+      userurlslug: generatedCode,
     })
     await user_parmalink.save();
+    user.userurlslug = generatedCode;
+    await user.save();
   }
   sendToken(user, 200, res);
 });
@@ -414,6 +416,12 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   };
 
   const company = await Company.create(companyData);
+  const companyurlslug = company.companyurlslug;
+  const permalinkSlugDoc = await parmalinkSlug.findOne({ companyID: company._id });
+  if (permalinkSlugDoc) {
+    permalinkSlugDoc.companyurlslug = companyurlslug;
+    await permalinkSlugDoc.save();
+  }
 
   user.companyID = company._id;
   user.save();
@@ -1032,7 +1040,7 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData, manage_superadmin } = req.body;
   const { companyID } = req.user;
-  console.log(manage_superadmin,"*****************************")
+  console.log(manage_superadmin, "*****************************")
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(memberData) || memberData.length === 0) {
@@ -1041,7 +1049,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
   let accountManager = {};
   const manager = manage_superadmin.find(user => user.role === 'manager');
-  
+
   if (manager) {
     accountManager.name = manager.first_name;
     accountManager.email = manager.email;
@@ -1828,6 +1836,16 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     user.set(updatedUserDetails);
     await user.save();
 
+    const userurlslug = user.userurlslug;
+    await parmalinkSlug.updateOne(
+      { user_id: id }, 
+      { $push: { unique_slugs: { $each: [{ value: userurlslug}] } } } ,
+    );
+    await parmalinkSlug.updateOne(
+      { user_id: id },
+      { userurlslug: userurlslug }
+    );
+
     res.status(200).json({
       success: true,
       message: "User details updated successfully",
@@ -2078,9 +2096,9 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
       .json({ message: "companyurlslug is already taken." });
   }
 
-  const existinguserurlslug = await User.findOne({
-    _id: { $ne: currentUserId },
-    userurlslug,
+  const existinguserurlslug = await parmalinkSlug.findOne({
+    user_id: { $ne: currentUserId },
+    "unique_slugs.value": userurlslug,
   });
 
   if (existinguserurlslug) {
@@ -2088,9 +2106,9 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
   }
 
   // Check case-sensitive duplicates
-  const caseSensitiveuserurlslug = await User.findOne({
-    _id: { $ne: currentUserId }, // Exclude the current company by ID
-    userurlslug: new RegExp(`^${userurlslug}$`, "i"),
+  const caseSensitiveuserurlslug = await parmalinkSlug.findOne({
+    user_id: { $ne: currentUserId }, // Exclude the current company by ID
+    "unique_slugs.value": new RegExp(`^${userurlslug}$`, "i"),
   });
 
   if (caseSensitiveuserurlslug) {
@@ -4202,4 +4220,20 @@ exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) 
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+});
+
+exports.getunique_slug = catchAsyncErrors(async (req, res, next) => {
+  const { _id } = req.user;
+  console.log(_id);
+  const users_slug = await parmalinkSlug.find({ user_id: _id });
+  console.log(users_slug)
+
+  if (!users_slug) {
+    return next(new ErrorHandler("No slug details Found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    users_slug,
+  });
 });
