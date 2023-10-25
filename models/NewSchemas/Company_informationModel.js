@@ -31,7 +31,7 @@ const Company_information = new mongoose.Schema(
         return this.company_name.toLowerCase().replace(/[^a-z0-9-]/g, "");
       },
     },
-    keywords: [{ type: String }],
+    keywords: { type: String },
     website_url: {
       type: String,
       default: "",

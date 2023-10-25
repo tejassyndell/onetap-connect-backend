@@ -4266,3 +4266,34 @@ exports.getunique_slug = catchAsyncErrors(async (req, res, next) => {
     users_slug,
   });
 });
+exports.accountSetupsteps = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.user)
+  const { id } = req.user; 
+  const { accountSetup } = req.body; // The updated Account_setup data
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+
+    // If the user doesn't have the Account_setup field, create it
+    if (!user.Account_setup) {
+      user.Account_setup = accountSetup;
+    } else {
+      // Update the existing Account_setup array
+      user.Account_setup = accountSetup;
+    }
+
+
+    // Save the user document with the updated Account_setup array
+    await user.save();
+
+    res.status(200).json({ message: 'Account_setup updated successfully' , user});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});

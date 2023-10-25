@@ -84,7 +84,8 @@ const {
   generateotp,
   verifyotp,
   google_verify_recover_account,
-  getunique_slug
+  getunique_slug,
+  accountSetupsteps
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -242,4 +243,5 @@ router.post('/verify-otp',  verifyotp)
 router.post('/google_acc_recover',google_verify_recover_account)
 router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
 
+router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
 module.exports = router;
