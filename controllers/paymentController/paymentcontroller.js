@@ -182,6 +182,11 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   const customerID = req.body.customerID;
   const Address = req.body.billingAddress;
   const selectedCard = req.body.selectedCard;
+  const newUser = req.body.newUser;
+  const primary_card = req.body.primaryCard;
+  console.log("..........")
+  console.log(primary_card, "/////////////////////////////////////")
+  console.log("..........")
   const taxID = req.body.taxId;
   const { type, planName } = req.body.plandata;
   const productID = type === 'monthly'
@@ -212,6 +217,7 @@ if(!selectedCard){
           description: 'Test description', 
           metadata: {
             company: req.body.company_name,
+            primary_card: primary_card
           },
           customer: customerID,
           default_payment_method: paymentToken,
@@ -223,13 +229,22 @@ if(!selectedCard){
           description: 'Test description', 
           metadata: {
             company: req.body.company_name,
+            primary_card: primary_card
           },
           customer: customerID,
           default_payment_method: attachedPaymentMethod.id,
           items: [{ price: price.id }],
           collection_method: "charge_automatically",
         });
+      }
 
+      if(newUser === true){
+        await stripe.customers.update(customerID, {
+          invoice_settings: {
+            // default_payment_method: paymentMethodID,
+            default_payment_method: paymentToken,
+          },
+        });
       }
   
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
@@ -594,26 +609,58 @@ if(!selectedCard && existingcard === false){
 exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
   const { customerID } = req.body
   console.log(req.body)
-  const paymentMethods = await stripe.paymentMethods.list({
+  let paymentMethods = await stripe.paymentMethods.list({
     customer: customerID,
     type: 'card', 
   });
+
+const customer = await stripe.customers.retrieve(customerID);
+
+const defaultPaymentMethodID = customer.invoice_settings.default_payment_method;
+
+let primaryPaymentMethod = null;
+paymentMethods.data.forEach((paymentMethod) => {
+  paymentMethod.isPrimary = paymentMethod.id === defaultPaymentMethodID;
+});
+console.log(paymentMethods)
+
+// res.send(primaryPaymentMethod)
 res.send(paymentMethods)
 })
 
 
 exports.updateCards = catchAsyncErrors(async (req, res, next) => {
   const { paymentData } = req.body;
+  // const isPrimary = req.body.isPrimary 
   const {type} = paymentData;
-  if(type === 'create'){
-    const {customerID, paymentID } = paymentData;
-       const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
-         customer: customerID,
-       });
-       res.status(200).json({
-         success: true,
-         paymentData: attachedPaymentMethod,
-       });
+  if (type === 'create') {
+    const { customerID, paymentID, isPrimary, cardId } = paymentData;
+  console.log(isPrimary, "|||||||")
+
+    const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+      customer: customerID,
+    });
+
+    if (isPrimary) {
+      // Set the new card as the primary payment method
+      await stripe.customers.update(customerID, {
+        invoice_settings: {
+          default_payment_method: paymentID,
+        },
+      });
+    }
+    if(cardId){
+      await stripe.customers.update(customerID, {
+        invoice_settings: {
+          default_payment_method: cardId.id,
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      paymentData: attachedPaymentMethod,
+    });
   }else if(type === 'delete'){
     const { paymentID } = paymentData;
     const deletePaymentMethod = await stripe.paymentMethods.detach(paymentID);
@@ -627,6 +674,16 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
       message: "Internal Server Error",
     });
   }
+})
+
+
+exports.testAPI = catchAsyncErrors(async (req, res, next) => {
+  await stripe.customers.update("cus_OsltsRd02lo3aH", {
+    invoice_settings: {
+      default_payment_method: "pm_1O50XLHsjFNmmZSiAvxS6lZf",
+    },
+  });
+  res.send("kjhgf")
 })
 
 
