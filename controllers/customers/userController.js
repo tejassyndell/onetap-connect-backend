@@ -2192,8 +2192,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     shippingAddressFind = new shippingAddress({
       userId: user._id,
       shipping_address: [],
-    }); 
-  } 
+    });
+  }
   // if(saveAddress) {
   //   shippingAddressFind.shipping_address.push(shippingData);
   // }
@@ -2305,8 +2305,8 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
     shippingAddressFind = new shippingAddress({
       userId: user._id,
       shipping_address: [],
-    }); 
-  } 
+    });
+  }
   // if(saveAddress) {
   //   shippingAddressFind.shipping_address.push(shippingData);
   // }
@@ -2351,7 +2351,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   user.email = userData.email;
   user.address = billingdata;
   user.first_login = true;
- 
+
 
   const company = await Company.findById(companyID);
   company.address = billingdata;
@@ -3162,12 +3162,38 @@ exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
 //   });
 // });
 
+// exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
+//   const { userId, userRole } = req.body;
+
+//   try {
+//     // Update user roles based on userId array
+//     await User.updateMany({ _id: { $in: userId } }, { role: userRole });
+//     res.status(200).json({
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error("Error updating user roles:", error);
+//     res.status(500).json({
+//       success: false,
+//       error: "Error updating user roles",
+//     });
+//   }
+// });
 exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
-  const { userId, userRole } = req.body;
+  const { superAdmins, administrators, managers, teammember } = req.body;
 
   try {
-    // Update user roles based on userId array
-    await User.updateMany({ _id: { $in: userId } }, { role: userRole });
+    // Define a function to update roles based on the provided user IDs and role
+    const updateUserRoles = async (userIds, userRole) => {
+      await User.updateMany({ _id: { $in: userIds } }, { role: userRole });
+    };
+
+    // Update user roles for each role category
+    await updateUserRoles(superAdmins.map(user => user.id), 'superadmin');
+    await updateUserRoles(administrators.map(user => user.id), 'administrator');
+    await updateUserRoles(managers.map(user => user.id), 'manager');
+    await updateUserRoles(teammember.map(user => user.id), 'teammember');
+
     res.status(200).json({
       success: true,
     });
@@ -3179,8 +3205,9 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+
 exports.updateUserPlanonRoleChange = catchAsyncErrors(async (req, res, next) => {
-  const { userID, subscriptionDetails } = req.body.userID;
+  const { userID, subscriptionDetails } = req.body;
   try {
     // const updatedUser = await User.findByIdAndUpdate(
     const filter = {
@@ -3538,22 +3565,22 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 //       html: `
 //     <!DOCTYPE html>
 //     <html>
-    
+
 //     <head>
 //         <meta charset="utf-8" />
 //         <meta name="viewport" content="initial-scale=1, width=device-width" />
 //     </head>
-    
+
 //     <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
-    
+
 //         <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
 //             <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
 //             <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
-            
+
 //             </div>
 //             <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
 //             <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-           
+
 //             <p>Dear ${firstname}<br/><br/>
 //             We hope this message finds you well.<br/><br/>
 //             We received a request to delete your account, and we wanted to let you know that your account is scheduled for deletion. However, we understand that circumstances may change. That's why we're providing you with a 7-day window to recover your account.<br/><br/>
@@ -3576,14 +3603,14 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 //             Thank you for using our platform.<br/><br/>
 //             Best regards,<br/>
 //             Team OneTapConnect.<br/>
-            
+
 //         </div>
-    
+
 //     </body>
-    
+
 //     </html>
-    
-    
+
+
 //   `,
 //     };
 
