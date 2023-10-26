@@ -85,7 +85,9 @@ const {
   verifyotp,
   google_verify_recover_account,
   getunique_slug,
-  accountSetupsteps
+  accountSetupsteps,
+  CancelInvitedUser,
+  // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
   imageUpload,
@@ -244,4 +246,6 @@ router.post('/google_acc_recover',google_verify_recover_account)
 router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
 
 router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
+router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
+// router.post('/testapii' ,Testapidummy)
 module.exports = router;
