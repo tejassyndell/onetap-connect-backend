@@ -9,7 +9,7 @@ exports.testAPI = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getProducts = catchAsyncErrors(async (req, res, next) => {
-  const products = await Product.find();
+  const products = await Product.find().populate('category', 'name');
 
   if (!products) {
     return next(new ErrorHandler("No Products Found.....", 404));
