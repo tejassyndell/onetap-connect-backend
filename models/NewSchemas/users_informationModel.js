@@ -7,6 +7,10 @@ const users_information = new mongoose.Schema(
             ref: 'user',
             // required: true,
         },
+        company_ID: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "company",
+          },
         team: { type: mongoose.Schema.Types.ObjectId },
         company_name: {
             type: String,
@@ -53,7 +57,7 @@ const users_information = new mongoose.Schema(
             type: String,
             default: ""
         },
-        keywords: [{ type: String }],
+        keywords: { type: String },
         social_media: [
             {
               name: { type: String, default: null },

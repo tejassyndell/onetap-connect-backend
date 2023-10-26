@@ -268,6 +268,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
     const userInfo = await UserInformation.create({
       user_id: user._id,
+      company_ID: user.companyID
       // Add any other fields you want to store in userinfo
     });
     await userInfo.save();
@@ -360,6 +361,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
 
 //   const userInfo = await UserInformation.create({
 //     user_id: user._id,
+//     company_ID: user.companyID
 //     // Add any other fields you want to store in userinfo
 //   });
 //   await userInfo.save();
@@ -3029,6 +3031,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
     const user = await User.create(userdetails);
     const userInfo = await UserInformation.create({
       user_id: user._id,
+      company_ID: user.companyID,
       // Add any other fields you want to store in userinfo
     });
     await userInfo.save();
@@ -3170,9 +3173,16 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     // Calculate the expiry date by adding 10 days
     const expiryDate = new Date(currentDate);
     expiryDate.setDate(currentDate.getDate() + 10);
+    console.log(expiryDate,"===============================================================================")
+    // Update the user object with the new fields
+    user.invitationToken = invitationToken;
+    user.invitationExpiry = expiryDate;
+    user.status = "pending";
+      // Save the updated user object
+      await user.save();
 
     const message = {
-      from: "developersweb001@gmail.com",
+      from: "OneTapConnect:developersweb001@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3202,7 +3212,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
-                <a href="${process.env.FRONTEND_URL}/plan-selection" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+            <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
         </div>
           <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
@@ -3528,6 +3538,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   const userInformationData = {
     user_id: userData._id,
     website_url: website_url,
+    company_ID:userData.companyID
     // Add other fields from formData if needed
   };
   await UserInformation.create(userInformationData);
@@ -4360,3 +4371,47 @@ exports.accountSetupsteps = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+exports.CancelInvitedUser = catchAsyncErrors(async (req, res, next) => {
+
+  const { invitedUserID } = req.body; // Expecting an array of _id values in the request body
+  console.log(invitedUserID);
+  const currentTime = new Date().toISOString();
+  try {
+    const updatedUsers = await InvitedTeamMemberModel.updateMany(
+      { _id: { $in: invitedUserID } }, // Find all documents with _id in the array
+      {
+        $set: {
+          status: "Cancelled",
+          invitationExpiry: currentTime,
+        }
+      }
+    );
+    return res.json({
+      message: `invited users updated successfully`,
+      updatedUsers
+    });
+    }
+    catch (error) {
+      return res.status(500).json({
+        error: "An error occurred while updating the invited users",
+      });
+    }
+});
+
+
+// exports.Testapidummy = catchAsyncErrors(async (req, res, next) => {  
+//   try {
+//     // Define the new value you want to set for the 'keywords' field
+//     const newKeywordsValue = ""; // Replace this with the desired value
+
+//     // Update the 'keywords' field for all documents in the 'Company' collection
+//     await Company.updateMany({}, { $set: { keywords: newKeywordsValue } });
+
+//     // Return a success response
+//     return res.status(200).json({ message: 'Keywords field updated successfully.' });
+//   } catch (error) {
+//     // Handle any errors that may occur
+//     return next(error);
+//   }
+// });
