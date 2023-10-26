@@ -242,13 +242,6 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   const generatedCode = generateUniqueCode();
-  // user.unique_slug = generatedCode;
-  // await user.save();
-  // await parmalinkSlug.create({
-  //   unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
-  // });
-
-
   if (!user) {
     return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
@@ -416,12 +409,6 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   };
 
   const company = await Company.create(companyData);
-  const companyurlslug = company.companyurlslug;
-  const permalinkSlugDoc = await parmalinkSlug.findOne({ companyID: company._id });
-  if (permalinkSlugDoc) {
-    permalinkSlugDoc.companyurlslug = companyurlslug;
-    await permalinkSlugDoc.save();
-  }
 
   user.companyID = company._id;
   user.save();
@@ -1098,7 +1085,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Please enter valid email"));
       }
     }
-    if(existingUserinusers || existingUser){
+    if (existingUserinusers || existingUser) {
       return next(new ErrorHandler("This email is already in use."));
     }
 
@@ -1247,11 +1234,11 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const userInfo = await User.findById(id);
   async function processCSVData(CSVMemberData) {
     const existingMails = [];
-  
+
     for (const item of CSVMemberData) {
       try {
         const isEmailAlreadyUsed = await User.exists({ email: item.email });
-        
+
         if (isEmailAlreadyUsed) {
           existingMails.push(item);
           item.emailAlreadyUsed = false;
@@ -1263,32 +1250,32 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         console.error("Error:", error);
       }
     }
-  
+
     return { existingMails };
   }
   const { existingMails } = await processCSVData(CSVMemberData);
 
   for (const userData of existingMails) {
     const { email, firstName, lastName, team, emailAlreadyUsed } = userData;
-    if(emailAlreadyUsed){
-    const password = generatePassword();
+    if (emailAlreadyUsed) {
+      const password = generatePassword();
 
-    if (!email || !firstName || !lastName || !team) {
-      return next(new ErrorHandler("Please fill out all user details", 400));
-    }
+      if (!email || !firstName || !lastName || !team) {
+        return next(new ErrorHandler("Please fill out all user details", 400));
+      }
 
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      return next(new ErrorHandler("Please enter a valid email", 400));
-    }
-    const rootDirectory = process.cwd();
-    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
-    const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
-      to: email,
-      subject: `${company.company_name} Invited you to join OneTapConnect`,
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        return next(new ErrorHandler("Please enter a valid email", 400));
+      }
+      const rootDirectory = process.cwd();
+      const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+      const message = {
+        from: "OneTapConnect:developersweb001@gmail.com",
+        to: email,
+        subject: `${company.company_name} Invited you to join OneTapConnect`,
 
-      html: `
+        html: `
     <!DOCTYPE html>
     <html>
     
@@ -1326,50 +1313,62 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-      attachments: [
-        {
-          filename: "Logo.png",
-          path: uploadsDirectory,
-          cid: "logo",
-        },
-      ],
-    };
+        attachments: [
+          {
+            filename: "Logo.png",
+            path: uploadsDirectory,
+            cid: "logo",
+          },
+        ],
+      };
 
-    transporter.sendMail(message, (err, info) => {
-      if (err) {
-        console.log(`Error sending email to ${email}: ${err}`);
-      } else {
-        console.log(`Email sent to ${email}: ${info.response}`);
-      }
-    });
+      transporter.sendMail(message, (err, info) => {
+        if (err) {
+          console.log(`Error sending email to ${email}: ${err}`);
+        } else {
+          console.log(`Email sent to ${email}: ${info.response}`);
+        }
+      });
 
-    // Check if the team already exists for the company
-    let teamRecord = await Team.findOne({
-      team_name: team,
-      companyID: companyID,
-    });
-
-    if (!teamRecord) {
-      // If the team doesn't exist, create a new team
-      teamRecord = await Team.create({
+      // Check if the team already exists for the company
+      let teamRecord = await Team.findOne({
         team_name: team,
         companyID: companyID,
       });
+
+      if (!teamRecord) {
+        // If the team doesn't exist, create a new team
+        teamRecord = await Team.create({
+          team_name: team,
+          companyID: companyID,
+        });
+      }
+
+      const teamId = teamRecord.id;
+      const generatedCode = generateUniqueCode();
+      const userRecord = await User.create({
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        team: teamId,
+        companyID: companyID,
+        password: password,
+        role: "teammember",
+        userurlslug: generatedCode,
+      });
+
+      const userId = userRecord.id;
+      // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+      const user_parmalink = await parmalinkSlug.create({
+        user_id: userId,
+        companyID: companyID,
+        unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+        userurlslug: generatedCode,
+      })
+      await user_parmalink.save();
     }
-
-    const teamId = teamRecord.id;
-
-    await User.create({
-      email: email,
-      first_name: firstName,
-      last_name: lastName,
-      team: teamId,
-      companyID: companyID,
-      password: password,
-      role: "teammember",
-    });
   }
-}
 
   res.status(201).json({
     success: true,
@@ -1867,8 +1866,8 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
 
     const userurlslug = user.userurlslug;
     await parmalinkSlug.updateOne(
-      { user_id: id }, 
-      { $push: { unique_slugs: { $each: [{ value: userurlslug}] } } } ,
+      { user_id: id },
+      { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
     );
     await parmalinkSlug.updateOne(
       { user_id: id },
@@ -2158,7 +2157,8 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   // console.log(companyId);
   // console.log(company_url_edit_permission);
   console.log("update is hit");
-  const trimslug = companyurlslug.trim()
+  // const trimslug = companyurlslug.trim()
+  const trimslug = companyurlslug?.trim() || companyurlslug ;
   try {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
       companyurlslug: trimslug,
@@ -3032,6 +3032,18 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       // Add any other fields you want to store in userinfo
     });
     await userInfo.save();
+
+    const generatedCode = generateUniqueCode();
+    const user_parmalink = await parmalinkSlug.create({
+      user_id: user._id,
+      companyID: userdetails.companyId,
+      unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+      userurlslug: generatedCode,
+    })
+    await user_parmalink.save();
+    user.userurlslug = generatedCode;
+    await user.save();
+
     const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(
       _id
     );
@@ -3079,6 +3091,7 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const parts = name.split(" ");
   const first_name = parts[0];
   const last_name = parts[1];
+  const generatedCode = generateUniqueCode();
   userData = {
     email: email,
     first_name: first_name,
@@ -3088,6 +3101,7 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
     isIndividual: false,
     isIndividual: false,
     isPaidUser: true,
+    userurlslug: generatedCode,
   };
   const existingUser = await User.findOne({ email: userData.email });
 
@@ -3098,6 +3112,15 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   }
 
   const newUser = await User.create(userData);
+  const user = newUser._id;
+  const user_parmalink = await parmalinkSlug.create({
+    user_id: user,
+    companyID: companyId,
+    unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+    userurlslug: generatedCode,
+  })
+  await user_parmalink.save();
+
   const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(_id);
   if (!deleteInvitedUser) {
     res.status(500).json({
@@ -3446,6 +3469,8 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     }
   });
 
+  const generatedCode = generateUniqueCode();
+
   const userData = await User.create({
     email: email, // This line is removed to prevent email storage
     first_name: firstname,
@@ -3469,6 +3494,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     },
     companyID: companyID,
     password: password,
+    userurlslug: generatedCode,
     role: "teammember",
   });
   // console.log("called")
@@ -3480,6 +3506,16 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   await UserInformation.create(userInformationData);
 
   // console.log(userData._id)
+  const user_parmalink = await parmalinkSlug.create({
+    user_id: userData._id,
+    companyID: companyID,
+    unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+    userurlslug: generatedCode,
+  })
+  await user_parmalink.save();
+
+  // User.userurlslug = generatedCode;
+  // await User.save();
 
   res.status(201).json({
     success: true,
