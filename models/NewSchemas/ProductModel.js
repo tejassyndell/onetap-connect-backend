@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    status: {type: String},
     image: [
       {
         type: String, // Assuming each image is stored as a URL
@@ -34,7 +35,7 @@ const productSchema = new mongoose.Schema(
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ProductCategory", // Assuming you have a "productCategories" collection
+      ref: "Product_Categories", // Assuming you have a "productCategories" collection
     },
     Description: {
       type: [String],

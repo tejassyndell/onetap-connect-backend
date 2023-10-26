@@ -3260,12 +3260,38 @@ exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
 //   });
 // });
 
+// exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
+//   const { userId, userRole } = req.body;
+
+//   try {
+//     // Update user roles based on userId array
+//     await User.updateMany({ _id: { $in: userId } }, { role: userRole });
+//     res.status(200).json({
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error("Error updating user roles:", error);
+//     res.status(500).json({
+//       success: false,
+//       error: "Error updating user roles",
+//     });
+//   }
+// });
 exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
-  const { userId, userRole } = req.body;
+  const { superAdmins, administrators, managers, teammember } = req.body;
 
   try {
-    // Update user roles based on userId array
-    await User.updateMany({ _id: { $in: userId } }, { role: userRole });
+    // Define a function to update roles based on the provided user IDs and role
+    const updateUserRoles = async (userIds, userRole) => {
+      await User.updateMany({ _id: { $in: userIds } }, { role: userRole });
+    };
+
+    // Update user roles for each role category
+    await updateUserRoles(superAdmins.map(user => user.id), 'superadmin');
+    await updateUserRoles(administrators.map(user => user.id), 'administrator');
+    await updateUserRoles(managers.map(user => user.id), 'manager');
+    await updateUserRoles(teammember.map(user => user.id), 'teammember');
+
     res.status(200).json({
       success: true,
     });
@@ -3277,8 +3303,9 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+
 exports.updateUserPlanonRoleChange = catchAsyncErrors(async (req, res, next) => {
-  const { userID, subscriptionDetails } = req.body.userID;
+  const { userID, subscriptionDetails } = req.body;
   try {
     // const updatedUser = await User.findByIdAndUpdate(
     const filter = {
