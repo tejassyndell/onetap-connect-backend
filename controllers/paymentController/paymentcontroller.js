@@ -634,15 +634,13 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
   // const isPrimary = req.body.isPrimary 
   const {type} = paymentData;
   if (type === 'create') {
-    const { customerID, paymentID, isPrimary, cardId } = paymentData;
-  console.log(isPrimary, "|||||||")
+    const { customerID, paymentID, cardId ,isPrimary} = paymentData;
+    let attachedPaymentMethod;
 
-    const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
-      customer: customerID,
-    });
-
+   attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+    customer: customerID,
+  });
     if (isPrimary) {
-      // Set the new card as the primary payment method
       await stripe.customers.update(customerID, {
         invoice_settings: {
           default_payment_method: paymentID,
