@@ -9,6 +9,33 @@ const productCategorySchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-});
+  parentCategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    require: false,
+    set: (v) => (v === "" ? null : v),
+  },
+  CustomPermalink: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  featuredImage: [
+    {
+      image: [
+        {
+          type: String,
+        },
+      ],
+      imageName: { type: String },
+      altText: { type: String }
+    }
+  ],
+  status: { type: String },
+  Visibility: { type: String },
+  // publishedDate: {type: Date},
+  activitylog: { type: String }
+
+}, { timestamps: true });
 
 module.exports = mongoose.model("Product_Categories", productCategorySchema);
