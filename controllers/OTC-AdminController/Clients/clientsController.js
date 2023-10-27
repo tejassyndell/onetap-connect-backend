@@ -4,7 +4,7 @@ const User = require("../../../models/NewSchemas/UserModel.js");
 const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
-const company = require("../../../models/NewSchemas/Company_informationModel.js");
+const Company = require("../../../models/NewSchemas/Company_informationModel.js");
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
@@ -23,7 +23,7 @@ exports.getClients = catchAsyncErrors(async (req, res, next) => {
   const Clients = await User.find({ _id: { $in: userIdsWithPlan } }).populate({
     path: "companyID",
     model: "companies_information",
-    select: "industry",
+    select: "industry company_name",
   });
 
   if (!Clients) {
@@ -108,4 +108,30 @@ exports.getOtcAdminProfile = catchAsyncErrors(async (req, res, next) => {
     success: true,
     user,
   });
+});
+
+exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
+{
+  try{
+    const userInformationTeamData = await UserInformation.find({ 'subscription_details.plan': 'Team' }).populate({
+      path: "company_ID",
+      model: "companies_information",
+      select: "industry company_name",
+    }).populate({
+      path: "user_id",
+      model: "user",
+      // select: "first_name last_name",
+    });
+    console.log(userInformationTeamData)
+
+
+    res.status(200).json({
+      userInformationTeamData
+    });
+  } 
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred' });
+  }
+}
 });

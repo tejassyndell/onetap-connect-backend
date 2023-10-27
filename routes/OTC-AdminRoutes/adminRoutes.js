@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile,
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient,
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { createProduct } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -9,6 +9,7 @@ const { createProduct } = require("../../controllers/OTC-AdminController/Clients
 
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
+router.get("/admin/allclients", getordersclient);
 router.post("/admin/signup", Signup);
 router.post("/admin/login", OtcLogin);
 router.post("/admin/logout", Otclogout);
