@@ -4,7 +4,7 @@ const {
   testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile,
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
-const { createProduct } = require("../../controllers/OTC-AdminController/Clients/productController");
+const { createProduct, createProductCategories } = require("../../controllers/OTC-AdminController/Clients/productController");
 
 
 router.get("/admin/test", testAPIS);
@@ -15,5 +15,6 @@ router.post("/admin/logout", Otclogout);
 router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser ,getOtcAdminProfile);
 
 router.post("/admin/product",createProduct);
+router.post("/admin/productCategory/create",createProductCategories);
 
 module.exports = router;
