@@ -666,6 +666,59 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
       success: true,
       message: "Payment Method Deleted successfully",
     });
+  }else if(type === 'createNewCustomer'){
+    const { paymentID,isPrimary} = paymentData;
+    const user = req.user;
+    const customer = await stripe.customers.create({
+  name: `${user.first_name} ${user.last_name}`,
+  email: user.email,
+  phone: user.contact,
+  address: {
+    line1: user.address.line1,
+    line2: user.address.line2,
+    city: user.address.city,
+    state: user.address.state,
+    country: user.address.country,
+    postal_code: user.address.postal_code,
+  },
+  expand: ['tax']
+});
+if(!customer){
+  return res.status(501).json({
+    success: false,
+    message: "Internal Server Error",
+  }); 
+}
+const updatedUserInfo = await UserInformation.findOneAndUpdate(
+  { user_id: user._id},
+  { $set: { 'subscription_details.customer_id': customer.id } },
+  { new: true }
+);
+if(!updatedUserInfo){
+  return res.status(501).json({
+    success: false,
+    message: "Internal Server Error",
+  }); 
+}
+
+const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+  customer: customer.id,
+});
+const setPrimary = await stripe.customers.update(customer.id, {
+  invoice_settings: {
+    default_payment_method: paymentID,
+  },
+});
+if(!attachedPaymentMethod || !setPrimary){
+  return res.status(501).json({
+    success: false,
+    message: "Internal Server Error",
+  }); 
+}
+res.status(200).json({
+  success: true,
+  paymentData: attachedPaymentMethod,
+});
   }else{
     res.status(501).json({
       success: false,
@@ -676,12 +729,7 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.testAPI = catchAsyncErrors(async (req, res, next) => {
-  await stripe.customers.update("cus_OsltsRd02lo3aH", {
-    invoice_settings: {
-      default_payment_method: "pm_1O50XLHsjFNmmZSiAvxS6lZf",
-    },
-  });
-  res.send("kjhgf")
+
 })
 
 
