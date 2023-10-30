@@ -63,7 +63,7 @@ exports.OtcLogin = catchAsyncErrors(async (req, res, next) => {
     const user = await AdminUsers.findOne({ email }).select("+password");
 
     if (!user) {
-        return res.status(401).json({ message: "user not found." });
+        return res.status(401).json({ message: "User not found." });
     }
     console.log(user);
 
@@ -101,7 +101,7 @@ exports.getOtcAdminProfile = catchAsyncErrors(async (req, res, next) => {
   const user = await AdminUsers.findById(id);
 
   if (!user) {
-    return next(new ErrorHandler("user not found", 401));
+    return next(new ErrorHandler("User not found.", 401));
   }
 
   res.status(200).json({
@@ -113,20 +113,35 @@ exports.getOtcAdminProfile = catchAsyncErrors(async (req, res, next) => {
 exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
 {
   try{
-    const userInformationTeamData = await UserInformation.find({ 'subscription_details.plan': 'Team' }).populate({
+    const userInformationTeamData = await UserInformation.find({ "subscription_details.plan": { $ne: null }, }).populate({
       path: "company_ID",
       model: "companies_information",
-      select: "industry company_name",
+      // select: "industry company_name",
     }).populate({
       path: "user_id",
       model: "user",
       // select: "first_name last_name",
     });
     console.log(userInformationTeamData)
+    // Create a map to track seen company IDs
+    const seenCompanyIDs = new Map();
+    const filteredUserInformationTeamData = [];
 
+    for (const data of userInformationTeamData) {
+      const companyID = data.company_ID._id;
+
+      // If the company ID is not in the map, add it to the map and add the data to the filtered array
+      if (!seenCompanyIDs.has(companyID)) {
+        seenCompanyIDs.set(companyID, true);
+        filteredUserInformationTeamData.push(data);
+      }
+    }
+
+    console.log(filteredUserInformationTeamData);
 
     res.status(200).json({
-      userInformationTeamData
+      // userInformationTeamData
+      userInformationTeamData: filteredUserInformationTeamData,
     });
   } 
   catch (error) {
@@ -135,3 +150,35 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
   }
 }
 });
+
+// exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
+//   try {
+//     const userInformationData = await UserInformation.find();
+
+//     // Create a map to store unique company_ID values as keys
+//     const companyMap = new Map();
+
+//     // Iterate through the userInformationData and store unique company_ID documents in the map
+//     userInformationData.forEach(userInformation => {
+//       if (!companyMap.has(userInformation.company_ID)) {
+//         companyMap.set(userInformation.company_ID, userInformation);
+//       }
+//     });
+
+//     // Convert the map values (which are unique userInformation documents) to an array
+//     const uniqueUserInformation = Array.from(companyMap.values());
+
+//     // Populate companyInformation and user data
+//     for (const userInformation of uniqueUserInformation) {
+//       await userInformation.populate('company_ID');
+//       await userInformation.populate('user_id');
+//     }
+
+//     res.status(200).json({
+//       userInformationTeamData: uniqueUserInformation
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'An error occurred' });
+//   }
+// });

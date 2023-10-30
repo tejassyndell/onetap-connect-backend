@@ -156,7 +156,7 @@ const userSchema = new mongoose.Schema(
     unique_slug:{type: String, unique: true},
     companyID: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "company",
+      ref: "companies_information",
       default: null,
     },
     otptoken: { type: String, default: null },

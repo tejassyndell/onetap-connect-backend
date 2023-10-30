@@ -9,7 +9,7 @@ const users_information = new mongoose.Schema(
         },
         company_ID: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "company",
+            ref: "companies_information",
           },
         team: { type: mongoose.Schema.Types.ObjectId },
         company_name: {
