@@ -27,6 +27,6 @@ router.post('/payment/change-plan', switchPlan)
 router.get('/payment/isactive' ,isAuthenticatedUser, isActive)
 router.get('/payment/test' ,isAuthenticatedUser, cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
-router.post('/payment/update-card', updateCards)
+router.post('/payment/update-card',isAuthenticatedUser, updateCards)
 router.post('/payment/test', testAPI)
 module.exports = router;
