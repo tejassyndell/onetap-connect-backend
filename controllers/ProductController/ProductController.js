@@ -1,8 +1,7 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../utils/errorHandler.js");
 const Product = require("../../models/NewSchemas/ProductModel.js");
-const ProductCategory = require("../../models/NewSchemas/ProductCategoryModel.js");
-const cart = require("../../models/NewSchemas/cartModel.js");
+  const cart = require("../../models/NewSchemas/cartModel.js");
 
 exports.testAPI = catchAsyncErrors(async (req, res, next) => {
   res.send("called");
