@@ -5,6 +5,8 @@ const UserInformation = require("../../models/NewSchemas/users_informationModel.
 const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
 const UserModel = require("../../models/NewSchemas/UserModel");
 const ErrorHandler = require("../../utils/errorHandler.js");
+const billingAddressModal = require("../../models/NewSchemas/user_billing_addressModel");
+const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
 
 
 const productId = process.env.PLAN_PRODUCT_ID
@@ -503,7 +505,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     // Get the user ID from the authenticated user or request data
     const userId = req.body.userId; // Assuming you have a user object in the request with an "id" property
     const orderData = req.body.createOrderData
-    console.log(userId, "order by userId");
     const {
       smartAccessories,
       totalAmount,
@@ -511,8 +512,12 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       billingAddress,
       shippingAddress,
       selectedCard,
-      existingcard
+      existingcard,
+      saveAddress,
+      selectedEditAddress,
     } = req.body;
+
+
     const totalAmountInCents = Math.round(totalAmount * 100);
     const type = (smartAccessories ? "smartAccessories" : "")
 
@@ -551,7 +556,6 @@ if(!selectedCard && existingcard === false){
     receipt_email: "hivete6126@ksyhtc.com",
   });
 }else{
-  console.log("new card........................")
    paymentIntent = await stripe.paymentIntents.create({
     amount: totalAmountInCents,
     currency: 'usd',
@@ -565,7 +569,49 @@ if(!selectedCard && existingcard === false){
 
 }
 
+const user = await UserModel.findById(userId);
+if (!user) {
+  return next(new ErrorHandler("User not found", 404));
+}
 
+let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
+if (!billingAddressFind) {
+  billingAddressFind = new billingAddressModal({
+    userId: user._id,
+    billing_address: billingAddress,
+  });
+} else {
+  billingAddressFind.billing_address = billingAddress;
+}
+
+let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
+
+if (!shippingAddressFind) {
+  shippingAddressFind = new shippingAddressModal({
+    userId: user._id,
+    shipping_address: [],
+  });
+}
+// if(saveAddress) {
+//   shippingAddressFind.shipping_address.push(shippingData);
+// }
+if (saveAddress) {
+  if (selectedEditAddress) {
+    const index = shippingAddressFind.shipping_address.findIndex(
+      (address) => address._id.toString() === selectedEditAddress._id.toString()
+    );
+    if (index !== -1) {
+      // Replace the existing address with the updated address
+      shippingAddressFind.shipping_address[index] = shippingAddress;
+    }
+  } else {
+    // Add a new address
+    shippingAddressFind.shipping_address.push(shippingAddress);
+  }
+}
+
+await billingAddressFind.save();
+await shippingAddressFind.save();
 
     const paymentDate = new Date();
     // res.status(200).json({ success: true, client_secret: paymentIntent.client_secret });
@@ -666,6 +712,59 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
       success: true,
       message: "Payment Method Deleted successfully",
     });
+  }else if(type === 'createNewCustomer'){
+    const { paymentID,isPrimary} = paymentData;
+    const user = req.user;
+    const customer = await stripe.customers.create({
+  name: `${user.first_name} ${user.last_name}`,
+  email: user.email,
+  phone: user.contact,
+  address: {
+    line1: user.address.line1,
+    line2: user.address.line2,
+    city: user.address.city,
+    state: user.address.state,
+    country: user.address.country,
+    postal_code: user.address.postal_code,
+  },
+  expand: ['tax']
+});
+if(!customer){
+  return res.status(501).json({
+    success: false,
+    message: "Internal Server Error",
+  }); 
+}
+const updatedUserInfo = await UserInformation.findOneAndUpdate(
+  { user_id: user._id},
+  { $set: { 'subscription_details.customer_id': customer.id } },
+  { new: true }
+);
+if(!updatedUserInfo){
+  return res.status(501).json({
+    success: false,
+    message: "Internal Server Error",
+  }); 
+}
+
+const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+  customer: customer.id,
+});
+const setPrimary = await stripe.customers.update(customer.id, {
+  invoice_settings: {
+    default_payment_method: paymentID,
+  },
+});
+if(!attachedPaymentMethod || !setPrimary){
+  return res.status(501).json({
+    success: false,
+    message: "Internal Server Error",
+  }); 
+}
+res.status(200).json({
+  success: true,
+  paymentData: attachedPaymentMethod,
+});
   }else{
     res.status(501).json({
       success: false,
@@ -676,12 +775,7 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.testAPI = catchAsyncErrors(async (req, res, next) => {
-  await stripe.customers.update("cus_OsltsRd02lo3aH", {
-    invoice_settings: {
-      default_payment_method: "pm_1O50XLHsjFNmmZSiAvxS6lZf",
-    },
-  });
-  res.send("kjhgf")
+
 })
 
 
