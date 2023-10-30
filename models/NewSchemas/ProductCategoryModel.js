@@ -9,6 +9,9 @@ const productCategorySchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // parentCategory:{
+  //   type: String,
+  // },
   parentCategory:{
     type: mongoose.Schema.Types.ObjectId,
     require: false,
