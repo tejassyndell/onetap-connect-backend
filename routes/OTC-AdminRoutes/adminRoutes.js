@@ -16,7 +16,7 @@ router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser ,getOtcAdminProfile);
 
 router.post("/admin/product",createProduct);
 router.post("/admin/productCategory/create" ,createProductCategories);
-router.post("/admin/productCategory/img" ,productImageUpload, categorImage);
+// router.post("/admin/productCategory/img" ,productImageUpload, categorImage);
 // router.post("/admin/productCategory/create", productImageUpload ,createProductCategories);
 router.get("/admin/productCategory/fetch", getProductCategories);
 
