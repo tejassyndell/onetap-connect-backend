@@ -263,6 +263,8 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     const companySettingSchema = await CompanyShareReferralModel.create({
       companyID: newCompany._id,
     });
+    user.userurlslug = generatedCode;
+
 
     await user.save({ validateBeforeSave: true });
 
@@ -280,8 +282,6 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       userurlslug: generatedCode,
     })
     await user_parmalink.save();
-    user.userurlslug = generatedCode;
-    await user.save();
   }
   sendToken(user, 200, res);
 });
@@ -2160,7 +2160,7 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   // console.log(company_url_edit_permission);
   console.log("update is hit");
   // const trimslug = companyurlslug.trim()
-  const trimslug = companyurlslug?.trim() || companyurlslug ;
+  const trimslug = companyurlslug?.trim() || companyurlslug;
   try {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
       companyurlslug: trimslug,
@@ -3173,13 +3173,13 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     // Calculate the expiry date by adding 10 days
     const expiryDate = new Date(currentDate);
     expiryDate.setDate(currentDate.getDate() + 10);
-    console.log(expiryDate,"===============================================================================")
+    console.log(expiryDate, "===============================================================================")
     // Update the user object with the new fields
     user.invitationToken = invitationToken;
     user.invitationExpiry = expiryDate;
     user.status = "pending";
-      // Save the updated user object
-      await user.save();
+    // Save the updated user object
+    await user.save();
 
     const message = {
       from: "OneTapConnect:developersweb001@gmail.com",
@@ -3538,7 +3538,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   const userInformationData = {
     user_id: userData._id,
     website_url: website_url,
-    company_ID:userData.companyID
+    company_ID: userData.companyID
     // Add other fields from formData if needed
   };
   await UserInformation.create(userInformationData);
@@ -4342,7 +4342,7 @@ exports.getunique_slug = catchAsyncErrors(async (req, res, next) => {
 });
 exports.accountSetupsteps = catchAsyncErrors(async (req, res, next) => {
   console.log(req.user)
-  const { id } = req.user; 
+  const { id } = req.user;
   const { accountSetup } = req.body; // The updated Account_setup data
 
   try {
@@ -4365,7 +4365,7 @@ exports.accountSetupsteps = catchAsyncErrors(async (req, res, next) => {
     // Save the user document with the updated Account_setup array
     await user.save();
 
-    res.status(200).json({ message: 'Account_setup updated successfully' , user});
+    res.status(200).json({ message: 'Account_setup updated successfully', user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -4391,16 +4391,16 @@ exports.CancelInvitedUser = catchAsyncErrors(async (req, res, next) => {
       message: `invited users updated successfully`,
       updatedUsers
     });
-    }
-    catch (error) {
-      return res.status(500).json({
-        error: "An error occurred while updating the invited users",
-      });
-    }
+  }
+  catch (error) {
+    return res.status(500).json({
+      error: "An error occurred while updating the invited users",
+    });
+  }
 });
 
 
-// exports.Testapidummy = catchAsyncErrors(async (req, res, next) => {  
+// exports.Testapidummy = catchAsyncErrors(async (req, res, next) => {
 //   try {
 //     // Define the new value you want to set for the 'keywords' field
 //     const newKeywordsValue = ""; // Replace this with the desired value
