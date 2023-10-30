@@ -15,7 +15,7 @@ router.post("/admin/login", OtcLogin);
 router.post("/admin/logout", Otclogout);
 router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser, getOtcAdminProfile);
 router.post("/admin/productCategory/create", createProductCategories);
-router.post("/admin/productCategory/fetch", getProductCategories);
+router.get("/admin/productCategory/fetch", getProductCategories);
 router.post("/admin/product", createProduct);
 
 module.exports = router;
