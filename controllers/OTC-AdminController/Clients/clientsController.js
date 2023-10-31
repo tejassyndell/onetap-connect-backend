@@ -63,7 +63,7 @@ exports.OtcLogin = catchAsyncErrors(async (req, res, next) => {
     const user = await AdminUsers.findOne({ email }).select("+password");
 
     if (!user) {
-        return res.status(401).json({ message: "User not found." });
+      return res.status(401).json({ message: "User not found." });
     }
     console.log(user);
 
@@ -71,7 +71,7 @@ exports.OtcLogin = catchAsyncErrors(async (req, res, next) => {
     if (!isPasswordMatched) {
       return next(new ErrorHandler("Please enter valid password.", 401));
     }
-    
+
     sendOtcToken(user, 200, res);
   } catch (error) {
     console.error(error);
@@ -111,44 +111,52 @@ exports.getOtcAdminProfile = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
-{
-  try{
-    const userInformationTeamData = await UserInformation.find({ "subscription_details.plan": { $ne: null }, }).populate({
-      path: "company_ID",
-      model: "companies_information",
-      // select: "industry company_name",
-    }).populate({
-      path: "user_id",
-      model: "user",
-      // select: "first_name last_name",
-    });
-    console.log(userInformationTeamData)
-    // Create a map to track seen company IDs
-    const seenCompanyIDs = new Map();
-    const filteredUserInformationTeamData = [];
+  {
+    try {
+      const userInformationTeamData = await UserInformation.find({
+        "subscription_details.plan": { $ne: null },
+      })
+        .populate({
+          path: "company_ID",
+          model: "companies_information",
+          // select: "industry company_name",
+        })
+        .populate({
+          path: "user_id",
+          model: "user",
+          // select: "first_name last_name",
+        });
+      console.log(userInformationTeamData);
+      // Create a map to track seen company IDs
+      const seenCompanyIDs = new Map();
+      const filteredUserInformationTeamData = [];
 
-    for (const data of userInformationTeamData) {
-      const companyID = data.company_ID._id;
+      for (const data of userInformationTeamData) {
+        const companyID = data.company_ID._id;
 
-      // If the company ID is not in the map, add it to the map and add the data to the filtered array
-      if (!seenCompanyIDs.has(companyID)) {
-        seenCompanyIDs.set(companyID, true);
-        filteredUserInformationTeamData.push(data);
+        // If the company ID is not in the map, add it to the map and add the data to the filtered array
+        if (!seenCompanyIDs.has(companyID)) {
+          seenCompanyIDs.set(companyID, true);
+          filteredUserInformationTeamData.push(data);
+        }
       }
+      const ReverseData = filteredUserInformationTeamData.reverse();
+      console.log(filteredUserInformationTeamData);
+
+      res.status(200).json({
+        // userInformationTeamData
+        userInformationTeamData: ReverseData,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred" });
     }
-
-    console.log(filteredUserInformationTeamData);
-
-    res.status(200).json({
-      // userInformationTeamData
-      userInformationTeamData: filteredUserInformationTeamData,
-    });
-  } 
-  catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred' });
   }
-}
+});
+
+exports.getclient = catchAsyncErrors(async (req, res, next) => {
+  {
+  }
 });
 
 // exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
