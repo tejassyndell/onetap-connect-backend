@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const productCategorySchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    // required: true,
   },
   isActive: {
     type: Boolean,
@@ -23,11 +23,11 @@ const productCategorySchema = new mongoose.Schema({
   description: {
     type: String,
   },
-  image: [
-    {
+  image: {
       type: String, 
+      // default:""
     },
-  ],
+  
   imageName: { type: String} ,
   altText: { type: String },
 status: {type: String},

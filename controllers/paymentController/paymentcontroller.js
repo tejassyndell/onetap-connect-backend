@@ -503,7 +503,7 @@ exports.isActive = catchAsyncErrors(async (req, res, next) => {
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   try {
     // Get the user ID from the authenticated user or request data
-    const userId = req.body.userId; // Assuming you have a user object in the request with an "id" property
+    const userId = req.body.userId;
     const orderData = req.body.createOrderData
     const {
       smartAccessories,
@@ -569,6 +569,9 @@ if(!selectedCard && existingcard === false){
 
 }
 
+if(userId !== "Guest"){
+
+
 const user = await UserModel.findById(userId);
 if (!user) {
   return next(new ErrorHandler("User not found", 404));
@@ -612,6 +615,8 @@ if (saveAddress) {
 
 await billingAddressFind.save();
 await shippingAddressFind.save();
+}
+
 
     const paymentDate = new Date();
     // res.status(200).json({ success: true, client_secret: paymentIntent.client_secret });
@@ -648,7 +653,7 @@ await shippingAddressFind.save();
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: error });
   }
 });
  

@@ -2339,6 +2339,17 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.address = billingdata;
   user.first_login = true;
 
+  const order = new Order({
+    user: user._id, // Link the order to the specific user
+    company: companyID,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    type:"PlanPurchase",
+    subscription_details: planData,
+    shippingAddress: shippingData,
+    billingAddress:billingdata,
+  });
   const company = await Company.findById(companyID);
   company.address = billingdata;
   company.company_name = company_name;
@@ -2347,6 +2358,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await user.save();
   await card.save();
   await company.save();
+  await order.save();
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
