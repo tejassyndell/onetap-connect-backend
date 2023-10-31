@@ -89,6 +89,14 @@ app.get("/", (req, res) => {
   res.sendFile(filePath);
 });
 
+app.get("/api/v1/admin/productCategory/img/:filename", (req, res) => {
+  const filename = req.params.filename;
+  console.log(filename);
+
+  const filePath = path.join(__dirname, "/uploads/categoryImages", filename);
+  res.sendFile(filePath);
+});
+
 app.get("/test", (req, res) => {
   const htmlResponse = `
     <html>
