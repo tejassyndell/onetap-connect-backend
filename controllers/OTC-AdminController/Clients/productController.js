@@ -41,12 +41,14 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
         // Handle error
         next(error);
     }
-});
-
-exports.categorImage = catchAsyncErrors(async (req, res, next) => {
-    console.log(req.file)
-    console.log(req.body.id)
-});
+  });
+  exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
+    res.status(200).json({
+      success: true,
+      imageName: req.file.originalname,
+    });
+  });
+  
 
 
 exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
