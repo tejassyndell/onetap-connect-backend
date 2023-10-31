@@ -39,13 +39,13 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
-  const ProductCategory = await ProductCategory.find()
+  const ProductCategories = await ProductCategory.find()
 
-  if (!ProductCategory) {
-    return next(new ErrorHandler("No ProductCategory Found.....", 404));
+  if (!ProductCategories) {
+    return next(new ErrorHandler("No ProductCategories Found.....", 404));
   }
 
   res.status(200).json({
-    ProductCategory,
+    ProductCategories,
   });
 });

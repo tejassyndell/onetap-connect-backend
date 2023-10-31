@@ -6,29 +6,42 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    status: {type: String},
-    image: [
-      {
-        type: String, // Assuming each image is stored as a URL
-      },
-    ],
+    status: { type: String },
+    image: [{
+      url: String,
+      alt: String,
+      name: String
+    }],
     sku: {
       type: String,
-      unique: true,
-      required: true,
+     
     },
-    isstock: {
+    stockStatus: {
       type: String,
-      enum: ["In Stock", "Out of Stock"], // You can customize the options
-      required: true,
+      enum: ["In Stock", "Backorder", null], // You can customize the options
+      // required: true,
     },
     quantity: {
       type: Number,
       default: 0,
     },
+    inventory: { type: String },
+    shippingDate: { type: String },
+    height: {
+      type: Number,
+    },
+    width: {
+      type: Number,
+    },
+    length: {
+      type: Number,
+    },
+    weight: {
+      type: Number,
+    },
     price: {
       type: Number,
-      required: true,
+      // required: true,
     },
     saleprice: {
       type: Number,
@@ -37,15 +50,25 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product_Categories", // Assuming you have a "productCategories" collection
     },
-    Description: {
-      type: [String],
-    },
     Tags: {
       type: [String],
     },
     isFeatured: {
       type: Boolean,
       default: false,
+    },
+    isOnSale: {
+      type: Boolean,
+      default: false,
+    },
+    publishedBy: {
+      type: String,
+    },
+    visibility: {
+      type: String,
+    },
+    activityLog: {
+      type: String,
     },
     LinkedCoupons: {
       type: [String],
@@ -55,45 +78,50 @@ const productSchema = new mongoose.Schema(
     },
     producttype: {
       type: String,
-      enum: ["Simple product", "Variations Products", "Dow"], // Add more options if needed
+      enum: ["Simple", "Variation", "Dow", null], // Add more options if needed
     },
     hasVariations: {
       type: Boolean,
     },
     shortDescription: {
-      tagline: String,
-      shortdescription: String
+      type: String,
     },
     description: {
       type: String,
     },
+    CompatibilityInformation: {
+      type: String,
+    },
+    ShippingAndReturnInformation: {
+      type: String,
+    },
     variations: [
       {
-       
+
         Type: {
           type: String,
-          required: true,
+          // required: true,
         },
-        Image: [
-          {
-            type: String, // Assuming each image is stored as a URL
-          },
-        ],
-        isstock: {
+        image: [{
+          url: String,
+          alt: String,
+          name: String
+        }],
+        stockStatus: {
           type: String,
-          enum: ["In Stock", "Out of Stock"], // You can customize the options
-          required: true,
+          enum: ["In Stock", "Out of Stock", null], // You can customize the options
+          // required: true,
         },
-        Sku: {
+        sku: {
           type: String,
-          required: true,
+          // required: true,
         },
         quantity: {
           type: Number,
         },
         price: {
           type: Number,
-          required: true,
+          // required: true,
         },
         saleprice: {
           type: Number,
@@ -104,11 +132,24 @@ const productSchema = new mongoose.Schema(
           },
         ],
         shortDescription: {
-          tagline: String,
-          shortdescription: String
+          type: String,
         },
         description: {
           type: String,
+        },
+        inventory: { type: String },
+        shippingDate: { type: String },
+        height: {
+          type: Number,
+        },
+        width: {
+          type: Number,
+        },
+        length: {
+          type: Number,
+        },
+        weight: {
+          type: Number,
         },
         CustomPermalink: {
           type: String,
