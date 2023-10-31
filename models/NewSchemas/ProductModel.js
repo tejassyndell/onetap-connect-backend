@@ -14,7 +14,6 @@ const productSchema = new mongoose.Schema(
     }],
     sku: {
       type: String,
-     
     },
     stockStatus: {
       type: String,
@@ -41,7 +40,7 @@ const productSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      // required: true,
+      required: true,
     },
     saleprice: {
       type: Number,
@@ -121,7 +120,7 @@ const productSchema = new mongoose.Schema(
         },
         price: {
           type: Number,
-          // required: true,
+          required: true,
         },
         saleprice: {
           type: Number,
