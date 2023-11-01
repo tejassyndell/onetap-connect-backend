@@ -4411,6 +4411,21 @@ exports.CancelInvitedUser = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+exports.getcompanies = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
+  
+  const companies = await Company.find({ _id: { $ne: companyID } }, 'company_name');
+
+  if (!companies) {
+    return next(new ErrorHandler("No companies Found", 404));
+  }
+console.log(companies,"===================================================================================")
+  res.status(200).json({
+    success: true,
+    companies, // Return the selected fields
+  });
+});
+
 
 // exports.Testapidummy = catchAsyncErrors(async (req, res, next) => {
 //   try {
