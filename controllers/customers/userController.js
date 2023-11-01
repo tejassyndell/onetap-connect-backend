@@ -100,8 +100,8 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
         <div style="font-weight: bold; text-align: center;">Email verification</div>
         <p>Please click the “Verify email” button below to continue with the setup of your OneTapConnect account.</p>
         <p>If you believe you received the email by mistake, you may disregard this email, or contact our support team for any information.</p>
-        <div class="main-div-" style="display:block; margin-top: 25px; width:50%; juatify-content:center;  text-align: center;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
+        <div class="main-div-" style="display:block; margin-top: 25px; juatify-content:center;  text-align: center;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; margin: 0 24%;">
                 <a href="${process.env.FRONTEND_URL}/register/${token}" style="display: inline-block; ; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Verify email</a>
             </div>
         </div>
@@ -685,7 +685,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: "developersweb001@gmail.com",
+      from: "OneTapConnect:developersweb001@gmail.com",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -840,13 +840,28 @@ exports.getinvitedUsers = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
 
   try {
-    // Fetch invited users based on companyID
+    // Fetch invited users based on companyID    
     const invitedusers = await InvitedTeamMemberModel.find({
       companyId: companyID,
     });
 
+    // console.log(invitedusers, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
     if (invitedusers.length === 0) {
       return next(new ErrorHandler("No invited users found", 404));
+    }
+
+    for (const user of invitedusers) {
+      if (user.status === 'pending' && user.invitationExpiry < new Date()) {
+        // If status is pending and invitation has expired
+        const newData = await InvitedTeamMemberModel.findOneAndUpdate(
+          { _id: user._id },
+          { status: 'unresponsive' },
+          { new: true }
+        );
+        // Update the user in the array of invited users
+        invitedusers[invitedusers.indexOf(user)] = newData;
+      }
     }
 
     res.status(200).json({
@@ -1027,26 +1042,26 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
 
 // invite team member
 exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-  const { memberData, manage_superadmin } = req.body;
+  const { memberData, manage_superadmin, manager_firstname, manager_email } = req.body;
   const { companyID } = req.user;
-  console.log(manage_superadmin, "*****************************")
+  // console.log(manage_superadmin, "*****************************")
 
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(memberData) || memberData.length === 0) {
     return next(new ErrorHandler("No user data provided", 400));
   }
 
-  let accountManager = {};
-  const manager = manage_superadmin.find(user => user.role === 'manager');
+  // let accountManager = {};
+  // const manager = manage_superadmin.find(user => user.role === 'manager');
 
-  if (manager) {
-    accountManager.name = manager.first_name;
-    accountManager.email = manager.email;
-  } else {
-    const superadmin = manage_superadmin.find(user => user.role === 'superadmin');
-    accountManager.name = superadmin.first_name;
-    accountManager.email = superadmin.email;
-  }
+  // if (manager) {
+  //   accountManager.name = manager.first_name;
+  //   accountManager.email = manager.email;
+  // } else {
+  //   const superadmin = manage_superadmin.find(user => user.role === 'superadmin');
+  //   accountManager.name = superadmin.first_name;
+  //   accountManager.email = superadmin.email;
+  // }
 
   const transporter = nodemailer.createTransport({
     service: "Gmail",
@@ -1095,9 +1110,9 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 
     const currentDate = new Date();
 
-    // Calculate the expiry date by adding 10 days
+    // Calculate the expiry date by adding 5 days
     const expiryDate = new Date(currentDate);
-    expiryDate.setDate(currentDate.getDate() + 10);
+    expiryDate.setDate(currentDate.getDate() + 5);
 
     // Convert the expiry date to ISO string format
     // const expiryDateString = expiryDate.toISOString();
@@ -1130,14 +1145,14 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
-            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex;">
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
         </div> <br/>
-          <p>If you have any question about this invitation, please contact your company account manager ${accountManager.name} at ${accountManager.email}.</p>
+          <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
           <h5>Technical issue?</h5>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
       </div>
@@ -3144,7 +3159,7 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
-  const { userid } = req.body;
+  const { userid, manager_email, manager_firstname } = req.body;
   const { companyID } = req.user;
 
   console.log(userid);
@@ -3170,10 +3185,10 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
 
     const currentDate = new Date();
 
-    // Calculate the expiry date by adding 10 days
+    // Calculate the expiry date by adding 5 days
     const expiryDate = new Date(currentDate);
-    expiryDate.setDate(currentDate.getDate() + 10);
-    console.log(expiryDate, "===============================================================================")
+    expiryDate.setDate(currentDate.getDate() + 5);
+    // console.log(expiryDate, "===============================================================================")
     // Update the user object with the new fields
     user.invitationToken = invitationToken;
     user.invitationExpiry = expiryDate;
@@ -3208,14 +3223,14 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; width:30%; margin: 0 12%;">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
-            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden">
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; width:30%;">
             <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
         </div>
-          <p>If you have any question about this invitation, please contact your company account manager [account_manager_name] at [account_manager_name_email].</p>
+          <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
           <h5>Technical issue?</h5>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
       </div>
@@ -4034,7 +4049,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: 'developersweb001@gmail.com',
+    from: "OneTapConnect:developersweb001@gmail.com",
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4140,7 +4155,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: 'developersweb001@gmail.com',
+        from: "OneTapConnect:developersweb001@gmail.com",
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
