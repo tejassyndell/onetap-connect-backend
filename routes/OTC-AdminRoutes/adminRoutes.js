@@ -13,7 +13,7 @@ router.get("/admin/allclients", getordersclient);
 router.post("/admin/signup", Signup);
 router.post("/admin/login", OtcLogin);
 router.post("/admin/logout", Otclogout);
-router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser ,getOtcAdminProfile);
+router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser, getOtcAdminProfile);
 
 router.post("/admin/product",createProduct);
 router.post("/admin/productCategory/create" ,createProductCategories);
@@ -21,5 +21,5 @@ router.post("/admin/productCategory/create" ,createProductCategories);
 router.post("/admin/imageUpload",productImageUpload ,imageUpload);
 // router.post("/admin/productCategory/create", productImageUpload ,createProductCategories);
 router.get("/admin/productCategory/fetch", getProductCategories);
-
+router.post("/admin/imageUpload", productImageUpload, imageUpload);
 module.exports = router;
