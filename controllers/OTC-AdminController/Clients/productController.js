@@ -18,37 +18,105 @@ exports.createProduct = catchAsyncErrors(async (req, res, next) => {
 
 exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
     try {
-        const CustomPermalinkSlug = req.body.CustomPermalink;
-        const CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug
+        const { productcategoryImage, id } = req.body;
+        const CustomPermalinkSlug = productcategoryImage.CustomPermalink;
+        let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
-        const { name, isActive, parentCategory, description, image, imageName, altText, status, Visibility, activitylog } = req.body;
-        const newCategory = new ProductCategory({
-            name,
-            isActive,
-            parentCategory,
-            CustomPermalink,
-            description,
-            image,
-            imageName,
-            altText,
-            status,
-            Visibility,
-            activitylog,
-        });
-        const createdCategory = await newCategory.save();
-        res.status(201).json({ success: true, category: createdCategory });
+        const { name, isActive, parentCategory, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
+
+        if (id) {
+            // Editing an existing category
+          
+            const existingCategory = await ProductCategory.findById(id);
+            if (!existingCategory) {
+                return res.status(404).json({ success: false, message: 'Category not found' });
+            }
+
+            // Check if CustomPermalink is not changed or is unique
+            if (CustomPermalink !== existingCategory.CustomPermalink) {
+                const isUnique = await isCustomPermalinkUnique(CustomPermalink);
+                if (!isUnique) {
+                    CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
+                }
+            }
+
+            const updatedCategory = await ProductCategory.findByIdAndUpdate(
+                id,
+                {
+                    name,
+                    isActive,
+                    parentCategory,
+                    CustomPermalink,
+                    description,
+                    image,
+                    imageName,
+                    altText,
+                    status,
+                    Visibility,
+                    activitylog,
+                },
+                { new: true } // Return the updated document
+            );
+
+            res.status(200).json({ success: true, category: updatedCategory });
+        } else {
+            // Creating a new category
+            const isUnique = await isCustomPermalinkUnique(CustomPermalink);
+            if (!isUnique) {
+                CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
+            }
+
+            const newCategory = new ProductCategory({
+                name,
+                isActive,
+                parentCategory,
+                CustomPermalink,
+                description,
+                image,
+                imageName,
+                altText,
+                status,
+                Visibility,
+                activitylog,
+                publishedDate: new Date()
+            });
+            const createdCategory = await newCategory.save();
+            res.status(201).json({ success: true, category: createdCategory });
+        }
     } catch (error) {
         // Handle error
         next(error);
     }
-  });
+});
+
+async function isCustomPermalinkUnique(CustomPermalink) {
+    const existingCategory = await ProductCategory.findOne({ CustomPermalink });
+    return !existingCategory;
+}
+
+async function generateUniqueCustomPermalink(basePermalink) {
+    let uniquePermalink = basePermalink;
+    let counter = 1;
+    while (true) {
+        const existingCategory = await ProductCategory.findOne({ CustomPermalink: uniquePermalink });
+        if (!existingCategory) {
+            return uniquePermalink;
+        }
+        // Append a counter to the base permalink to make it unique
+        uniquePermalink = `${basePermalink}-${counter}`;
+        counter++;
+    }
+}
+
+
+
   exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
-      success: true,
-      imageName: req.file.originalname,
+        success: true,
+        imageName: req.file.originalname,
     });
-  });
-  
+});
+
 
 
 exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
@@ -64,8 +132,21 @@ exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
+    const fileNames = req.fileNames;
+    const fileTypes = req.body.fileType || [] // Get the "fileType" from the request body
+   
+        // Create an array of objects with name and fileType
+        const imagesWithTypes = fileNames.map((name, index) => ({
+            name,
+            fileType: fileTypes[index], // Include the "fileType" for each image
+        }));
+   
     res.status(200).json({
         success: true,
-        imageName: req.file.originalname,
+        imageNames: imagesWithTypes,
     });
 });
+
+
+
+
