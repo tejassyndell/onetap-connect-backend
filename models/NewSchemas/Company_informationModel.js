@@ -6,6 +6,12 @@ const Company_information = new mongoose.Schema(
       type: String,
       // required: [true, "Please Enter Your Company Name"],
     },
+    owner_first_name:{
+      type:String,
+    },
+    owner_last_name:{
+      type:String,
+    },
     contact: { type: Number, default: null },
     fax_number: {
       type: Number,

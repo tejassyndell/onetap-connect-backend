@@ -255,6 +255,8 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       industry,
       contact,
       team_size,
+      owner_first_name: first_name,
+      owner_last_name: last_name,
     });
 
     user.companyID = newCompany._id;
