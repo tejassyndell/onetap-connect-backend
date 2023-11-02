@@ -255,6 +255,8 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       industry,
       contact,
       team_size,
+      owner_first_name: first_name,
+      owner_last_name: last_name,
     });
 
     user.companyID = newCompany._id;
@@ -4409,6 +4411,21 @@ exports.CancelInvitedUser = catchAsyncErrors(async (req, res, next) => {
       error: "An error occurred while updating the invited users",
     });
   }
+});
+
+exports.getcompanies = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.user;
+  
+  const companies = await Company.find({ _id: { $ne: companyID } }, 'company_name');
+
+  if (!companies) {
+    return next(new ErrorHandler("No companies Found", 404));
+  }
+console.log(companies,"===================================================================================")
+  res.status(200).json({
+    success: true,
+    companies, // Return the selected fields
+  });
 });
 
 

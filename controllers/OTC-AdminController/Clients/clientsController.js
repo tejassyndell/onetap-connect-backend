@@ -154,8 +154,33 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-exports.getclient = catchAsyncErrors(async (req, res, next) => {
+exports.getallusers = catchAsyncErrors(async (req, res, next) => {
   {
+    try {
+      const userInformationTeamData = await UserInformation.find()
+        .populate({
+          path: "company_ID",
+          model: "companies_information",
+          // select: "industry company_name",
+        })
+        .populate({
+          path: "user_id",
+          model: "user",
+          // select: "first_name last_name",
+        });
+      console.log(userInformationTeamData);
+     
+      const ReverseData = userInformationTeamData.reverse();
+      console.log(userInformationTeamData);
+
+      res.status(200).json({
+        // userInformationTeamData
+        userInformationTeamData: ReverseData,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred" });
+    }
   }
 });
 
