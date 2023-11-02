@@ -41,14 +41,14 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
         // Handle error
         next(error);
     }
-  });
-  exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
+});
+exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
-      success: true,
-      imageName: req.file.originalname,
+        success: true,
+        imageName: req.file.originalname,
     });
-  });
-  
+});
+
 
 
 exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
@@ -64,8 +64,21 @@ exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
+    const fileNames = req.fileNames;
+    const fileTypes = req.body.fileType || [] // Get the "fileType" from the request body
+   
+        // Create an array of objects with name and fileType
+        const imagesWithTypes = fileNames.map((name, index) => ({
+            name,
+            fileType: fileTypes[index], // Include the "fileType" for each image
+        }));
+   
     res.status(200).json({
         success: true,
-        imageName: req.file.originalname,
+        imageNames: imagesWithTypes,
     });
 });
+
+
+
+

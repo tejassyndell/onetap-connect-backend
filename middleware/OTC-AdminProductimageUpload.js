@@ -52,7 +52,7 @@ const storage = multer.diskStorage({
 
 // Define a file filter to accept specific image types
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true); // Accept the file
@@ -68,17 +68,60 @@ const upload = multer({
 });
 
 // Define the middleware function
+// exports.productImageUpload = (req, res, next) => {
+//   const isMultiple = req.query.multiple === 'true'; // Check if it's multiple files
+
+//   const uploadMiddleware = isMultiple ? upload.array('image') : upload.single('image');
+
+//   uploadMiddleware(req, res, (err) => {
+//     if (err) {
+//       return res.status(400).json({ message: 'Error uploading file', error: err });
+//     }
+
+//     if (isMultiple) {
+//       // req.files is now available for multiple files
+//       const originalnames = req.files.map((file) => file.originalname);
+//       req.fileNames = originalnames;
+//     } else {
+//       // req.file is now available for a single file
+//       req.fileNames = [newFilename];
+//     }
+
+//     next();
+//   });
+// };
+
+
 exports.productImageUpload = (req, res, next) => {
-  upload.single('image')(req, res, (err) => {
+  const isMultiple = req.query.multiple === 'true'; // Check if it's multiple files
+
+  const uploadMiddleware = isMultiple ? upload.array('image') : upload.single('image');
+
+  uploadMiddleware(req, res, (err) => {
     if (err) {
       return res.status(400).json({ message: 'Error uploading file', error: err });
     }
 
-    // req.file is now available because of the broader scope of newFilename
-    req.file = {
-      originalname: newFilename,
-    };
+    if (isMultiple) {
+      // req.files is now available for multiple files
+      const originalnames = req.files.map((file) => file.originalname);
+      const fileTypes = req.body.fileType; // Get the "fileType" from the request body
 
-    next();
-  });
+      // Combine file names and file types into an array of objects
+      const filesWithTypes = originalnames.map((name, index) => ({
+        name,
+        fileType: fileTypes[index],
+      }));
+
+      req.fileNames = filesWithTypes;
+    } else {
+      //       // req.file is now available for a single file
+      req.fileNames = [newFilename];
+      //     }
+    }
+      next();
+    });
 };
+
+
+

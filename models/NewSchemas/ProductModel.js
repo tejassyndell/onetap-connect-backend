@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema(
       alt: String,
       name: String
     }],
+    media: [{ type: String }],
     sku: {
       type: String,
     },
