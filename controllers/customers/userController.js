@@ -207,21 +207,6 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     }
   }
 
-
-
-  // Check if company name is provided
-  // if (company_name) {
-  //   const trimedString = company_name.replace(/\s/g, "").toLowerCase();
-
-  //   // Check if company with the same name already exists
-  //   const existingCompany = await Company.findOne({
-  //     company_name: { $regex: new RegExp(trimedString, "i") }
-  //   });
-
-  //   if (existingCompany) {
-  //     return res.status(400).json({ message: "Company Already Exists." });
-  //   }
-  // }
   if (password === undefined) {
     user = await User.create({
       email,
@@ -1384,6 +1369,31 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         userurlslug: generatedCode,
       })
       await user_parmalink.save();
+
+      // const userplan = planData.plan;
+      // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
+      let slug = null;
+      const username = firstName;
+      const userlastname = lastName;
+      // console.log(userlastname, username, "---------------------------------------------------")
+
+      const first_Name = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      const last_Name = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      slug = `${first_Name}${last_Name}`;
+      // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+
+      if (slug !== null) {
+        // Check for duplicates in user_parmalink collection before saving
+        const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+        if (!isDuplicate) {
+          // Save the slug
+          const uniqueSlug = { value: slug, timestamp: Date.now() };
+          await parmalinkSlug.updateOne(
+            { user_id: userId },
+            { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+          );
+        }
+      }
     }
   }
 
@@ -2141,6 +2151,17 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
       .json({ message: "companyurlslug is already taken." });
   }
 
+  // Check if userurlslug is already taken by the current user
+  const currentUserUrlSlug = await parmalinkSlug.findOne({
+    user_id: currentUserId,
+    "unique_slugs.value": userurlslug,
+  });
+
+  if (currentUserUrlSlug) {
+    return res.status(400).json({ message: "already active." });
+  }
+
+  // Check if userurlslug is already taken globally
   const existinguserurlslug = await parmalinkSlug.findOne({
     user_id: { $ne: currentUserId },
     "unique_slugs.value": userurlslug,
@@ -2359,12 +2380,45 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   company.company_name = company_name;
   console.log(company.address, "company address");
 
+  const userplan = planData.plan;
+  // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
+  let slug = null;
+  const username = user.first_name;
+  const userlastname = user.last_name;
+  // console.log(userlastname, username, "---------------------------------------------------")
+  if (userplan === "Free") {
+    // If the plan is "free", skip slug generation
+  } else if (userplan === "Professional" || userplan === "Team") {
+    const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    slug = `${firstName}${lastName}`;
+    // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+  }
+
+  if (slug !== null) {
+    // Check for duplicates in user_parmalink collection before saving
+    const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+    if (!isDuplicate) {
+      // Save the slug
+      const uniqueSlug = { value: slug, timestamp: Date.now() };
+      await parmalinkSlug.updateOne(
+        { user_id: user._id },
+        { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+      );
+    }
+  }
+
   await user.save();
   await card.save();
   await company.save();
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
+
+
+  // const userplan = await UserInformation.findOne({ user_id: user._id });
+  // console.log(userplan, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  // const plan = userplan.subscription_details.plan;
 
   res.status(200).json({
     success: true,
@@ -3062,6 +3116,30 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
     user.userurlslug = generatedCode;
     await user.save();
 
+    // const userplan = planData.plan;
+    // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
+    let slug = null;
+    const username = user.first_name;
+    const userlastname = user.last_name;
+    // console.log(userlastname, username, "---------------------------------------------------")
+    const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    slug = `${firstName}${lastName}`;
+    // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+
+    if (slug !== null) {
+      // Check for duplicates in user_parmalink collection before saving
+      const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+      if (!isDuplicate) {
+        // Save the slug
+        const uniqueSlug = { value: slug, timestamp: Date.now() };
+        await parmalinkSlug.updateOne(
+          { user_id: user._id },
+          { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+        );
+      }
+    }
+
     const deleteInvitedUser = await InvitedTeamMemberModel.findByIdAndDelete(
       _id
     );
@@ -3567,6 +3645,29 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   })
   await user_parmalink.save();
 
+  // const userplan = planData.plan;
+  // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
+  let slug = null;
+  const username = firstname;
+  const userlastname = lastname;
+  // console.log(userlastname, username, "---------------------------------------------------")
+  const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  slug = `${firstName}${lastName}`;
+  // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+
+  if (slug !== null) {
+    // Check for duplicates in user_parmalink collection before saving
+    const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+    if (!isDuplicate) {
+      // Save the slug
+      const uniqueSlug = { value: slug, timestamp: Date.now() };
+      await parmalinkSlug.updateOne(
+        { user_id: userData._id },
+        { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+      );
+    }
+  }
   // User.userurlslug = generatedCode;
   // await User.save();
 
