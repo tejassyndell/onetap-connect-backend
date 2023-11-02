@@ -89,6 +89,7 @@ const {
   CancelInvitedUser,
   getcompanies,
   getOrders,
+  redirectUser,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -251,5 +252,6 @@ router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
 router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
 router.get("/getallcompanies", isAuthenticatedUser, getcompanies);  
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
+router.post('/user/redirect' ,redirectUser)
 // router.post('/testapii' ,Testapidummy)
 module.exports = router;
