@@ -23,10 +23,10 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
         let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
         const { name, isActive, parentCategory, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
-console.log(id, "id")
+
         if (id) {
             // Editing an existing category
-            console.log("if......have id")
+          
             const existingCategory = await ProductCategory.findById(id);
             if (!existingCategory) {
                 return res.status(404).json({ success: false, message: 'Category not found' });
@@ -65,7 +65,7 @@ console.log(id, "id")
             if (!isUnique) {
                 CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
             }
-console.log("else....not have id new category")
+
             const newCategory = new ProductCategory({
                 name,
                 isActive,
