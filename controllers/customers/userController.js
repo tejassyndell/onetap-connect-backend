@@ -34,7 +34,7 @@ const TeamDetails = require("../../models/NewSchemas/Team_SchemaModel.js");
 const Team_SchemaModel = require("../../models/NewSchemas/Team_SchemaModel.js");
 const UserInformation = require("../../models/NewSchemas/users_informationModel.js");
 const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
-const Order = require('../../models/NewSchemas/orderSchemaModel.js'); // Import the Order model
+const Order = require('../../models/NewSchemas/orderSchemaModel.js');
 const parmalinkSlug = require('../../models/NewSchemas/parmalink_slug.js');
 const { log } = require("console");
 const { getMaxListeners } = require("events");
@@ -400,7 +400,6 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     industry,
   } = req.body);
 
-  console.log(req.body);
 
   const user = await User.create(userData);
 
@@ -564,7 +563,6 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
-  console.log(req);
   const { id } = req.user;
 
   // checking if user has given password and email both
@@ -778,7 +776,6 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   });
 
   console.log(user);
-  console.log(req.body);
 
   if (!user) {
     return next(
@@ -803,9 +800,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getCompanyDetails = catchAsyncErrors(async (req, res, next) => {
-  console.log(req);
   const { companyID } = req.user;
-  console.log(req.user);
   const company = await Company.findById(companyID)
     .populate("primary_account")
     .populate("primary_manager")
@@ -2313,7 +2308,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   }
 
   const card = await Cards.create(cardData);
-  console.log(card, "card");
   card.userID = user._id;
 
   let userInformation = await UserInformation.findOne({ user_id: user._id });
@@ -2340,7 +2334,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.first_login = true;
 
   const order = new Order({
-    user: user._id, // Link the order to the specific user
+    user: user._id, 
     company: companyID,
     first_name: user.first_name,
     last_name: user.last_name,
@@ -2362,7 +2356,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
-
+  
   res.status(200).json({
     success: true,
     user,
@@ -4353,7 +4347,6 @@ exports.getunique_slug = catchAsyncErrors(async (req, res, next) => {
   });
 });
 exports.accountSetupsteps = catchAsyncErrors(async (req, res, next) => {
-  console.log(req.user)
   const { id } = req.user;
   const { accountSetup } = req.body; // The updated Account_setup data
 
@@ -4410,6 +4403,36 @@ exports.CancelInvitedUser = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+
+exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
+  const { slug } = req.body;
+
+  try {
+    const permalink = await parmalinkSlug.findOne({ 'unique_slugs.value': slug });
+
+    if (!permalink) {
+      return res.status(404).json({ success: false, message: 'No user found' });
+    }
+
+    if (permalink.unique_slugs.length === 1 || slug === permalink.unique_slugs[0].value) {
+      console.log("called1");
+      return res.status(200).json({ success: true, slug: permalink.unique_slugs[0].value });
+    }
+
+    if (permalink.unique_slugs.length > 1) {
+      console.log("called2");
+      return res.status(200).json({ success: true, slug: permalink.unique_slugs[permalink.unique_slugs.length - 1].value });
+    }
+
+    console.log("called3");
+    return res.status(500).json({ success: false, message: 'No user found' });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
 
 
 // exports.Testapidummy = catchAsyncErrors(async (req, res, next) => {

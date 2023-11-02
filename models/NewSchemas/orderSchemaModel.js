@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const order_Schema = new mongoose.Schema(
   {
+    orderNumber: {
+      type: Number,
+      default: 1,
+    },
     user: {
       type: String,
     },
@@ -89,5 +93,15 @@ const order_Schema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+//middleware to autoincrement value
+order_Schema.pre("save", async function (next) {
+  console.log("Middleware called");
+  if (this.orderNumber) {
+    const highestOrder = await this.constructor.findOne({}, {}, { sort: { orderNumber: -1 } });
+    this.orderNumber = highestOrder ? highestOrder.orderNumber + 1 : 1;
+  }
+  next();
+}); 
 
 module.exports = mongoose.model("order", order_Schema);
