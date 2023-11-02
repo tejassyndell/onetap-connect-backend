@@ -88,6 +88,7 @@ const {
   accountSetupsteps,
   CancelInvitedUser,
   getcompanies,
+  getOrders,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -249,5 +250,6 @@ router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
 router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
 router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
 router.get("/getallcompanies", isAuthenticatedUser, getcompanies);  
+router.get('/getOrders', isAuthenticatedUser ,getOrders)
 // router.post('/testapii' ,Testapidummy)
 module.exports = router;

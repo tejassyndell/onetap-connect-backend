@@ -4444,3 +4444,14 @@ console.log(companies,"=========================================================
 //     return next(error);
 //   }
 // });
+
+exports.getOrders = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.user;
+  try {
+    const orders = await Order.find({ user: id });
+    res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' }); 
+  }
+});

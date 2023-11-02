@@ -32,7 +32,7 @@ const productCategorySchema = new mongoose.Schema({
   altText: { type: String },
 status: {type: String},
 Visibility: {type: String},
-// publishedDate: {type: Date},
+publishedDate: {type: Date},
 activitylog: {type: String}
 
 }, { timestamps: true });
