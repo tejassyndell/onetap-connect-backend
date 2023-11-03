@@ -2377,10 +2377,12 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
-    type:"PlanPurchase",
+    paymentDate: new Date(),
+    type:"Subscription",
     subscription_details: planData,
     shippingAddress: shippingData,
     billingAddress:billingdata,
+    shipping_method:shipping_method
   });
   const company = await Company.findById(companyID);
   company.address = billingdata;
@@ -4581,10 +4583,27 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
   try {
-    const orders = await Order.find({ user: id });
-    res.status(200).json({ success: true, orders });
+    // Find orders by user ID
+    const orders = await Order.find({ user: id }).populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    });
+
+    // Create an array to store user data for each order
+    const ordersWithUserData = [];
+
+    for (const order of orders) {
+      // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
+      const user = await User.findOne({ _id: order.user });
+const userdata = { firstName : user.first_name , lastName : user.last_name, email : user.email, contact: user.contact}
+      // Add the user data to the order document
+      const orderWithUserData = { ...order.toObject(), userdata };
+      ordersWithUserData.push(orderWithUserData);
+    }
+
+    res.status(200).json({ success: true, orders: ordersWithUserData });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' }); 
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
