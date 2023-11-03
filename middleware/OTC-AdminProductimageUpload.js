@@ -94,7 +94,7 @@ const upload = multer({
 
 exports.productImageUpload = (req, res, next) => {
   const isMultiple = req.query.multiple === 'true'; // Check if it's multiple files
-
+ 
   const uploadMiddleware = isMultiple ? upload.array('image') : upload.single('image');
 
   uploadMiddleware(req, res, (err) => {
@@ -106,21 +106,21 @@ exports.productImageUpload = (req, res, next) => {
       // req.files is now available for multiple files
       const originalnames = req.files.map((file) => file.originalname);
       const fileTypes = req.body.fileType; // Get the "fileType" from the request body
-
+      
       // Combine file names and file types into an array of objects
       const filesWithTypes = originalnames.map((name, index) => ({
         name,
-        fileType: fileTypes[index],
+        fileType: Array.isArray(fileTypes) ? fileTypes[index] : fileTypes,
       }));
-
+    
       req.fileNames = filesWithTypes;
     } else {
       //       // req.file is now available for a single file
       req.fileNames = [newFilename];
       //     }
     }
-      next();
-    });
+    next();
+  });
 };
 
 
