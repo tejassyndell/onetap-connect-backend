@@ -2122,31 +2122,38 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
 exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
   const { companyurlslug, userurlslug } = req.body;
+  console.log(companyurlslug, "!!")
   const currentCompanyId = req.user.companyID;
+  console.log(currentCompanyId, "@@")
   const currentUserId = req.user.id;
 
-  const existingcompanyurlslug = await Company.findOne({
-    _id: { $ne: currentCompanyId },
-    companyurlslug,
-  });
-
-  if (existingcompanyurlslug) {
-    return res
-      .status(400)
-      .json({ message: "companyurlslug is already taken." });
+  if (currentCompanyId && companyurlslug) {
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId },
+      companyurlslug,
+    });
+  
+    if (existingcompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
   }
 
   // Check case-sensitive duplicates
-  const caseSensitivecompanyurlslug = await Company.findOne({
-    _id: { $ne: currentCompanyId }, // Exclude the current company by ID
-    companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
-  });
-
-  if (caseSensitivecompanyurlslug) {
-    return res
-      .status(400)
-      .json({ message: "companyurlslug is already taken." });
+  if (currentCompanyId && companyurlslug) {
+    const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+    });
+  
+    if (caseSensitivecompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
   }
+  
 
   // Check if userurlslug is already taken by the current user
   const currentUserUrlSlug = await parmalinkSlug.findOne({
