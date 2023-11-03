@@ -9,6 +9,7 @@ const productRoutes = require("./routes/ProductRoutes/ProductRoutes.js");
 const SuperAdminRoutes = require("./routes/SuperAdminRoutes/superAdminRoutes.js");
 const OTCAdminRoutes = require("./routes/OTC-AdminRoutes/adminRoutes.js")
 const AccountRoutes = require("./routes/accountSwitch/accountRoutes.js");
+const { webhookHandler } = require("./controllers/webhook/webhookController.js");
 const errorMiddleware = require("./middleware/error.js");
 const app = express();
 const path = require("path");
@@ -19,6 +20,12 @@ const connectDatabase = require("./db/db.js");
 
 dotenv.config();
 const url = process.env.FRONTEND_URL;
+
+// do not remove this
+// stripe webhook route
+app.use('/api/v1/webhook', express.raw({ type: 'application/json' }));
+app.post('/api/v1/webhook', webhookHandler)
+// till here
 
 app.use(express.json());
 app.use(bodyParser.json());

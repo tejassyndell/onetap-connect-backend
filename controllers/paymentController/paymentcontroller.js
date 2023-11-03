@@ -108,7 +108,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
           country: user.billing_address.country,
           postal_code: user.billing_address.postal_code,
         },
-        // test_clock: "clock_1Nzxs4HsjFNmmZSi2juG1I0J",
+        // test_clock: "clock_1O8ITvHsjFNmmZSiSmLG7AMY",
         shipping: {
           name: `${user.first_name} ${user.last_name}`,
           address: {
@@ -253,13 +253,13 @@ if(!selectedCard){
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
-      console.log("paymentIntent")
-      console.log(paymentIntent)
-      console.log("paymentIntent")
+      console.log("myPayment")
+      console.log(myPayment)
+      console.log("myPayment")
   
       // Save payment ID and user details in your database after successful payment
   
-      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status  });
+      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status, endDate : myPayment.current_period_end });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, error: error.message });
@@ -413,8 +413,9 @@ let myPayment;
       });
 
   
-      // Remove the existing item from the subscription
+      console.log("myPayment");
       console.log(myPayment);
+      console.log("myPayment");
       // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       // const paymentIntent = await stripe.paymentIntents.retrieve(
       //   latestInvoice.payment_intent
@@ -432,7 +433,10 @@ let myPayment;
 
     // Save payment ID and user details in your database after successful payment
   }
-    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status : "true" });
+  console.log("myPayment");
+  console.log(myPayment);
+  console.log("myPayment");
+    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status : "true", endDate : myPayment.current_period_end });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
@@ -779,8 +783,36 @@ res.status(200).json({
 })
 
 
-exports.testAPI = catchAsyncErrors(async (req, res, next) => {
+exports.testAPI = catchAsyncErrors(async (request, response, next) => {
+  console.log("called")
+  const endpointSecret = "whsec_4073426e12386336160aa0222f4add5e6f6c11fda6d6f1641c7af7687c990eba";
+  const sig = request.headers['stripe-signature'];
 
+
+  let event;
+  
+  try {
+    event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+    console.log(event.type)
+    console.log('----------------------------------------------------------------------------------')
+  } catch (err) {
+    console.log(err.message)
+    response.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+console.log(event.type)
+  // Handle the event
+  switch (event.type) {
+    case 'customer.subscription.updated':
+      const customerSubscriptionUpdated = event.data.object;
+      console.log(customerSubscriptionUpdated)
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  // Return a 200 response to acknowledge receipt of the event
+  response.send();
 })
 
 
