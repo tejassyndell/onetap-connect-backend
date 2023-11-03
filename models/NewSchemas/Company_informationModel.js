@@ -97,7 +97,7 @@ const Company_information = new mongoose.Schema(
     },
     company_url_edit_permission: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     company_logo_name: { type: String, default: null },
     logo_alt: { type: String, default: null },

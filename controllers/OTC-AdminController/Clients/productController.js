@@ -6,15 +6,141 @@ const Product = require('../../../models/NewSchemas/ProductModel.js');
 const ProductCategory = require("../../../models/NewSchemas/ProductCategoryModel.js");
 
 
-exports.createProduct = catchAsyncErrors(async (req, res, next) => {
-    const product = Product(req.body);
+
+// Create or update a product
+exports.createProduct = async (req, res, next) => {
     try {
-        await product.save();
-        res.status(201).json({ success: true, product });
+        console.log("Creating", req.body);
+        const { dataToSend, id } = req.body;
+        // console.log("Creating", _id);
+        const product = dataToSend
+        const {
+            name,
+            status,
+            image,
+            media,
+            sku,
+            stockStatus,
+            quantity,
+            inventory,
+            shippingDate,
+            height,
+            width,
+            length,
+            weight,
+            price,
+            saleprice,
+            category,
+            Tags,
+            isFeatured,
+            isOnSale,
+            publishedBy,
+            visibility,
+            activityLog,
+            LinkedCoupons,
+            CustomPermalink,
+            producttype,
+            hasVariations,
+            shortDescription,
+            description,
+            CompatibilityInformation,
+            ShippingAndReturnInformation,
+            variations,
+            isActive,
+        } = product;
+
+        if (id) {
+            // Editing an existing product
+            const existingProduct = await Product.findById(id);
+            if (!existingProduct) {
+                return res.status(404).json({ success: false, message: 'Product not found' });
+            }
+
+            // Update the product fields
+            existingProduct.name = name;
+            existingProduct.status = status;
+            existingProduct.image = image;
+            existingProduct.media = media;
+            existingProduct.sku = sku;
+            existingProduct.stockStatus = stockStatus;
+            existingProduct.quantity = quantity;
+            existingProduct.inventory = inventory;
+            existingProduct.shippingDate = shippingDate;
+            existingProduct.height = height;
+            existingProduct.width = width;
+            existingProduct.length = length;
+            existingProduct.weight = weight;
+            existingProduct.price = price;
+            existingProduct.saleprice = saleprice;
+            existingProduct.category = category;
+            existingProduct.Tags = Tags;
+            existingProduct.isFeatured = isFeatured;
+            existingProduct.isOnSale = isOnSale;
+            existingProduct.publishedBy = publishedBy;
+            existingProduct.visibility = visibility;
+            existingProduct.activityLog = activityLog;
+            existingProduct.LinkedCoupons = LinkedCoupons;
+            existingProduct.CustomPermalink = CustomPermalink;
+            existingProduct.producttype = producttype;
+            existingProduct.hasVariations = hasVariations;
+            existingProduct.shortDescription = shortDescription;
+            existingProduct.description = description;
+            existingProduct.CompatibilityInformation = CompatibilityInformation;
+            existingProduct.ShippingAndReturnInformation = ShippingAndReturnInformation;
+            existingProduct.variations = variations;
+            existingProduct.isActive = isActive;
+
+            // Save the updated product
+            const updatedProduct = await existingProduct.save();
+
+            res.status(200).json({ success: true, product: updatedProduct });
+        } else {
+            // Creating a new product
+            const newProduct = new Product({
+                name,
+                status,
+                image,
+                media,
+                sku,
+                stockStatus,
+                quantity,
+                inventory,
+                shippingDate,
+                height,
+                width,
+                length,
+                weight,
+                price,
+                saleprice,
+                category,
+                Tags,
+                isFeatured,
+                isOnSale,
+                publishedBy,
+                visibility,
+                activityLog,
+                LinkedCoupons,
+                CustomPermalink,
+                producttype,
+                hasVariations,
+                shortDescription,
+                description,
+                CompatibilityInformation,
+                ShippingAndReturnInformation,
+                variations,
+                isActive,
+            });
+
+            // Save the new product
+            const createdProduct = await newProduct.save();
+
+            res.status(201).json({ success: true, product: createdProduct });
+        }
     } catch (error) {
-        res.status(400).json({ success: false, error: error.message });
+        // Handle error
+        next(error);
     }
-});
+};
 
 exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
     try {
@@ -26,7 +152,7 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
 
         if (id) {
             // Editing an existing category
-          
+
             const existingCategory = await ProductCategory.findById(id);
             if (!existingCategory) {
                 return res.status(404).json({ success: false, message: 'Category not found' });
@@ -110,7 +236,7 @@ async function generateUniqueCustomPermalink(basePermalink) {
 
 
 
-  exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
+exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
         success: true,
         imageName: req.file.originalname,
@@ -134,12 +260,13 @@ exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     const fileNames = req.fileNames;
     const fileTypes = req.body.fileType || [] // Get the "fileType" from the request body
-   
-        // Create an array of objects with name and fileType
-        const imagesWithTypes = fileNames.map((name, index) => ({
-            name,
-            fileType: fileTypes[index], // Include the "fileType" for each image
-        }));
+ 
+    // Create an array of objects with name and fileType
+    const imagesWithTypes = fileNames.map((name, index) => ({
+        name,
+        fileType: Array.isArray(fileTypes) ? fileTypes[index] : fileTypes,
+        // Include the "fileType" for each image
+    }));
    
     res.status(200).json({
         success: true,

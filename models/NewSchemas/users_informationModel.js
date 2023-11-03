@@ -94,6 +94,7 @@ const users_information = new mongoose.Schema(
             total_amount: { type: Number },
             // payment_status: { type: String },
             billing_cycle: { type: String },
+            endDate: { type: Number, default : null },
             plan: { type: String , default : null },
             total_user: [
                 {

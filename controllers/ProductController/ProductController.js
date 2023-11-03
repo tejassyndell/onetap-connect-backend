@@ -1,7 +1,7 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../utils/errorHandler.js");
 const Product = require("../../models/NewSchemas/ProductModel.js");
-  const cart = require("../../models/NewSchemas/cartModel.js");
+const cart = require("../../models/NewSchemas/cartModel.js");
 
 exports.testAPI = catchAsyncErrors(async (req, res, next) => {
   res.send("called");
@@ -211,7 +211,7 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 
     // Iterate through addedProducts array and add the new products
     for (const addedProduct of req.body.addedProducts) {
-      const { product, quantity,variation } = addedProduct;
+      const { product, quantity, variation } = addedProduct;
       userCart.products.push({
         product: product,
         quantity: quantity,
@@ -262,8 +262,8 @@ exports.updateCart = catchAsyncErrors(async (req, res, next) => {
 // });
 
 exports.fetchProducts = catchAsyncErrors(async (req, res, next) => {
-  const { productIds } = req.body;
 
+  const { productIds } = req.body;
   const selectedProducts = await Product.find({ _id: { $in: productIds } })
 
   res.status(200).json({
