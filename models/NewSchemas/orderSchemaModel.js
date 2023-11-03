@@ -94,6 +94,10 @@ const order_Schema = new mongoose.Schema(
         postal_code: { type: String, default: null },
       },
     ],
+    shipping_method: [{
+      type: { type: String },
+      price: { type: Number }
+    }],
   },
   { timestamps: true }
 );
