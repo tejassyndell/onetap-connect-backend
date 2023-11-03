@@ -12,7 +12,7 @@ const {
   cancelPlan,
   fetchCards,
   updateCards,
-  testAPI
+  // testAPI
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -28,5 +28,6 @@ router.get('/payment/isactive' ,isAuthenticatedUser, isActive)
 router.get('/payment/test' ,isAuthenticatedUser, cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card',isAuthenticatedUser, updateCards)
-router.post('/payment/test', testAPI)
+// router.post('/webhook', express.raw({ type: 'application/json' }) , testAPI)
+
 module.exports = router;
