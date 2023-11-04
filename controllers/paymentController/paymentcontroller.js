@@ -108,7 +108,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
           country: user.billing_address.country,
           postal_code: user.billing_address.postal_code,
         },
-        // test_clock: "clock_1O8ITvHsjFNmmZSiSmLG7AMY",
+        test_clock: "clock_1O8cA0HsjFNmmZSiqWEBGtNK",
         shipping: {
           name: `${user.first_name} ${user.last_name}`,
           address: {
