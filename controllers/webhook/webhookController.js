@@ -7,6 +7,8 @@ const UserModel = require("../../models/NewSchemas/UserModel");
 const billingAddressModal = require("../../models/NewSchemas/user_billing_addressModel");
 const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
 
+const endpointSecret = process.env.Stripe_webhook_signing_secret
+
 // functions to update user data in database
 
 // update when users subscription get updated
@@ -35,7 +37,6 @@ async function updateSubscriptionData(subscriptionData) {
 
 exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
     console.log("called")
-    const endpointSecret = "whsec_4073426e12386336160aa0222f4add5e6f6c11fda6d6f1641c7af7687c990eba";
     const sig = request.headers['stripe-signature'];
   
     let event;
