@@ -2371,10 +2371,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   userInformation.subscription_details.auto_renewal = true;
   userInformation.shipping_method = shipping_method;
   user.isPaidUser = true;
-  user.first_name = userData.first_name;
-  user.last_name = userData.last_name;
-  user.contact = userData.contact;
-  user.email = userData.email;
+  // user.first_name = userData.first_name;
+  // user.last_name = userData.last_name;
+  // user.contact = userData.contact;
+  // user.email = userData.email;
   user.address = billingdata;
   user.first_login = true;
 
