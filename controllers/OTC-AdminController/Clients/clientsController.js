@@ -169,7 +169,7 @@ exports.getallusers = catchAsyncErrors(async (req, res, next) => {
           // select: "first_name last_name",
         });
       console.log(userInformationTeamData);
-     
+
       const ReverseData = userInformationTeamData.reverse();
       console.log(userInformationTeamData);
 
@@ -181,6 +181,82 @@ exports.getallusers = catchAsyncErrors(async (req, res, next) => {
       console.error(error);
       res.status(500).json({ error: "An error occurred" });
     }
+  }
+});
+
+exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  {
+    try {
+      const userInformationTeamData = await UserInformation.find({
+        company_ID: id,
+      }).populate({
+        path: "user_id",
+        model: "user",
+      });
+      const companydata = await Company.findOne({ _id: id }).populate({
+        path: "primary_billing",
+        model: "user", // Adjust the model name as needed
+        select: "first_name last_name avatar role designation",
+      });
+
+      if (!userInformationTeamData) {
+        return next(new ErrorHandler("No company details Found", 404));
+      }
+      res.status(200).json({
+        success: true,
+        userInformationTeamData,
+        companydata,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred" });
+    }
+  }
+});
+
+exports.getcompanyuserstatus = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Fetch all companies
+    const companies = await Company.find();
+
+    const companyStatusCounts = [];
+
+    for (const company of companies) {
+      const companyId = company._id;
+
+      // Count active users for the company
+      const activeUserCount = await User.countDocuments({
+        companyID: companyId,
+        status: "active",
+      });
+      // Count inactive users for the company
+      const inactiveUserCount = await User.countDocuments({
+        companyID: companyId,
+        status: "inactive",
+      });
+      // Calculate the count of new users created within the last 28 days
+      const currentDate = new Date();
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+      const newThisMonthCount = await User.countDocuments({
+        companyID: companyId,
+        createdAt: {
+          $gte: startOfMonth,
+        },
+      });
+      companyStatusCounts.push({
+        id: companyId,
+        ActiveuserCount: activeUserCount,
+        deActiveuserCount: inactiveUserCount,
+        Newthismonth: newThisMonthCount,
+      });
+    }
+
+    res.status(200).json({ companies: companyStatusCounts });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
