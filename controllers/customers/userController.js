@@ -158,19 +158,50 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+// function generateUniqueCode() {
+//   let code;
+//   const alphanumeric = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+//   do {
+//     code = '';
+//     for (let i = 0; i < 6; i++) {
+//       const randomIndex = Math.floor(Math.random() * alphanumeric.length);
+//       code += alphanumeric[randomIndex];
+//     }
+//   } while (usedCodes.has(code));
+//   usedCodes.add(code);
+//   return code;
+// }
 function generateUniqueCode() {
   let code;
-  const alphanumeric = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const totalPossibleCodes = Math.pow(alphabetic.length, 6);
+
+  if (usedCodes.size >= totalPossibleCodes) {
+    if (usedCodes.size >= Math.pow(alphabetic.length, 7)) {
+      throw new Error("All possible 7-digit alphabetic codes have been generated.");
+    }
+    const newLength = 7;
+    return generateCodeWithLength(newLength);
+  }
+
+  return generateCodeWithLength(6);
+}
+function generateCodeWithLength(length) {
+  let code = '';
+  const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
   do {
     code = '';
-    for (let i = 0; i < 6; i++) {
-      const randomIndex = Math.floor(Math.random() * alphanumeric.length);
-      code += alphanumeric[randomIndex];
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * alphabetic.length);
+      code += alphabetic[randomIndex];
     }
   } while (usedCodes.has(code));
+
   usedCodes.add(code);
   return code;
 }
+
 
 //sign-up step-2
 exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
@@ -227,6 +258,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     });
   }
   const generatedCode = generateUniqueCode();
+  const generatedcompanyCode = generateUniqueCode();
   if (!user) {
     return next(new ErrorHandler("Something went wrong please try again.", 400));
   }
@@ -251,6 +283,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       companyID: newCompany._id,
     });
     user.userurlslug = generatedCode;
+    user.companyurlslug = generatedcompanyCode;
 
 
     await user.save({ validateBeforeSave: true });
@@ -266,7 +299,9 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
       user_id: user._id,
       companyID: newCompany._id,
       unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+      companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
       userurlslug: generatedCode,
+      companyurlslug: generatedcompanyCode,
     })
     await user_parmalink.save();
   }
@@ -1345,6 +1380,8 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
 
       const teamId = teamRecord.id;
       const generatedCode = generateUniqueCode();
+      const generatedcompanyCode = generateUniqueCode();
+
       const userRecord = await User.create({
         email: email,
         first_name: firstName,
@@ -1363,15 +1400,19 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         user_id: userId,
         companyID: companyID,
         unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+        companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
         userurlslug: generatedCode,
+        companyurlslug: generatedcompanyCode,
       })
       await user_parmalink.save();
 
       // const userplan = planData.plan;
       // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
       let slug = null;
+      let companyslug = null;
       const username = firstName;
       const userlastname = lastName;
+      const companyName = company_name;
       // console.log(userlastname, username, "---------------------------------------------------")
 
       const first_Name = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -1888,15 +1929,15 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     user.set(updatedUserDetails);
     await user.save();
 
-    const userurlslug = user.userurlslug;
-    await parmalinkSlug.updateOne(
-      { user_id: id },
-      { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
-    );
-    await parmalinkSlug.updateOne(
-      { user_id: id },
-      { userurlslug: userurlslug }
-    );
+    // const userurlslug = user.userurlslug;
+    // await parmalinkSlug.updateOne(
+    //   { user_id: id },
+    //   { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
+    // );
+    // await parmalinkSlug.updateOne(
+    //   { user_id: id },
+    //   { userurlslug: userurlslug }
+    // );
 
     res.status(200).json({
       success: true,
@@ -2132,7 +2173,7 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
       _id: { $ne: currentCompanyId },
       companyurlslug,
     });
-  
+
     if (existingcompanyurlslug) {
       return res
         .status(400)
@@ -2146,14 +2187,14 @@ exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
       _id: { $ne: currentCompanyId }, // Exclude the current company by ID
       companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
     });
-  
+
     if (caseSensitivecompanyurlslug) {
       return res
         .status(400)
         .json({ message: "companyurlslug is already taken." });
     }
   }
-  
+
 
   // Check if userurlslug is already taken by the current user
   const currentUserUrlSlug = await parmalinkSlug.findOne({
@@ -2379,17 +2420,17 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.first_login = true;
 
   const order = new Order({
-    user: user._id, 
+    user: user._id,
     company: companyID,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
     paymentDate: new Date(),
-    type:"Subscription",
+    type: "Subscription",
     subscription_details: planData,
     shippingAddress: shippingData,
-    billingAddress:billingdata,
-    shipping_method:shipping_method
+    billingAddress: billingdata,
+    shipping_method: shipping_method
   });
   const company = await Company.findById(companyID);
   company.address = billingdata;
@@ -2399,29 +2440,55 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const userplan = planData.plan;
   // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
   let slug = null;
+  let companyslug = null;
   const username = user.first_name;
   const userlastname = user.last_name;
+  const companyName = company_name;
   // console.log(userlastname, username, "---------------------------------------------------")
   if (userplan === "Free") {
     // If the plan is "free", skip slug generation
   } else if (userplan === "Professional" || userplan === "Team") {
     const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const comapny_Name = companyName.toLowerCase().replace(/[^a-z0-9-]/g, "");
     slug = `${firstName}${lastName}`;
+    companyslug = `${comapny_Name}`;
     // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
   }
-
+  let userVar = null
   if (slug !== null) {
     // Check for duplicates in user_parmalink collection before saving
     const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
     if (!isDuplicate) {
       // Save the slug
       const uniqueSlug = { value: slug, timestamp: Date.now() };
+      userVar = uniqueSlug;
       await parmalinkSlug.updateOne(
         { user_id: user._id },
         { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
       );
     }
+    
+  }
+  let companyVar = null
+  if (companyslug !== null) {
+    const iscompanyDuplicate = await parmalinkSlug.exists({ "companyunique_slug.value": companyslug });
+    if (!iscompanyDuplicate) {
+      // Save the slug
+      const uniquecompanySlug = { value: companyslug, timestamp: Date.now() };
+      companyVar = uniquecompanySlug;
+      await parmalinkSlug.updateOne(
+        { user_id: user._id },
+        { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug: companyslug },
+      );
+    }
+  }
+  console.log(userVar, companyVar , "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  if (userVar !== null) {
+    user.userurlslug = userVar.value;
+  }
+  if (companyVar !== null) {
+    company.companyurlslug = companyVar.value;
   }
 
   await user.save();
@@ -2431,7 +2498,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
-  
+
   res.status(200).json({
     success: true,
     user,
@@ -4528,7 +4595,7 @@ exports.CancelInvitedUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.getcompanies = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
-  
+
   const companies = await Company.find({ _id: { $ne: companyID } }, 'company_name');
 
   if (!companies) {
@@ -4602,7 +4669,7 @@ exports.getOrders = catchAsyncErrors(async (req, res, next) => {
     for (const order of orders) {
       // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
       const user = await User.findOne({ _id: order.user });
-const userdata = { firstName : user.first_name , lastName : user.last_name, email : user.email, contact: user.contact}
+      const userdata = { firstName: user.first_name, lastName: user.last_name, email: user.email, contact: user.contact }
       // Add the user data to the order document
       const orderWithUserData = { ...order.toObject(), userdata };
       ordersWithUserData.push(orderWithUserData);
@@ -4613,4 +4680,19 @@ const userdata = { firstName : user.first_name , lastName : user.last_name, emai
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
+});
+
+exports.getuniqueslugbyid = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+ 
+  const users_slug = await parmalinkSlug.findOne({ user_id: id });
+
+  if (!users_slug) {
+    return next(new ErrorHandler("No slug details Found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    users_slug,
+  });
 });
