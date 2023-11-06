@@ -105,7 +105,7 @@ const users_information = new mongoose.Schema(
             recurring_amount: { type: Number },
             renewal_date: { type: Date },
             auto_renewal: { type: Boolean, default: true },
-            taxRate: { type: String },
+            taxRate: { type: String , default:'0'},
           },
         // addones: [{ service: { type: String }, price: { type: Number } }],
     },

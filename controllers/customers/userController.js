@@ -509,7 +509,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   // Check if the user signed up with Google
   if (user.googleId !== null) {
     return next(
-      new ErrorHandler("User signed up with Google. Use Google login.", 400)
+      new ErrorHandler("This account is associated with a Google login. Please log in with Google.", 400)
     );
   }
 
@@ -2537,10 +2537,22 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   const company = await Company.findById(companyID);
   company.address = billingdata;
   company.company_name = company_name;
-  // console.log(company.address, "company address");
+  const order = new Order({
+    user: user._id, 
+    company: companyID,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    paymentDate: new Date(),
+    type:"Subscription",
+    subscription_details: planData,
+    shippingAddress: shippingData,
+    billingAddress:billingdata,
+    shipping_method:shipping_method
+  });
 
   await user.save();
-  // await card.save();
+  await order.save();
   await company.save();
   await billingAddressFind.save();
   await shippingAddressFind.save();
