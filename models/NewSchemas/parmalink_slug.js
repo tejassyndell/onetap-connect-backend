@@ -17,6 +17,12 @@ const parmalink_slug_Schema = new mongoose.Schema(
                 timestamp: { type: Date, default: Date.now },
             }
         ],
+        companyunique_slug: [
+            {
+                value: { type: String, unique: true },
+                timestamp: { type: Date, default: Date.now },
+            }
+        ],
         userurlslug: {
             type: String,
             ref: 'user',
