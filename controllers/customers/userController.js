@@ -1236,7 +1236,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
 
     for (const item of CSVMemberData) {
       try {
-        const isEmailAlreadyUsed = await User.exists({ email: item.email });
+        const isEmailAlreadyUsed = await User.exists({ email: item.Email });
 
         if (isEmailAlreadyUsed) {
           existingMails.push(item);
@@ -1255,7 +1255,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { existingMails } = await processCSVData(CSVMemberData);
 
   for (const userData of existingMails) {
-    const { email, firstName, lastName, team, emailAlreadyUsed } = userData;
+    const { 'First name': firstName, 'Last name': lastName, Email: email, Team: team, emailAlreadyUsed } = userData;
     if (emailAlreadyUsed) {
       const password = generatePassword();
 
