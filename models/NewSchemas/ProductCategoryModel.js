@@ -12,15 +12,18 @@ const productCategorySchema = new mongoose.Schema({
   // parentCategory:{
   //   type: String,
   // },
-  parentCategory:{
-    type: mongoose.Schema.Types.ObjectId,
-    require: false,
-    set: (v) => (v === "" ? null : v),
-  },
+  // parentCategory:{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   require: false,
+  //   set: (v) => (v === "" ? null : v),
+  // },
   CustomPermalink: {
     type: String,
   },
   description: {
+    type: String,
+  },
+  categoryType: {
     type: String,
   },
   image: {
@@ -37,4 +40,4 @@ activitylog: {type: String}
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("Product_Categories", productCategorySchema);
+module.exports = mongoose.model("otc_categories", productCategorySchema);

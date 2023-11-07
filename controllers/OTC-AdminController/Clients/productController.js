@@ -148,7 +148,7 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
         const CustomPermalinkSlug = productcategoryImage.CustomPermalink;
         let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
-        const { name, isActive, parentCategory, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
+        const { name, isActive, categoryType, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
 
         if (id) {
             // Editing an existing category
@@ -171,7 +171,7 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
                 {
                     name,
                     isActive,
-                    parentCategory,
+                    categoryType,
                     CustomPermalink,
                     description,
                     image,
@@ -195,7 +195,7 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
             const newCategory = new ProductCategory({
                 name,
                 isActive,
-                parentCategory,
+                categoryType,
                 CustomPermalink,
                 description,
                 image,
