@@ -5,7 +5,7 @@ const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
 const Company = require("../../../models/NewSchemas/Company_informationModel.js");
-
+const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
@@ -260,6 +260,35 @@ exports.getcompanyuserstatus = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+exports.updateAddons = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { id, updatedData } = req.body;
+  
+  
+    if (id) {
+      // If ID is provided, update the existing Addon
+      const existingAddon = await Adminaddons.findByIdAndUpdate(id, updatedData, { new: true });
+      if (!existingAddon) {
+        return res.status(404).json({ error: 'Addon not found' });
+      }
+      return res.json(existingAddon);
+    } else {
+
+      
+      // If ID is not provided, create a new Addon
+      const newAddon = new Adminaddons(updatedData);
+      const savedAddon = await newAddon.save();
+      return res.status(201).json(savedAddon);
+    }
+  
+  
+  
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
 //   try {
 //     const userInformationData = await UserInformation.find();
@@ -291,3 +320,14 @@ exports.getcompanyuserstatus = catchAsyncErrors(async (req, res, next) => {
 //     res.status(500).json({ error: 'An error occurred' });
 //   }
 // });
+exports.getAddons = catchAsyncErrors(async (req, res, next) => {
+  const Addons = await Adminaddons.find()
+
+  if (!Addons) {
+      return next(new ErrorHandler("No Addons Found.....", 404));
+  }
+
+  res.status(200).json({
+    Addons,
+  });
+});

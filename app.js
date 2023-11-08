@@ -61,6 +61,13 @@ app.get("/api/v1/product/img/:filename", (req, res) => {
   res.sendFile(filePath);
 });
 
+app.get("/api/v1/admin/addons/img/:filename", (req, res) => {
+  const filename = req.params.filename;
+  console.log(filename);
+
+  const filePath = path.join(__dirname, "/uploads/addonsimages", filename);
+  res.sendFile(filePath);
+});
 app.get("/api/v1/logo/img/:filename", (req, res) => {
   const filename = req.params.filename;
   console.log(filename);

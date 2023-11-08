@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus,
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons,
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -27,4 +27,6 @@ router.get("/admin/companyusers/:id", getallusersofcompany);
 router.get("/admin/getcompanyuserstatus", getcompanyuserstatus);
 router.post("/admin/createproductCategory",createProductCategory);
 
+router.post("/admin/updateAddons", updateAddons);
+router.get("/admin/getAddons", getAddons);
 module.exports = router;
