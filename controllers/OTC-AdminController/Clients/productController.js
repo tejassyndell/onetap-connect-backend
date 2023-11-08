@@ -10,7 +10,7 @@ const ProductCategory = require("../../../models/NewSchemas/ProductCategoryModel
 // Create or update a product
 exports.createProduct = async (req, res, next) => {
     try {
-        console.log("Creating", req.body);
+
         const { dataToSend, id } = req.body;
         // console.log("Creating", _id);
         const product = dataToSend
@@ -141,7 +141,29 @@ exports.createProduct = async (req, res, next) => {
         next(error);
     }
 };
-
+exports.createProductCategory = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { name, isActive, parentCategory, CustomPermalink, description, featuredImage, status, Visibility, activitylog } = req.body;
+        const categoryType = "Smart-accessories"
+        const newCategory = new ProductCategory({
+            name,
+            isActive,
+            parentCategory,
+            CustomPermalink,
+            description,
+            featuredImage,
+            status,
+            Visibility,
+            activitylog,
+            categoryType,
+        });
+        const createdCategory = await newCategory.save();
+        res.status(201).json({ category: createdCategory });
+    } catch (error) {
+        // Handle error
+        next(error);
+    }
+});
 exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
     try {
         const { productcategoryImage, id } = req.body;
@@ -260,14 +282,14 @@ exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     const fileNames = req.fileNames;
     const fileTypes = req.body.fileType || [] // Get the "fileType" from the request body
- 
+
     // Create an array of objects with name and fileType
     const imagesWithTypes = fileNames.map((name, index) => ({
         name,
         fileType: Array.isArray(fileTypes) ? fileTypes[index] : fileTypes,
         // Include the "fileType" for each image
     }));
-   
+
     res.status(200).json({
         success: true,
         imageNames: imagesWithTypes,

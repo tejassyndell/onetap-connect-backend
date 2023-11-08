@@ -5,6 +5,7 @@ const productCategorySchema = new mongoose.Schema({
     type: String,
     // required: true,
   },
+  categoryType: { type: String },
   isActive: {
     type: Boolean,
     default: true,
@@ -12,7 +13,7 @@ const productCategorySchema = new mongoose.Schema({
   // parentCategory:{
   //   type: String,
   // },
-  parentCategory:{
+  parentCategory: {
     type: mongoose.Schema.Types.ObjectId,
     require: false,
     set: (v) => (v === "" ? null : v),
@@ -24,16 +25,16 @@ const productCategorySchema = new mongoose.Schema({
     type: String,
   },
   image: {
-      type: String, 
-      // default:""
-    },
-  
-  imageName: { type: String} ,
+    type: String,
+    // default:""
+  },
+
+  imageName: { type: String },
   altText: { type: String },
-status: {type: String},
-Visibility: {type: String},
-publishedDate: {type: Date},
-activitylog: {type: String}
+  status: { type: String },
+  Visibility: { type: String },
+  publishedDate: { type: Date },
+  activitylog: { type: String }
 
 }, { timestamps: true });
 

@@ -148,7 +148,7 @@ exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
 
         if (existingCartItem) {
           // If the product with the same variation is already in the cart, update the quantity
-          existingCartItem.quantity = quantity;
+          existingCartItem.quantity += quantity;
         } else {
           // If the product with the same variation is not in the cart, add it as a new item
           userCart.products.push({
@@ -173,7 +173,7 @@ exports.updateCartProducts = catchAsyncErrors(async (req, res, next) => {
 
         if (existingCartItem) {
           // If the product with the same variation is already in the cart, update the quantity
-          existingCartItem.quantity = quantity;
+          existingCartItem.quantity += quantity;
         } else {
           // If the product with the same variation is not in the cart, add it as a new item
           userCart.products.push({

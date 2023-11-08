@@ -43,7 +43,7 @@ const productSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      required: true,
+      // required: true,
     },
     saleprice: {
       type: Number,
@@ -111,12 +111,13 @@ const productSchema = new mongoose.Schema(
         }],
         stockStatus: {
           type: String,
-          enum: ["In Stock", "Out of Stock", null], // You can customize the options
+          enum: ["In Stock", "Backorder", null], // You can customize the options
           // required: true,
         },
         sku: {
           type: String,
-          // required: true,
+          required: true,
+          unique: true,
         },
         quantity: {
           type: Number,
