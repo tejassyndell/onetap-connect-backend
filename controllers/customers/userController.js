@@ -1162,7 +1162,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%;">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
@@ -1429,6 +1429,10 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
           await parmalinkSlug.updateOne(
             { user_id: userId },
             { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+          );
+          await User.updateOne(
+            { _id: userId },
+            { userurlslug: slug },
           );
         }
       }
@@ -2723,7 +2727,6 @@ const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(
       null,
-      "//////////////////////////////////////////////////////////////////////////////////////////////////////////"
     );
   },
   filename: (req, file, cb) => {
@@ -3227,6 +3230,10 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
         await parmalinkSlug.updateOne(
           { user_id: user._id },
           { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+        );
+        await User.updateOne(
+          { _id: user._id },
+          { userurlslug: slug },
         );
       }
     }
@@ -3756,6 +3763,10 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
       await parmalinkSlug.updateOne(
         { user_id: userData._id },
         { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+      );
+      await User.updateOne(
+        { _id: userData._id },
+        { userurlslug: slug },
       );
     }
   }
