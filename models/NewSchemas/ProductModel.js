@@ -50,7 +50,7 @@ const productSchema = new mongoose.Schema(
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product_Categories", // Assuming you have a "productCategories" collection
+      ref: "otc_categories", // Assuming you have a "productCategories" collection
     },
     Tags: {
       type: [String],
