@@ -5,6 +5,7 @@ const productCategorySchema = new mongoose.Schema({
     type: String,
     // required: true,
   },
+  categoryType: { type: String },
   isActive: {
     type: Boolean,
     default: true,
@@ -12,29 +13,32 @@ const productCategorySchema = new mongoose.Schema({
   // parentCategory:{
   //   type: String,
   // },
-  parentCategory:{
-    type: mongoose.Schema.Types.ObjectId,
-    require: false,
-    set: (v) => (v === "" ? null : v),
-  },
+  // parentCategory:{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   require: false,
+  //   set: (v) => (v === "" ? null : v),
+  // },
   CustomPermalink: {
     type: String,
   },
   description: {
     type: String,
   },
+  categoryType: {
+    type: String,
+  },
   image: {
-      type: String, 
-      // default:""
-    },
-  
-  imageName: { type: String} ,
+    type: String,
+    // default:""
+  },
+
+  imageName: { type: String },
   altText: { type: String },
-status: {type: String},
-Visibility: {type: String},
-publishedDate: {type: Date},
-activitylog: {type: String}
+  status: { type: String },
+  Visibility: { type: String },
+  publishedDate: { type: Date },
+  activitylog: { type: String }
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("Product_Categories", productCategorySchema);
+module.exports = mongoose.model("otc_categories", productCategorySchema);

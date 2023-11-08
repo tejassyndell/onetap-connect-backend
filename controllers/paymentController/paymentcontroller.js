@@ -185,7 +185,7 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   const Address = req.body.billingAddress;
   const selectedCard = req.body.selectedCard;
   const newUser = req.body.newUser;
-  const primary_card = req.body.primaryCard;
+  const primary_card = req.body.primary_card;
   console.log("..........")
   console.log(primary_card, "/////////////////////////////////////")
   console.log("..........")
@@ -200,7 +200,6 @@ if(!selectedCard){
     customer: customerID,
   });
 }
-
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
         currency: 'usd', 
@@ -223,6 +222,7 @@ if(!selectedCard){
           },
           customer: customerID,
           default_payment_method: paymentToken,
+          cancel_at_period_end: false,
           items: [{ price: price.id }],
           collection_method: "charge_automatically",
         });
@@ -235,6 +235,7 @@ if(!selectedCard){
           },
           customer: customerID,
           default_payment_method: attachedPaymentMethod.id,
+          cancel_at_period_end: false,
           items: [{ price: price.id }],
           collection_method: "charge_automatically",
         });
@@ -250,6 +251,7 @@ if(!selectedCard){
       }
   
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      if(latestInvoice.payment_inten){
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
@@ -259,7 +261,10 @@ if(!selectedCard){
   
       // Save payment ID and user details in your database after successful payment
   
-      res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status, endDate : myPayment.current_period_end });
+      return res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status, endDate : myPayment.current_period_end });
+    }
+    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end });
+
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, error: error.message });
@@ -303,15 +308,49 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.body)
   try {
-    const proration_date = Math.floor(Date.now() / 1000);
-    const subscriptionId = 'sub_1O0K0XHsjFNmmZSiWX5nfGVU';
-
-    const deleted = await stripe.subscriptions.cancel(subscriptionId, {
-      prorate: true
+    const { subId } = req.body
+    if(!subId){
+     return res.status(500).json({ success: false, error: 'No Subscription Id found' });
+      }
+      
+    const canceledSubscription = await stripe.subscriptions.cancel(subId,{
+      invoice_now : true,
+      prorate : true
     });
+    console.log(canceledSubscription);
+    console.log('canceledSubscription');
 
-    res.status(200).json({ success: true, message: deleted });
+    if(!canceledSubscription){
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+    
+    const updatedUserInfo = await UserInformation.findOneAndUpdate(
+      { 'subscription_details.customer_id': canceledSubscription.customer},
+      { $set: { 'subscription_details.subscription_id': null,
+                'subscription_details.addones': [],
+                'subscription_details.total_amount': null,
+                'subscription_details.billing_cycle': null,
+                'subscription_details.endDate': null,
+                'subscription_details.plan': 'Free',
+                'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
+                'subscription_details.recurring_amount': null,
+                'subscription_details.renewal_date': null,
+                'subscription_details.auto_renewal': null,
+                'subscription_details.taxRate': null,
+              }},
+              { new: true }
+              );
+              if(!updatedUserInfo){
+                return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+              }
+
+              console.log(updatedUserInfo)
+              console.log("updatedUserInfo")
+
+    res.status(200).json({ success: true, delete : "Subscription Canceled successfully" });
+    // res.status(200).json({ success: true, message: canceledSubscription });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
@@ -783,36 +822,13 @@ res.status(200).json({
 })
 
 
-exports.testAPI = catchAsyncErrors(async (request, response, next) => {
-  console.log("called")
-  const endpointSecret = "whsec_4073426e12386336160aa0222f4add5e6f6c11fda6d6f1641c7af7687c990eba";
-  const sig = request.headers['stripe-signature'];
+exports.updateCustomerCreditBalance = catchAsyncErrors(async (req, res, next) => {
+  const {cusId} = req.body;
 
-
-  let event;
-  
-  try {
-    event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
-    console.log(event.type)
-    console.log('----------------------------------------------------------------------------------')
-  } catch (err) {
-    console.log(err.message)
-    response.status(400).send(`Webhook Error: ${err.message}`);
-    return;
-  }
-console.log(event.type)
-  // Handle the event
-  switch (event.type) {
-    case 'customer.subscription.updated':
-      const customerSubscriptionUpdated = event.data.object;
-      console.log(customerSubscriptionUpdated)
-      break;
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  // Return a 200 response to acknowledge receipt of the event
-  response.send();
+  const balanceTransactions = await stripe.customers.listBalanceTransactions(
+    cusId
+  );
+  res.send({data : balanceTransactions.data[0].ending_balance / 100})
 })
 
 

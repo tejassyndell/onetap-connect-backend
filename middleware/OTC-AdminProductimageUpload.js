@@ -13,6 +13,10 @@ const destination = (req, file, cb) => {
     folder = 'productImages';
   } else if (imageType === 'category') {
     folder = 'categoryImages';
+  } else if (imageType === 'addonsimage'){
+    folder = 'addonsimages';
+  } else if (imageType === 'plan') {
+    folder = 'planImages';
   }
 
   const destinationPath = path.join('./uploads', folder);
@@ -32,6 +36,10 @@ const storage = multer.diskStorage({
       folder = 'productImages';
     } else if (imageType === 'category') {
       folder = 'categoryImages';
+    } else if (imageType === 'addonsimage'){
+      folder = 'addonsimages';
+    }else if(imageType === 'plan'){
+      folder = 'planImages';
     }
 
     const destinationPath = path.join('./uploads', folder);
@@ -52,7 +60,7 @@ const storage = multer.diskStorage({
 
 // Define a file filter to accept specific image types
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+  const allowedTypes = ['image/jpeg', 'image/png','image/svg', 'image/webp', 'video/mp4', 'video/webm'];
 
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true); // Accept the file

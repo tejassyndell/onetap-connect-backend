@@ -4,13 +4,14 @@ const User = require("../../../models/NewSchemas/UserModel.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
 const Product = require('../../../models/NewSchemas/ProductModel.js');
 const ProductCategory = require("../../../models/NewSchemas/ProductCategoryModel.js");
+const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 
 
 
 // Create or update a product
 exports.createProduct = async (req, res, next) => {
     try {
-        console.log("Creating", req.body);
+
         const { dataToSend, id } = req.body;
         // console.log("Creating", _id);
         const product = dataToSend
@@ -141,14 +142,36 @@ exports.createProduct = async (req, res, next) => {
         next(error);
     }
 };
-
+exports.createProductCategory = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { name, isActive, parentCategory, CustomPermalink, description, featuredImage, status, Visibility, activitylog } = req.body;
+        const categoryType = "Smart-accessories"
+        const newCategory = new ProductCategory({
+            name,
+            isActive,
+            parentCategory,
+            CustomPermalink,
+            description,
+            featuredImage,
+            status,
+            Visibility,
+            activitylog,
+            categoryType,
+        });
+        const createdCategory = await newCategory.save();
+        res.status(201).json({ category: createdCategory });
+    } catch (error) {
+        // Handle error
+        next(error);
+    }
+});
 exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
     try {
         const { productcategoryImage, id } = req.body;
         const CustomPermalinkSlug = productcategoryImage.CustomPermalink;
         let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
-        const { name, isActive, parentCategory, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
+        const { name, isActive, categoryType, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
 
         if (id) {
             // Editing an existing category
@@ -171,7 +194,7 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
                 {
                     name,
                     isActive,
-                    parentCategory,
+                    categoryType,
                     CustomPermalink,
                     description,
                     image,
@@ -195,7 +218,7 @@ exports.createProductCategories = catchAsyncErrors(async (req, res, next) => {
             const newCategory = new ProductCategory({
                 name,
                 isActive,
-                parentCategory,
+                categoryType,
                 CustomPermalink,
                 description,
                 image,
@@ -260,14 +283,14 @@ exports.getProductCategories = catchAsyncErrors(async (req, res, next) => {
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     const fileNames = req.fileNames;
     const fileTypes = req.body.fileType || [] // Get the "fileType" from the request body
- 
+
     // Create an array of objects with name and fileType
     const imagesWithTypes = fileNames.map((name, index) => ({
         name,
         fileType: Array.isArray(fileTypes) ? fileTypes[index] : fileTypes,
         // Include the "fileType" for each image
     }));
-   
+
     res.status(200).json({
         success: true,
         imageNames: imagesWithTypes,
@@ -275,5 +298,87 @@ exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
 });
 
 
+exports.createPlan = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { planData, planFormData ,id } = req.body;
+
+        const CustomPermalinkSlug = planFormData.CustomPermalink;
+        let CustomPermalink =  CustomPermalinkSlug;
+        // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
+
+        const { InternalPlanName,PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog } = planFormData;
+        const { planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee,yearly_sku} = planData
+
+        if (id) {
+            // Editing an existing category
+
+            const existingCategory = await Plan.findById(id);
+            if (!existingCategory) {
+                return res.status(404).json({ success: false, message: 'Category not found' });
+            }
+
+            // Check if CustomPermalink is not changed or is unique
+            if (CustomPermalink !== existingCategory.CustomPermalink) {
+                const isUnique = await isCustomPermalinkUnique(CustomPermalink);
+                if (!isUnique) {
+                    CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
+                }
+            }
+
+            const updatedCategory = await Plan.findByIdAndUpdate(
+                id,
+                {InternalPlanName,PublicPlanName,categoryType,CustomPermalink,description,image,imageName,altText,status,Visibility,activitylog,planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee,yearly_sku},
+                { new: true } // Return the updated document
+            );
+            res.status(200).json({ success: true, category: updatedCategory });
+        } else {
+            // Creating a new category
+            const isUnique = await isCustomPermalinkUnique(CustomPermalink);
+            if (!isUnique) {
+                CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
+            }
+
+            const newplans = new Plan({
+                InternalPlanName,PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText,status, Visibility,  activitylog,publishedDate: new Date(),planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee,yearly_sku
+            });
+            const plans = await newplans.save();
+            res.status(201).json({ success: true, plans });
+        }
+    } catch (error) {
+        // Handle error
+        next(error);
+    }
+});
+
+async function isCustomPermalinkUnique(CustomPermalink) {
+    const existingCategory = await Plan.findOne({ CustomPermalink });
+    return !existingCategory;
+}
+
+async function generateUniqueCustomPermalink(basePermalink) {
+    let uniquePermalink = basePermalink;
+    let counter = 1;
+    while (true) {
+        const existingCategory = await Plan.findOne({ CustomPermalink: uniquePermalink });
+        if (!existingCategory) {
+            return uniquePermalink;
+        }
+        // Append a counter to the base permalink to make it unique
+        uniquePermalink = `${basePermalink}-${counter}`;
+        counter++;
+    }
+}
+
+exports.getPlans = catchAsyncErrors(async (req, res, next) => {
+    const Plans = await Plan.find()
+
+    if (!Plans) {
+        return next(new ErrorHandler("No Plans Found.....", 404));
+    }
+
+    res.status(200).json({
+        Plans,
+    });
+});
 
 
