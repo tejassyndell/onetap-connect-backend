@@ -2727,7 +2727,6 @@ const logostorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(
       null,
-      "//////////////////////////////////////////////////////////////////////////////////////////////////////////"
     );
   },
   filename: (req, file, cb) => {
