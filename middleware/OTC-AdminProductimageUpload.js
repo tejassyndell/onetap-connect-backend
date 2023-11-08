@@ -13,6 +13,8 @@ const destination = (req, file, cb) => {
     folder = 'productImages';
   } else if (imageType === 'category') {
     folder = 'categoryImages';
+  } else if (imageType === 'addonsimage'){
+    folder = 'addonsimages';
   }
 
   const destinationPath = path.join('./uploads', folder);
@@ -32,6 +34,8 @@ const storage = multer.diskStorage({
       folder = 'productImages';
     } else if (imageType === 'category') {
       folder = 'categoryImages';
+    } else if (imageType === 'addonsimage'){
+      folder = 'addonsimages';
     }
 
     const destinationPath = path.join('./uploads', folder);

@@ -5,7 +5,7 @@ const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
 const Company = require("../../../models/NewSchemas/Company_informationModel.js");
-const Adminaddons = require("../../../models/NewSchemas/AddOnsSchema.js")
+const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
@@ -273,6 +273,8 @@ exports.updateAddons = catchAsyncErrors(async (req, res, next) => {
       }
       return res.json(existingAddon);
     } else {
+
+      
       // If ID is not provided, create a new Addon
       const newAddon = new Adminaddons(updatedData);
       const savedAddon = await newAddon.save();
@@ -318,3 +320,14 @@ exports.updateAddons = catchAsyncErrors(async (req, res, next) => {
 //     res.status(500).json({ error: 'An error occurred' });
 //   }
 // });
+exports.getAddons = catchAsyncErrors(async (req, res, next) => {
+  const Addons = await Adminaddons.find()
+
+  if (!Addons) {
+      return next(new ErrorHandler("No Addons Found.....", 404));
+  }
+
+  res.status(200).json({
+    Addons,
+  });
+});
