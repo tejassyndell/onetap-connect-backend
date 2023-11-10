@@ -39,17 +39,34 @@ async function updateCustomerBalance(subscriptionData) {
        const balanceTransactions = await stripe.customers.listBalanceTransactions(
         subscriptionData.customer
       );
-
-      const updatedCreditbalance = await UserInformation.findOneAndUpdate(
-        { 'subscription_details.customer_id': balanceTransactions.data[0].customer },
-        {
-          $set: {
-            'subscription_details.creditBalance': balanceTransactions.data[0].ending_balance / 100,
-          },
-        },
-        { new: true } 
-      );
-     return updatedCreditbalance
+      console.log("balanceTransactions")
+      console.log(balanceTransactions)
+      console.log("balanceTransactions")
+      console.log(balanceTransactions.data.length)
+      console.log(balanceTransactions.data.length)
+      console.log(balanceTransactions.data.length)
+      console.log(balanceTransactions.data.length)
+      console.log(balanceTransactions.data.length)
+      console.log(balanceTransactions.data.length)
+      console.log(balanceTransactions.data.length)
+      if(balanceTransactions.data.length > 0){
+        const updatedCreditbalance = await UserInformation.findOneAndUpdate(
+          { 'subscription_details.customer_id': balanceTransactions.data[0].customer },
+          {
+            $set: {
+              'subscription_details.creditBalance': balanceTransactions.data[0].ending_balance / 100,
+            },
+          },  
+          { new: true } 
+          );
+          // return updatedCreditbalance
+          console.log("updatedCreditbalance")
+          console.log(updatedCreditbalance)
+          console.log("updatedCreditbalance")
+        }else{
+          console.log("else part")
+        }
+        return null
     } catch (error) {
         throw error;
     }
