@@ -92,7 +92,7 @@ const users_information = new mongoose.Schema(
             addones: [{type: mongoose.Schema.Types.ObjectId}],
             userCount: { type : Number},
             total_amount: { type: Number },
-            creditBalance : { type: Number },
+            creditBalance : { type: Number, default: null },
             // payment_status: { type: String },
             billing_cycle: { type: String },
             endDate: { type: Number, default : null },

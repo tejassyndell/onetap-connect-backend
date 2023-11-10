@@ -2405,12 +2405,37 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
-      subscription_details: planData,
-    });
-    userInformation.subscription_details = planData;
-    console.log(userInformation, "userInformation");
+        subscription_details: {
+              addones: planData.addones,
+              subscription_id: planData.subscription_id,
+              total_amount: planData.total_amount,
+              plan: planData.plan,
+              endDate : planData.endDate,
+              total_user: planData.total_user,
+              billing_cycle: planData.billing_cycle,
+              recurring_amount:planData.recurring_amount,
+              renewal_date: planData.renewal_date,
+              taxRate: planData.taxRate,
+              customer_id: planData.customer_id,
+        },
+      });
+    // userInformation.subscription_details = planData;
+    // console.log(userInformation, "userInformation");
   } else {
-    userInformation.subscription_details = planData;
+    userInformation.subscription_details = {
+      ...userInformation.subscription_details,
+      addones: planData.addones,
+      subscription_id: planData.subscription_id,
+      total_amount: planData.total_amount,
+      plan: planData.plan,
+      endDate: planData.endDate,
+      total_user: planData.total_user,
+      billing_cycle: planData.billing_cycle,
+      recurring_amount: planData.recurring_amount,
+      renewal_date: planData.renewal_date,
+      taxRate: planData.taxRate,
+      customer_id: planData.customer_id,
+  };
   }
   shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
@@ -2442,13 +2467,11 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   console.log(company.address, "company address");
 
   const userplan = planData.plan;
-  // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
   let slug = null;
   let companyslug = null;
   const username = user.first_name;
   const userlastname = user.last_name;
   const companyName = company_name;
-  // console.log(userlastname, username, "---------------------------------------------------")
   if (userplan === "Free") {
     // If the plan is "free", skip slug generation
   } else if (userplan === "Professional" || userplan === "Team") {
@@ -2457,7 +2480,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     const comapny_Name = companyName.toLowerCase().replace(/[^a-z0-9-]/g, "");
     slug = `${firstName}${lastName}`;
     companyslug = `${comapny_Name}`;
-    // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
   }
   let userVar = null
   if (slug !== null) {
