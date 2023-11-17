@@ -42,13 +42,7 @@ async function updateCustomerBalance(subscriptionData) {
       console.log("balanceTransactions")
       console.log(balanceTransactions)
       console.log("balanceTransactions")
-      console.log(balanceTransactions.data.length)
-      console.log(balanceTransactions.data.length)
-      console.log(balanceTransactions.data.length)
-      console.log(balanceTransactions.data.length)
-      console.log(balanceTransactions.data.length)
-      console.log(balanceTransactions.data.length)
-      console.log(balanceTransactions.data.length)
+
       if(balanceTransactions.data.length > 0){
         const updatedCreditbalance = await UserInformation.findOneAndUpdate(
           { 'subscription_details.customer_id': balanceTransactions.data[0].customer },
@@ -65,6 +59,7 @@ async function updateCustomerBalance(subscriptionData) {
           console.log("updatedCreditbalance")
         }else{
           console.log("else part")
+          return
         }
         return null
     } catch (error) {
@@ -85,26 +80,26 @@ exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
       response.status(400).send(`Webhook Error: ${err.message}`);
       return;
     }
-  console.log(event.type)
     // Handle the event
-    switch (event.type) {
-      case 'customer.subscription.updated':
-        const customerSubscriptionUpdated = event.data.object;
-        const data = updateSubscriptionData(customerSubscriptionUpdated)
-        const customerData = updateCustomerBalance(customerSubscriptionUpdated)
-        break;
-      case 'customer.subscription.deleted':
-        const deletedSubData = event.data.object;
-        const updatedData = updateCustomerBalance(deletedSubData)
-        break;
-      case ' customer.subscription.created':
-        const createdSubData = event.data.object;
-        const createdData = updateCustomerBalance(createdSubData)
-        break;
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
-  
-    // Return a 200 response to acknowledge receipt of the event
-    response.status(200);
+    try {
+      
+      switch (event.type) {
+        case 'customer.subscription.updated':
+          await updateSubscriptionData(event.data.object)
+          await updateCustomerBalance(event.data.object)
+          break;
+          case 'customer.subscription.deleted':
+            await updateCustomerBalance(event.data.object)
+            break;
+            case ' customer.subscription.created':
+              await updateCustomerBalance(event.data.object)
+              break;
+              default:
+                console.log(`Unhandled event type ${event.type}`);
+              }
+              response.status(200).end();
+            } catch (error) {
+              console.error('Error processing webhook event:', error);
+              response.status(500).send('Error processing webhook event').end();
+            }
   })
