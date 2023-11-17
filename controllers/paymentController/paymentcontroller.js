@@ -196,9 +196,9 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
     : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
     let attachedPaymentMethod;
 if(!selectedCard){
-   attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
-    customer: customerID,
-  });
+    attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+      customer: customerID,
+    });
 }
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
@@ -211,6 +211,14 @@ if(!selectedCard){
         interval_count : 1
   },
 });
+const invoiceItem = await stripe.invoiceItems.create({
+        customer: customerID,
+        amount: 5 * 100,  // need to pass charge amount
+        currency: 'usd',
+        description: 'Initial setup fee',
+      });
+
+
     try {
       let myPayment;
       if(selectedCard){
@@ -223,6 +231,9 @@ if(!selectedCard){
           customer: customerID,
           default_payment_method: paymentToken,
           cancel_at_period_end: false,
+          automatic_tax: {
+            enabled: true
+          },
           items: [{ price: price.id }],
           collection_method: "charge_automatically",
         });
@@ -237,6 +248,9 @@ if(!selectedCard){
           default_payment_method: attachedPaymentMethod.id,
           cancel_at_period_end: false,
           items: [{ price: price.id }],
+          automatic_tax: {
+            enabled: true
+          },
           collection_method: "charge_automatically",
         });
       }
@@ -249,7 +263,12 @@ if(!selectedCard){
           },
         });
       }
-  
+
+
+      if(!myPayment){
+        throw new Error('Subscription creation failed'); 
+      }
+
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       if(latestInvoice.payment_inten){
       const paymentIntent = await stripe.paymentIntents.retrieve(
@@ -267,6 +286,32 @@ if(!selectedCard){
 
     } catch (error) {
       console.error(error);
+       // handle subscription failure
+       try {
+        const deleteCustomer = customerID && await stripe.customers.del(customerID);
+        const deletedInvoiceItem =
+          invoiceItem && invoiceItem.id && (await stripe.invoiceItems.del(invoiceItem.id));
+        const detachPT =
+          attachedPaymentMethod &&
+          attachedPaymentMethod.id &&
+          (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
+        const deletePrice = price && await stripe.prices.update(
+          price.id,
+          {
+            active : false
+          }
+        );
+  
+        console.error(
+          'Cleanup performed after failure:',
+          deleteCustomer,
+          deletedInvoiceItem,
+          detachPT,
+          deletePrice
+        );
+      } catch (cleanupError) {
+        console.error('Error during cleanup:', cleanupError);
+      }
       res.status(500).json({ success: false, error: error.message });
     }
 });

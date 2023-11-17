@@ -81,24 +81,25 @@ exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
       return;
     }
     // Handle the event
-    switch (event.type) {
-      case 'customer.subscription.updated':
-        const customerSubscriptionUpdated = event.data.object;
-        const data = updateSubscriptionData(customerSubscriptionUpdated)
-        const customerData = updateCustomerBalance(customerSubscriptionUpdated)
-        break;
-      case 'customer.subscription.deleted':
-        const deletedSubData = event.data.object;
-        const updatedData = updateCustomerBalance(deletedSubData)
-        break;
-      case ' customer.subscription.created':
-        const createdSubData = event.data.object;
-        const createdData = updateCustomerBalance(createdSubData)
-        break;
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
-    console.log("Res send")
-    response.status(200).end();
-    console.log("Res send")
+    try {
+      
+      switch (event.type) {
+        case 'customer.subscription.updated':
+          await updateSubscriptionData(event.data.object)
+          await updateCustomerBalance(event.data.object)
+          break;
+          case 'customer.subscription.deleted':
+            await updateCustomerBalance(event.data.object)
+            break;
+            case ' customer.subscription.created':
+              await updateCustomerBalance(event.data.object)
+              break;
+              default:
+                console.log(`Unhandled event type ${event.type}`);
+              }
+              response.status(200).end();
+            } catch (error) {
+              console.error('Error processing webhook event:', error);
+              response.status(500).send('Error processing webhook event').end();
+            }
   })
