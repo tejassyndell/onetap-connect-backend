@@ -98,7 +98,7 @@ exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
       default:
         console.log(`Unhandled event type ${event.type}`);
     }
-    consoel.log("Res send")
+    console.log("Res send")
     response.status(200).end();
-    consoel.log("Res send")
+    console.log("Res send")
   })
