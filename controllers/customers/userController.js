@@ -1158,11 +1158,11 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
           <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
           <h3>Welcome to OneTapConnect!</h3>
-          <p>Hi ${first_name}<br/>
+          <p>Hi ${first_name},<br/>
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
@@ -1170,7 +1170,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
             </div>
         </div> <br/>
           <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
-          <h5>Technical issue?</h5>
+          <h3>Technical issue?</h3>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
       </div>
   
