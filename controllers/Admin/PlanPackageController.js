@@ -2,7 +2,7 @@ const PlanPackage =  require('../../models/Admin/PlanPackageModel');
 const AddOn = require('../../models/Admin/AddOnsModel')
 const ErrorHandler = require('../../utils/errorHandler');
 const catchAsyncErrors = require('../../middleware/catchAsyncErrors');
-
+const OtcAddons = require('../../models/NewSchemas/OtcAddOnsSchema')
 
 //create Subscription --otc-Admin
 
@@ -69,7 +69,7 @@ exports.createAddOne = catchAsyncErrors(async(req,res,next)=>{
 //get all addons
 exports.getAllAddOns = catchAsyncErrors(async(req,res,next)=>{
 
-    const addOns = await AddOn.find(); 
+    const addOns = await OtcAddons.find(); 
 
     if(!addOns){
         return next(new ErrorHandler("Error in craeting plan",404))
@@ -79,4 +79,17 @@ exports.getAllAddOns = catchAsyncErrors(async(req,res,next)=>{
 
 
 })
+// //get all addons
+// exports.getAllAddOns = catchAsyncErrors(async(req,res,next)=>{
+
+//     const addOns = await AddOn.find(); 
+
+//     if(!addOns){
+//         return next(new ErrorHandler("Error in craeting plan",404))
+//     }
+
+//     res.status(201).json({addOns});
+
+
+// })
 

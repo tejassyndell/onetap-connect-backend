@@ -42,8 +42,8 @@ const Adminaddonsschema = new mongoose.Schema(
         unique: true,
         sparse: true,
       },
-      yearlyprice: { type: String },
-      monthlyprice: { type: String },
+      yearlyprice: { type: Number },
+      monthlyprice: { type: Number },
       monthlysku: {
         type: String,
         unique: true,
@@ -58,7 +58,7 @@ const Adminaddonsschema = new mongoose.Schema(
         unique: true,
         sparse: true,
       },
-      price: { type: String },
+      price: { type: Number },
     },
     
   },
@@ -107,4 +107,4 @@ const Adminaddonsschema = new mongoose.Schema(
 
 
 
-module.exports = mongoose.model("Adminaddons", Adminaddonsschema);
+module.exports = mongoose.model("otc_addons", Adminaddonsschema);
