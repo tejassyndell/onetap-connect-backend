@@ -153,7 +153,7 @@ const userSchema = new mongoose.Schema(
     isPaidUser: { type: Boolean, default: false },
     role: { type: String, default: "superadmin" },
     googleId: { type: String, default: null },
-    unique_slug:{type: String, unique: true},
+    // unique_slug:{type: String, unique: true},
     companyID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "companies_information",
