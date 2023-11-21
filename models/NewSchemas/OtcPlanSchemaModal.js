@@ -25,14 +25,17 @@ const planSchema = new mongoose.Schema({
   yearlyPrice_perUser: String,
   yearly_fee: String,
   yearly_sku: String,
+  publishedDate: Date,
   // smart_accessories : 
   smart_accessories: [{
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'product',
     require: false,
     set: (v) => (v === "" ? null : v),
   }],
   add_ons:[ {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Adminaddons',
     require: false,
     set: (v) => (v === "" ? null : v),
   }]

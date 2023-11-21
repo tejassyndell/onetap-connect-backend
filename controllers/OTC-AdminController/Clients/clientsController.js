@@ -407,13 +407,13 @@ async function generateUniqueCustomPermalink(basePermalink) {
 }
 
 exports.getPlans = catchAsyncErrors(async (req, res, next) => {
-  const Plans = await Plan.find()
+  const Plans = await Plan.find().populate('smart_accessories').populate('add_ons');
 
   if (!Plans) {
       return next(new ErrorHandler("No Plans Found.....", 404));
   }
 
   res.status(200).json({
-      Plans,
+      plans:Plans,
   });
 });
