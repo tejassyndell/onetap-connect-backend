@@ -12,7 +12,8 @@ const {
   cancelPlan,
   fetchCards,
   updateCards,
-  updateCustomerCreditBalance
+  updateCustomerCreditBalance,
+  purchaseaddon
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -29,5 +30,5 @@ router.post('/payment/updateCustomerBalance' , updateCustomerCreditBalance)
 router.post('/payment/cancelSubscription' , cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card',isAuthenticatedUser, updateCards)
-
+router.post("/addon-purchase",isAuthenticatedUser , purchaseaddon);
 module.exports = router;
