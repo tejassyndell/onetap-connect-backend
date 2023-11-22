@@ -620,6 +620,30 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 // //     }else{
 
 // //     }
+// create tax
+const calculation = await stripe.tax.calculations.create({
+  currency: 'usd',
+  customer_details: {
+    address: {
+      line1: shippingAddress.line1,
+      line2: shippingAddress.line,
+      postal_code: shippingAddress.postal_code,
+      state: shippingAddress.state,
+      country: shippingAddress.country,
+    },
+    address_source: 'shipping',
+  },
+  line_items: [
+    {
+      amount: totalAmount * 100,
+      reference: 'smart accessories',
+    },
+  ],
+});
+
+console.log("calculation")
+console.log(calculation)
+console.log("calculation")
 
 console.log(orderData.paymentToken,"......................")
 
@@ -634,32 +658,51 @@ console.log(orderData.paymentToken,"......................")
 if(!selectedCard && existingcard === false){
   console.log("old card........................")
    paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmountInCents,
+    amount: Math.roundcalculation.amount_total,
     currency: 'usd',
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
     customer: orderData.customerID,
     description: "test description",
     // payment_method: orderData.paymentToken,
     payment_method: attachedPaymentMethod.id, // when new card is used
-    receipt_email: "hivete6126@ksyhtc.com",
+    receipt_email: orderData.email,
   });
 }else{
    paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmountInCents,
+    amount:calculation.amount_total,
     currency: 'usd',
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
     customer: orderData.customerID,
     description: "test description",
     payment_method: orderData.paymentToken,
     // payment_method: attachedPaymentMethod.id, // when new card is used
-    receipt_email: "hivete6126@ksyhtc.com",
+    receipt_email: orderData.email,
   });
-
 }
+console.log("paymentIntent")
+console.log(paymentIntent)
+console.log("paymentIntent")
 
+// const transaction = await stripe.tax.transactions.createFromCalculation({
+//   calculation: calculation.id,
+//   reference: 'myOrder_123',
+// });
+// console.log("transaction")
+// console.log(transaction)
+// console.log("transaction")
+
+// const paymentIntentUpdate = await stripe.paymentIntents.update(
+//   paymentIntent.id,
+//   {
+//     metadata: {
+//       tax_transaction: transaction.id,
+//     },
+//   }
+// );
+// console.log("paymentIntentUpdate")
+// console.log(paymentIntentUpdate)
+// console.log("paymentIntentUpdate")
 if(userId !== "Guest"){
-
-
 const user = await UserModel.findById(userId);
 if (!user) {
   return next(new ErrorHandler("User not found", 404));
@@ -725,7 +768,39 @@ await shippingAddressFind.save();
         billingAddress,
       });
       // Save the order to the database
-      await order.save();
+      const orderData = await order.save();
+      console.log("orderData")
+      console.log(orderData)
+      console.log("orderData")
+      const transaction = await stripe.tax.transactions.createFromCalculation({
+        calculation: calculation.id,
+        reference: orderData._id.toString(),
+      });
+      console.log("transaction")
+      console.log(transaction)
+      console.log("transaction")
+      
+      const paymentIntentUpdate = await stripe.paymentIntents.update(
+        paymentIntent.id,
+        {
+          metadata: {
+            tax_transaction: transaction.id,
+          },
+        }
+      );
+      console.log("paymentIntentUpdate")
+      console.log(paymentIntentUpdate)
+      console.log("paymentIntentUpdate")
+
+
+
+
+
+
+
+
+
+
       res.status(201).json({
         success: true,
         message: 'Order created successfully',
@@ -867,13 +942,9 @@ res.status(200).json({
 })
 
 
-exports.updateCustomerCreditBalance = catchAsyncErrors(async (req, res, next) => {
-  const {cusId} = req.body;
-
-  const balanceTransactions = await stripe.customers.listBalanceTransactions(
-    cusId
-  );
-  res.send({data : balanceTransactions.data[0].ending_balance / 100})
+exports.fetchTaxrates = catchAsyncErrors(async (req, res, next) => {
+  const registrations = await stripe.tax.registrations.list({
+    status: 'all',
+  });
+  res.send(registrations)
 })
-
-
