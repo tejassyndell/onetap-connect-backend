@@ -6,6 +6,7 @@ const {
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, createProductCategories, getProductCategories, imageUpload, createPlan, getPlans , createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
+const { getCoupons } = require("../../controllers/OTC-AdminController/Clients/couponController");
 
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
@@ -31,4 +32,6 @@ router.post("/admin/updateAddons", updateAddons);
 router.get("/admin/getAddons", getAddons);
 router.post("/admin/plan/create", createPlan);
 router.get("/admin/plans", getPlans);
+
+router.get("/admin/getCoupons",getCoupons);
 module.exports = router;
