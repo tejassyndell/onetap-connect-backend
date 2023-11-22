@@ -7,6 +7,8 @@ const UserInformation = require("../../../models/NewSchemas/users_informationMod
 const Company = require("../../../models/NewSchemas/Company_informationModel.js");
 const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
+const Coupon = require("../../../models/NewSchemas/OtcCouponSchemaModal.js");
+const Category = require("../../../models/NewSchemas/OtcCategoryModel.js"); 
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
@@ -356,9 +358,9 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
 
           // Check if CustomPermalink is not changed or is unique
           if (CustomPermalink !== existingCategory.CustomPermalink) {
-              const isUnique = await isCustomPermalinkUnique(CustomPermalink);
+              const isUnique = await isPlanCustomPermalinkUnique(CustomPermalink);
               if (!isUnique) {
-                  CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
+                  CustomPermalink = await plangenerateUniqueCustomPermalink(CustomPermalink);
               }
           }
 
@@ -370,9 +372,9 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
           res.status(200).json({ success: true, category: updatedCategory });
       } else {
           // Creating a new category
-          const isUnique = await isCustomPermalinkUnique(CustomPermalink);
+          const isUnique = await isPlanCustomPermalinkUnique(CustomPermalink);
           if (!isUnique) {
-              CustomPermalink = await generateUniqueCustomPermalink(CustomPermalink);
+              CustomPermalink = await plangenerateUniqueCustomPermalink(CustomPermalink);
           }
 
           const newplans = new Plan({
@@ -387,12 +389,12 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-async function isCustomPermalinkUnique(CustomPermalink) {
+async function isPlanCustomPermalinkUnique(CustomPermalink) {
   const existingCategory = await Plan.findOne({ CustomPermalink });
   return !existingCategory;
 }
 
-async function generateUniqueCustomPermalink(basePermalink) {
+async function plangenerateUniqueCustomPermalink(basePermalink) {
   let uniquePermalink = basePermalink;
   let counter = 1;
   while (true) {
@@ -415,5 +417,170 @@ exports.getPlans = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
       plans:Plans,
+  });
+});
+
+
+exports.createCategories = catchAsyncErrors(async (req, res, next) => {
+  try {
+      const { productcategoryImage, id } = req.body;
+      const CustomPermalinkSlug = productcategoryImage.CustomPermalink;
+      let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
+
+      const { name, isActive, categoryType, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
+
+      if (id) {
+          // Editing an existing category
+
+          const existingCategory = await Category.findById(id);
+          if (!existingCategory) {
+              return res.status(404).json({ success: false, message: 'Category not found' });
+          }
+
+          // Check if CustomPermalink is not changed or is unique
+          if (CustomPermalink !== existingCategory.CustomPermalink) {
+              const isUnique = await isCategoryCustomPermalinkUnique(CustomPermalink);
+              if (!isUnique) {
+                  CustomPermalink = await categorygenerateUniqueCustomPermalink(CustomPermalink);
+              }
+          }
+
+          const updatedCategory = await Category.findByIdAndUpdate(
+              id,
+              {
+                  name,
+                  isActive,
+                  categoryType,
+                  CustomPermalink,
+                  description,
+                  image,
+                  imageName,
+                  altText,
+                  status,
+                  Visibility,
+                  activitylog,
+              },
+              { new: true } // Return the updated document
+          );
+
+          res.status(200).json({ success: true, category: updatedCategory });
+      } else {
+          // Creating a new category
+          const isUnique = await isCategoryCustomPermalinkUnique(CustomPermalink);
+          if (!isUnique) {
+              CustomPermalink = await categorygenerateUniqueCustomPermalink(CustomPermalink);
+          }
+
+          const newCategory = new Category({
+              name,
+              isActive,
+              categoryType,
+              CustomPermalink,
+              description,
+              image,
+              imageName,
+              altText,
+              status,
+              Visibility,
+              activitylog,
+              publishedDate: new Date()
+          });
+          const createdCategory = await newCategory.save();
+          res.status(201).json({ success: true, category: createdCategory });
+      }
+  } catch (error) {
+      // Handle error
+      next(error);
+  }
+});
+
+async function isCategoryCustomPermalinkUnique(CustomPermalink) {
+  const existingCategory = await Category.findOne({ CustomPermalink });
+  return !existingCategory;
+}
+
+async function categorygenerateUniqueCustomPermalink(basePermalink) {
+  let uniquePermalink = basePermalink;
+  let counter = 1;
+  while (true) {
+      const existingCategory = await Category.findOne({ CustomPermalink: uniquePermalink });
+      if (!existingCategory) {
+          return uniquePermalink;
+      }
+      // Append a counter to the base permalink to make it unique
+      uniquePermalink = `${basePermalink}-${counter}`;
+      counter++;
+  }
+}
+
+exports.getCategories = catchAsyncErrors(async (req, res, next) => {
+  const categories = await Category.find()
+
+  if (!categories) {
+      return next(new ErrorHandler("No Categories Found.....", 404));
+  }
+
+  res.status(200).json({
+      categories,
+  });
+});
+
+
+exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { id, couponData } = req.body;
+    let customPermalink = couponData.customPermalink;
+
+    if (id) {
+      // If ID is provided, update the existing Coupon
+      const existingCoupon = await Coupon.findByIdAndUpdate(id, couponData, { new: true });
+      if (!existingCoupon) {
+        return res.status(404).json({ error: 'Coupon not found' });
+      }
+      return res.json(existingCoupon);
+    } else {
+      const isUnique = await isCouponCustomPermalinkUnique(customPermalink);
+      if (!isUnique) {
+        customPermalink = await coupongenerateUniqueCustomPermalink(customPermalink);
+      }
+
+      // If ID is not provided, create a new Coupon
+      const newCoupon = new Coupon({ ...couponData, customPermalink });
+      const savedCoupon = await newCoupon.save();
+      res.status(201).json({ success: true, coupons: savedCoupon });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
+
+async function isCouponCustomPermalinkUnique(customPermalink) {
+  const existingCoupon = await Coupon.findOne({ customPermalink });
+  return !existingCoupon;
+}
+
+// Function to generate a unique customPermalink for coupons
+async function coupongenerateUniqueCustomPermalink(basePermalink) {
+  let uniquePermalink = basePermalink;
+  let counter = 1;
+  while (true) {
+    const existingCoupon = await Coupon.findOne({ customPermalink: uniquePermalink });
+    if (!existingCoupon) {
+      return uniquePermalink;
+    }
+    uniquePermalink = `${basePermalink}-${counter}`;
+    counter++;
+  }
+}
+
+exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
+  const Coupons = await Coupon.find()
+  if (!Coupons) {
+      return next(new ErrorHandler("No Coupons Found.....", 404));
+  }
+  res.status(200).json({
+      coupons: Coupons,
   });
 });
