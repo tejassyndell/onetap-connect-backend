@@ -33,6 +33,10 @@ const Adminaddonsschema = new mongoose.Schema(
     longdescription: {
       type: String,
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "otc_categories", // Assuming you have a "productCategories" collection
+    },
     paymentType: {
       type: String,
     },
