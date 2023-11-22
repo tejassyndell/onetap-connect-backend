@@ -1,15 +1,15 @@
 const mongoose = require("mongoose");
 
-const productCategorySchema = new mongoose.Schema({
+const categorySchema = new mongoose.Schema({
   name: {
     type: String,
     // required: true,
   },
   categoryType: { type: String },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
+  // isActive: {
+  //   type: Boolean,
+  //   default: true,
+  // },
   // parentCategory:{
   //   type: String,
   // },
@@ -34,11 +34,17 @@ const productCategorySchema = new mongoose.Schema({
 
   imageName: { type: String },
   altText: { type: String },
-  status: { type: String },
-  Visibility: { type: String },
+  status: {
+    type: String,
+    default: 'Published', // Set your default status value here
+  },
+  Visibility: {
+    type: String,
+    default: 'Public', // Set your default visibility value here
+  },
   publishedDate: { type: Date },
   activitylog: { type: String }
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("otc_categories", productCategorySchema);
+module.exports = mongoose.model("otc_categories", categorySchema);
