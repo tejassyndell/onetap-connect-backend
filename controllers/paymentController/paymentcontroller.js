@@ -7,7 +7,8 @@ const UserModel = require("../../models/NewSchemas/UserModel");
 const ErrorHandler = require("../../utils/errorHandler.js");
 const billingAddressModal = require("../../models/NewSchemas/user_billing_addressModel");
 const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
-
+const nodemailer = require("nodemailer");
+const path = require("path");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -126,18 +127,18 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         expand: ['tax']
       });
       console.log(customer)
-      fetchCustomerID = await UserModel.findOne({'email' : user.email})
+      fetchCustomerID = await UserModel.findOne({ 'email': user.email })
       console.log("fetchCustomerID")
       console.log(fetchCustomerID)
       console.log("fetchCustomerID")
 
       const updatedUserInfo = await UserInformation.findOneAndUpdate(
-        { user_id: fetchCustomerID._id},
+        { user_id: fetchCustomerID._id },
         { $set: { 'subscription_details.customer_id': customer.id } },
         { new: true }
       );
-      if(!updatedUserInfo){
-      return next(new ErrorHandler("Internal server Error", 501));
+      if (!updatedUserInfo) {
+        return next(new ErrorHandler("Internal server Error", 501));
       }
       res.status(200).json({ success: true, customer });
     }
@@ -194,126 +195,126 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   const productID = type === 'monthly'
     ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
     : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
-    let attachedPaymentMethod;
-if(!selectedCard){
+  let attachedPaymentMethod;
+  if (!selectedCard) {
     attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
       customer: customerID,
     });
-}
+  }
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
-        currency: 'usd', 
-        unit_amount: req.body.amount * 100, 
-        product: productID, 
-        tax_behavior: 'exclusive',
-        recurring : {
-        interval : type === "monthly" ? "month" : "year" ,
-        interval_count : 1
-  },
-});
-const invoiceItem = await stripe.invoiceItems.create({
+    currency: 'usd',
+    unit_amount: req.body.amount * 100,
+    product: productID,
+    tax_behavior: 'exclusive',
+    recurring: {
+      interval: type === "monthly" ? "month" : "year",
+      interval_count: 1
+    },
+  });
+  const invoiceItem = await stripe.invoiceItems.create({
+    customer: customerID,
+    amount: 5 * 100,  // need to pass charge amount
+    currency: 'usd',
+    description: 'Initial setup fee',
+  });
+
+
+  try {
+    let myPayment;
+    if (selectedCard) {
+      myPayment = await stripe.subscriptions.create({
+        description: 'Test description',
+        metadata: {
+          company: req.body.company_name,
+          primary_card: primary_card
+        },
         customer: customerID,
-        amount: 5 * 100,  // need to pass charge amount
-        currency: 'usd',
-        description: 'Initial setup fee',
+        default_payment_method: paymentToken,
+        cancel_at_period_end: false,
+        automatic_tax: {
+          enabled: true
+        },
+        items: [{ price: price.id }],
+        collection_method: "charge_automatically",
       });
+    } else {
+      myPayment = await stripe.subscriptions.create({
+        description: 'Test description',
+        metadata: {
+          company: req.body.company_name,
+          primary_card: primary_card
+        },
+        customer: customerID,
+        default_payment_method: attachedPaymentMethod.id,
+        cancel_at_period_end: false,
+        items: [{ price: price.id }],
+        automatic_tax: {
+          enabled: true
+        },
+        collection_method: "charge_automatically",
+      });
+    }
 
-
-    try {
-      let myPayment;
-      if(selectedCard){
-         myPayment = await stripe.subscriptions.create({
-          description: 'Test description', 
-          metadata: {
-            company: req.body.company_name,
-            primary_card: primary_card
-          },
-          customer: customerID,
+    if (newUser === true) {
+      await stripe.customers.update(customerID, {
+        invoice_settings: {
+          // default_payment_method: paymentMethodID,
           default_payment_method: paymentToken,
-          cancel_at_period_end: false,
-          automatic_tax: {
-            enabled: true
-          },
-          items: [{ price: price.id }],
-          collection_method: "charge_automatically",
-        });
-      }else{
-         myPayment = await stripe.subscriptions.create({
-          description: 'Test description', 
-          metadata: {
-            company: req.body.company_name,
-            primary_card: primary_card
-          },
-          customer: customerID,
-          default_payment_method: attachedPaymentMethod.id,
-          cancel_at_period_end: false,
-          items: [{ price: price.id }],
-          automatic_tax: {
-            enabled: true
-          },
-          collection_method: "charge_automatically",
-        });
-      }
-
-      if(newUser === true){
-        await stripe.customers.update(customerID, {
-          invoice_settings: {
-            // default_payment_method: paymentMethodID,
-            default_payment_method: paymentToken,
-          },
-        });
-      }
+        },
+      });
+    }
 
 
-      if(!myPayment){
-        throw new Error('Subscription creation failed'); 
-      }
+    if (!myPayment) {
+      throw new Error('Subscription creation failed');
+    }
 
-      const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-      if(latestInvoice.payment_inten){
+    const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+    if (latestInvoice.payment_inten) {
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
       console.log("myPayment")
       console.log(myPayment)
       console.log("myPayment")
-  
-      // Save payment ID and user details in your database after successful payment
-  
-      return res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status, endDate : myPayment.current_period_end });
-    }
-    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end });
 
-    } catch (error) {
-      console.error(error);
-       // handle subscription failure
-       try {
-        const deleteCustomer = customerID && await stripe.customers.del(customerID);
-        const deletedInvoiceItem =
-          invoiceItem && invoiceItem.id && (await stripe.invoiceItems.del(invoiceItem.id));
-        const detachPT =
-          attachedPaymentMethod &&
-          attachedPaymentMethod.id &&
-          (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
-        const deletePrice = price && await stripe.prices.update(
-          price.id,
-          {
-            active : false
-          }
-        );
-  
-        console.error(
-          'Cleanup performed after failure:',
-          deleteCustomer,
-          deletedInvoiceItem,
-          detachPT,
-          deletePrice
-        );
-      } catch (cleanupError) {
-        console.error('Error during cleanup:', cleanupError);
-      }
-      res.status(500).json({ success: false, error: error.message });
+      // Save payment ID and user details in your database after successful payment
+
+      return res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID: myPayment.id, status: paymentIntent.status, endDate: myPayment.current_period_end });
     }
+    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID: myPayment.id, status: 'active', endDate: myPayment.current_period_end });
+
+  } catch (error) {
+    console.error(error);
+    // handle subscription failure
+    try {
+      const deleteCustomer = customerID && await stripe.customers.del(customerID);
+      const deletedInvoiceItem =
+        invoiceItem && invoiceItem.id && (await stripe.invoiceItems.del(invoiceItem.id));
+      const detachPT =
+        attachedPaymentMethod &&
+        attachedPaymentMethod.id &&
+        (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
+      const deletePrice = price && await stripe.prices.update(
+        price.id,
+        {
+          active: false
+        }
+      );
+
+      console.error(
+        'Cleanup performed after failure:',
+        deleteCustomer,
+        deletedInvoiceItem,
+        detachPT,
+        deletePrice
+      );
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
+    }
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
@@ -356,45 +357,48 @@ exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
   console.log(req.body)
   try {
     const { subId } = req.body
-    if(!subId){
-     return res.status(500).json({ success: false, error: 'No Subscription Id found' });
-      }
-      
-    const canceledSubscription = await stripe.subscriptions.cancel(subId,{
-      invoice_now : true,
-      prorate : true
+    if (!subId) {
+      return res.status(500).json({ success: false, error: 'No Subscription Id found' });
+    }
+
+    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+      invoice_now: true,
+      prorate: true
     });
     console.log(canceledSubscription);
     console.log('canceledSubscription');
 
-    if(!canceledSubscription){
+    if (!canceledSubscription) {
       return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
     }
-    
+
     const updatedUserInfo = await UserInformation.findOneAndUpdate(
-      { 'subscription_details.customer_id': canceledSubscription.customer},
-      { $set: { 'subscription_details.subscription_id': null,
-                'subscription_details.addones': [],
-                'subscription_details.total_amount': null,
-                'subscription_details.billing_cycle': null,
-                'subscription_details.endDate': null,
-                'subscription_details.plan': 'Free',
-                'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
-                'subscription_details.recurring_amount': null,
-                'subscription_details.renewal_date': null,
-                'subscription_details.auto_renewal': null,
-                'subscription_details.taxRate': null,
-              }},
-              { new: true }
-              );
-              if(!updatedUserInfo){
-                return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
-              }
+      { 'subscription_details.customer_id': canceledSubscription.customer },
+      {
+        $set: {
+          'subscription_details.subscription_id': null,
+          'subscription_details.addones': [],
+          'subscription_details.total_amount': null,
+          'subscription_details.billing_cycle': null,
+          'subscription_details.endDate': null,
+          'subscription_details.plan': 'Free',
+          'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
+          'subscription_details.recurring_amount': null,
+          'subscription_details.renewal_date': null,
+          'subscription_details.auto_renewal': null,
+          'subscription_details.taxRate': null,
+        }
+      },
+      { new: true }
+    );
+    if (!updatedUserInfo) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
 
-              console.log(updatedUserInfo)
-              console.log("updatedUserInfo")
+    console.log(updatedUserInfo)
+    console.log("updatedUserInfo")
 
-    res.status(200).json({ success: true, delete : "Subscription Canceled successfully" });
+    res.status(200).json({ success: true, delete: "Subscription Canceled successfully" });
     // res.status(200).json({ success: true, message: canceledSubscription });
   } catch (error) {
     console.error(error);
@@ -439,9 +443,9 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     const productID = type === 'monthly'
       ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
       : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
-      let attachedPaymentMethod;
+    let attachedPaymentMethod;
     if (!selectedCard && existingcard === false) {
-       attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+      attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
         customer: customerID,
       });
     }
@@ -463,9 +467,9 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     console.log("called1")
 
     // Add the new item to the subscription
-let myPayment;
-    if(selectedCard){
-       myPayment = await stripe.subscriptions.update(subscriptionId, {
+    let myPayment;
+    if (selectedCard) {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
         items: [{
           id: subscription.items.data[0].id,
           price: price.id
@@ -474,7 +478,7 @@ let myPayment;
         proration_date: proration_date,
         cancel_at_period_end: false
       });
-    }else if(existingcard){ 
+    } else if (existingcard) {
       myPayment = await stripe.subscriptions.update(subscriptionId, {
         items: [{
           id: subscription.items.data[0].id,
@@ -485,8 +489,8 @@ let myPayment;
         cancel_at_period_end: false
       });
     }
-      else{
-       myPayment = await stripe.subscriptions.update(subscriptionId, {
+    else {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
         items: [{
           id: subscription.items.data[0].id,
           price: price.id
@@ -496,7 +500,7 @@ let myPayment;
         cancel_at_period_end: false
       });
 
-  
+
       console.log("myPayment");
       console.log(myPayment);
       console.log("myPayment");
@@ -504,23 +508,23 @@ let myPayment;
       // const paymentIntent = await stripe.paymentIntents.retrieve(
       //   latestInvoice.payment_intent
       // );
-  
-    
- 
 
-    // // Remove the existing item from the subscription
-    // console.log(myPayment);
-    // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-    // const paymentIntent = await stripe.paymentIntents.retrieve(
-    //   latestInvoice.payment_intent
-    // );
 
-    // Save payment ID and user details in your database after successful payment
-  }
-  console.log("myPayment");
-  console.log(myPayment);
-  console.log("myPayment");
-    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status : "true", endDate : myPayment.current_period_end });
+
+
+      // // Remove the existing item from the subscription
+      // console.log(myPayment);
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
+
+      // Save payment ID and user details in your database after successful payment
+    }
+    console.log("myPayment");
+    console.log(myPayment);
+    console.log("myPayment");
+    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.current_period_end });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
@@ -592,6 +596,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   try {
     // Get the user ID from the authenticated user or request data
     const userId = req.body.userId;
+    const useremail = req.body.email;
     const orderData = req.body.createOrderData
     const {
       smartAccessories,
@@ -605,7 +610,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       selectedEditAddress,
     } = req.body;
 
-
     const totalAmountInCents = Math.round(totalAmount * 100);
     const type = (smartAccessories ? "smartAccessories" : "")
 
@@ -614,96 +618,96 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     //   customer: orderData.customerID,
     // });
 
-//     let payment_method
-// //     if(selectedCard){
-// // // payment_method = 
-// //     }else{
+    //     let payment_method
+    // //     if(selectedCard){
+    // // // payment_method = 
+    // //     }else{
 
-// //     }
+    // //     }
 
-console.log(orderData.paymentToken,"......................")
+    console.log(orderData.paymentToken, "......................")
 
     let attachedPaymentMethod;
     if (!selectedCard && existingcard === false) {
       console.log("for new card........................")
       attachedPaymentMethod = await stripe.paymentMethods.attach(orderData.paymentToken, {
-       customer: orderData.customerID,
-     });
-   }
-   let paymentIntent;
-if(!selectedCard && existingcard === false){
-  console.log("old card........................")
-   paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmountInCents,
-    currency: 'usd',
-    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-    customer: orderData.customerID,
-    description: "test description",
-    // payment_method: orderData.paymentToken,
-    payment_method: attachedPaymentMethod.id, // when new card is used
-    receipt_email: "hivete6126@ksyhtc.com",
-  });
-}else{
-   paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmountInCents,
-    currency: 'usd',
-    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-    customer: orderData.customerID,
-    description: "test description",
-    payment_method: orderData.paymentToken,
-    // payment_method: attachedPaymentMethod.id, // when new card is used
-    receipt_email: "hivete6126@ksyhtc.com",
-  });
-
-}
-
-if(userId !== "Guest"){
-
-
-const user = await UserModel.findById(userId);
-if (!user) {
-  return next(new ErrorHandler("User not found", 404));
-}
-
-let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
-if (!billingAddressFind) {
-  billingAddressFind = new billingAddressModal({
-    userId: user._id,
-    billing_address: billingAddress,
-  });
-} else {
-  billingAddressFind.billing_address = billingAddress;
-}
-
-let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
-
-if (!shippingAddressFind) {
-  shippingAddressFind = new shippingAddressModal({
-    userId: user._id,
-    shipping_address: [],
-  });
-}
-// if(saveAddress) {
-//   shippingAddressFind.shipping_address.push(shippingData);
-// }
-if (saveAddress) {
-  if (selectedEditAddress) {
-    const index = shippingAddressFind.shipping_address.findIndex(
-      (address) => address._id.toString() === selectedEditAddress._id.toString()
-    );
-    if (index !== -1) {
-      // Replace the existing address with the updated address
-      shippingAddressFind.shipping_address[index] = shippingAddress;
+        customer: orderData.customerID,
+      });
     }
-  } else {
-    // Add a new address
-    shippingAddressFind.shipping_address.push(shippingAddress);
-  }
-}
+    let paymentIntent;
+    if (!selectedCard && existingcard === false) {
+      console.log("old card........................")
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmountInCents,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+        customer: orderData.customerID,
+        description: "test description",
+        // payment_method: orderData.paymentToken,
+        payment_method: attachedPaymentMethod.id, // when new card is used
+        receipt_email: "hivete6126@ksyhtc.com",
+      });
+    } else {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmountInCents,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+        customer: orderData.customerID,
+        description: "test description",
+        payment_method: orderData.paymentToken,
+        // payment_method: attachedPaymentMethod.id, // when new card is used
+        receipt_email: "hivete6126@ksyhtc.com",
+      });
 
-await billingAddressFind.save();
-await shippingAddressFind.save();
-}
+    }
+
+    if (userId !== "Guest") {
+
+
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+
+      let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
+      if (!billingAddressFind) {
+        billingAddressFind = new billingAddressModal({
+          userId: user._id,
+          billing_address: billingAddress,
+        });
+      } else {
+        billingAddressFind.billing_address = billingAddress;
+      }
+
+      let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
+
+      if (!shippingAddressFind) {
+        shippingAddressFind = new shippingAddressModal({
+          userId: user._id,
+          shipping_address: [],
+        });
+      }
+      // if(saveAddress) {
+      //   shippingAddressFind.shipping_address.push(shippingData);
+      // }
+      if (saveAddress) {
+        if (selectedEditAddress) {
+          const index = shippingAddressFind.shipping_address.findIndex(
+            (address) => address._id.toString() === selectedEditAddress._id.toString()
+          );
+          if (index !== -1) {
+            // Replace the existing address with the updated address
+            shippingAddressFind.shipping_address[index] = shippingAddress;
+          }
+        } else {
+          // Add a new address
+          shippingAddressFind.shipping_address.push(shippingAddress);
+        }
+      }
+
+      await billingAddressFind.save();
+      await shippingAddressFind.save();
+    }
 
 
     const paymentDate = new Date();
@@ -726,11 +730,12 @@ await shippingAddressFind.save();
       });
       // Save the order to the database
       await order.save();
+      await sendOrderConfirmationEmail(useremail, order._id);
       res.status(201).json({
         success: true,
         message: 'Order created successfully',
         order,
-        clientSecret : paymentIntent.client_secret
+        clientSecret: paymentIntent.client_secret
       });
     } else {
       // Payment confirmation failed
@@ -744,41 +749,106 @@ await shippingAddressFind.save();
     res.status(500).json({ message: error });
   }
 });
- 
+async function sendOrderConfirmationEmail(userEmail, orderId) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      to: userEmail,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'Order Confirmation',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Hi ${userEmail},<br/>
+          <p>Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!</p>
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+
+        </div> <br/>
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
+
 exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
   const { customerID } = req.body
   console.log(req.body)
   let paymentMethods = await stripe.paymentMethods.list({
     customer: customerID,
-    type: 'card', 
+    type: 'card',
   });
 
-const customer = await stripe.customers.retrieve(customerID);
+  const customer = await stripe.customers.retrieve(customerID);
 
-const defaultPaymentMethodID = customer.invoice_settings.default_payment_method;
+  const defaultPaymentMethodID = customer.invoice_settings.default_payment_method;
 
-let primaryPaymentMethod = null;
-paymentMethods.data.forEach((paymentMethod) => {
-  paymentMethod.isPrimary = paymentMethod.id === defaultPaymentMethodID;
-});
-console.log(paymentMethods)
+  let primaryPaymentMethod = null;
+  paymentMethods.data.forEach((paymentMethod) => {
+    paymentMethod.isPrimary = paymentMethod.id === defaultPaymentMethodID;
+  });
+  console.log(paymentMethods)
 
-// res.send(primaryPaymentMethod)
-res.send(paymentMethods)
+  // res.send(primaryPaymentMethod)
+  res.send(paymentMethods)
 })
 
 
 exports.updateCards = catchAsyncErrors(async (req, res, next) => {
   const { paymentData } = req.body;
   // const isPrimary = req.body.isPrimary 
-  const {type} = paymentData;
+  const { type } = paymentData;
   if (type === 'create') {
-    const { customerID, paymentID, cardId ,isPrimary} = paymentData;
+    const { customerID, paymentID, cardId, isPrimary } = paymentData;
     let attachedPaymentMethod;
 
-   attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
-    customer: customerID,
-  });
+    attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+      customer: customerID,
+    });
     if (isPrimary) {
       await stripe.customers.update(customerID, {
         invoice_settings: {
@@ -786,7 +856,7 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
         },
       });
     }
-    if(cardId){
+    if (cardId) {
       await stripe.customers.update(customerID, {
         invoice_settings: {
           default_payment_method: cardId.id,
@@ -798,67 +868,67 @@ exports.updateCards = catchAsyncErrors(async (req, res, next) => {
       success: true,
       paymentData: attachedPaymentMethod,
     });
-  }else if(type === 'delete'){
+  } else if (type === 'delete') {
     const { paymentID } = paymentData;
     const deletePaymentMethod = await stripe.paymentMethods.detach(paymentID);
     res.status(200).json({
       success: true,
       message: "Payment Method Deleted successfully",
     });
-  }else if(type === 'createNewCustomer'){
-    const { paymentID,isPrimary} = paymentData;
+  } else if (type === 'createNewCustomer') {
+    const { paymentID, isPrimary } = paymentData;
     const user = req.user;
     const customer = await stripe.customers.create({
-  name: `${user.first_name} ${user.last_name}`,
-  email: user.email,
-  phone: user.contact,
-  address: {
-    line1: user.address.line1,
-    line2: user.address.line2,
-    city: user.address.city,
-    state: user.address.state,
-    country: user.address.country,
-    postal_code: user.address.postal_code,
-  },
-  expand: ['tax']
-});
-if(!customer){
-  return res.status(501).json({
-    success: false,
-    message: "Internal Server Error",
-  }); 
-}
-const updatedUserInfo = await UserInformation.findOneAndUpdate(
-  { user_id: user._id},
-  { $set: { 'subscription_details.customer_id': customer.id } },
-  { new: true }
-);
-if(!updatedUserInfo){
-  return res.status(501).json({
-    success: false,
-    message: "Internal Server Error",
-  }); 
-}
+      name: `${user.first_name} ${user.last_name}`,
+      email: user.email,
+      phone: user.contact,
+      address: {
+        line1: user.address.line1,
+        line2: user.address.line2,
+        city: user.address.city,
+        state: user.address.state,
+        country: user.address.country,
+        postal_code: user.address.postal_code,
+      },
+      expand: ['tax']
+    });
+    if (!customer) {
+      return res.status(501).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+    const updatedUserInfo = await UserInformation.findOneAndUpdate(
+      { user_id: user._id },
+      { $set: { 'subscription_details.customer_id': customer.id } },
+      { new: true }
+    );
+    if (!updatedUserInfo) {
+      return res.status(501).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
 
-const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
-  customer: customer.id,
-});
-const setPrimary = await stripe.customers.update(customer.id, {
-  invoice_settings: {
-    default_payment_method: paymentID,
-  },
-});
-if(!attachedPaymentMethod || !setPrimary){
-  return res.status(501).json({
-    success: false,
-    message: "Internal Server Error",
-  }); 
-}
-res.status(200).json({
-  success: true,
-  paymentData: attachedPaymentMethod,
-});
-  }else{
+    const attachedPaymentMethod = await stripe.paymentMethods.attach(paymentID, {
+      customer: customer.id,
+    });
+    const setPrimary = await stripe.customers.update(customer.id, {
+      invoice_settings: {
+        default_payment_method: paymentID,
+      },
+    });
+    if (!attachedPaymentMethod || !setPrimary) {
+      return res.status(501).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      paymentData: attachedPaymentMethod,
+    });
+  } else {
     res.status(501).json({
       success: false,
       message: "Internal Server Error",
@@ -868,12 +938,12 @@ res.status(200).json({
 
 
 exports.updateCustomerCreditBalance = catchAsyncErrors(async (req, res, next) => {
-  const {cusId} = req.body;
+  const { cusId } = req.body;
 
   const balanceTransactions = await stripe.customers.listBalanceTransactions(
     cusId
   );
-  res.send({data : balanceTransactions.data[0].ending_balance / 100})
+  res.send({ data: balanceTransactions.data[0].ending_balance / 100 })
 })
 
 
