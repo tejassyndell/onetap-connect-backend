@@ -35,7 +35,7 @@ const planSchema = new mongoose.Schema({
   }],
   add_ons:[ {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Adminaddons',
+    ref: 'otc_addons',
     require: false,
     set: (v) => (v === "" ? null : v),
   }]

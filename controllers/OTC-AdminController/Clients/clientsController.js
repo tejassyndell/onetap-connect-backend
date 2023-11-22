@@ -7,7 +7,7 @@ const UserInformation = require("../../../models/NewSchemas/users_informationMod
 const Company = require("../../../models/NewSchemas/Company_informationModel.js");
 const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
-const Coupon = require("../../../models/NewSchemas/OtcCouponSchemaModal.js");
+const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js"); 
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
