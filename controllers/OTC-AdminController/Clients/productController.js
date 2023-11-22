@@ -144,8 +144,8 @@ exports.createProduct = async (req, res, next) => {
 };
 exports.createProductCategory = catchAsyncErrors(async (req, res, next) => {
     try {
-        const { name, isActive, parentCategory, CustomPermalink, description, featuredImage, status, Visibility, activitylog } = req.body;
-        const categoryType = "Smart-accessories"
+        const { name, isActive, parentCategory, CustomPermalink, description, featuredImage, status, Visibility, activitylog, categoryType } = req.body;
+        // const categoryType = "Smart-accessories"
         const newCategory = new ProductCategory({
             name,
             isActive,
