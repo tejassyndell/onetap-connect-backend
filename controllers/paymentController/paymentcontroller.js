@@ -948,3 +948,87 @@ exports.fetchTaxrates = catchAsyncErrors(async (req, res, next) => {
   });
   res.send(registrations)
 })
+exports.updateCustomerCreditBalance = catchAsyncErrors(async (req, res, next) => {
+  const {cusId} = req.body;
+
+  const balanceTransactions = await stripe.customers.listBalanceTransactions(
+    cusId
+  );
+  res.send({data : balanceTransactions.data[0].ending_balance / 100})
+})
+
+
+exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
+ try{
+   const userId = req.body.userId;
+   const {
+    totalAmount,
+    tax,
+    billingAddress,
+    shippingAddress,
+    addaddons,
+    selectedCard,
+    existingcard,
+    saveAddress,
+    selectedEditAddress,
+    shipping_method,
+    first_name,
+    email,
+    contact,
+    last_name,
+  } = req.body;
+  const type = (addaddons ? "AddonPurchase" : "")
+  const paymentDate = new Date();
+   const order = new Order({
+    user: userId, // Link the order to the specific user
+    shippingAddress,
+    billingAddress,
+    totalAmount,
+    tax,
+    first_name,
+    email,
+    contact,
+    last_name,
+    type,
+    addaddons,
+    paymentDate,
+    shipping_method
+
+  });
+
+      // Ensure totalAmount is treated as a number
+      // const numericTotalAmount = parseFloat(totalAmount);
+
+   // Save the order to the database
+   await order.save();
+    // Update UserInformation document
+    // Update UserInformation document
+    console.log(addaddons)
+    const updatedUserInformation = await UserInformation.findOneAndUpdate(
+      { user_id: userId },
+      {
+        $push: {
+          'subscription_details.addones': { $each: addaddons.map((addon) => addon.addonId) }
+        },
+        $inc: {  'subscription_details.total_amount' : totalAmount  } 
+      },
+      { new: true } // Return the updated document
+    );
+
+
+   res.status(201).json({
+     success: true,
+     message: 'Order created successfully',
+     order,
+     userInformation: updatedUserInformation,
+    //  clientSecret : paymentIntent.client_secret
+   });
+ } 
+ 
+ catch (error) {
+  console.error(error);
+  res.status(500).json({ message: error });
+}
+})
+
+

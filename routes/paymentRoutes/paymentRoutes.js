@@ -12,6 +12,8 @@ const {
   cancelPlan,
   fetchCards,
   updateCards,
+  updateCustomerCreditBalance,
+  purchaseaddon,
   fetchTaxrates
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
@@ -29,5 +31,5 @@ router.post('/payment/test' , fetchTaxrates)
 router.post('/payment/cancelSubscription' , cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card',isAuthenticatedUser, updateCards)
-
+router.post("/addon-purchase",isAuthenticatedUser , purchaseaddon);
 module.exports = router;

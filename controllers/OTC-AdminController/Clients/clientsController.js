@@ -264,33 +264,49 @@ exports.getcompanyuserstatus = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateAddons = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { id, updatedData } = req.body;
-  
+    const { id, updatedData , name } = req.body;
+    let CustomPermalink = updatedData.CustomPermalink;
   
     if (id) {
-      // If ID is provided, update the existing Addon
       const existingAddon = await Adminaddons.findByIdAndUpdate(id, updatedData, { new: true });
       if (!existingAddon) {
         return res.status(404).json({ error: 'Addon not found' });
       }
       return res.json(existingAddon);
     } else {
-
-      
-      // If ID is not provided, create a new Addon
-      const newAddon = new Adminaddons(updatedData);
+      const isUnique = await isAddonCustomPermalinkUnique(CustomPermalink);
+      if (!isUnique) {
+        CustomPermalink = await generateAddonUniqueCustomPermalink(CustomPermalink);
+      }
+     
+      const newAddon = new Adminaddons({ ...updatedData, CustomPermalink, publishedBy: name });
       const savedAddon = await newAddon.save();
       return res.status(201).json(savedAddon);
     }
-  
-  
   
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+async function isAddonCustomPermalinkUnique(CustomPermalink) {
+  const existingCategory = await Adminaddons.findOne({ CustomPermalink });
+  return !existingCategory;
+}
 
+async function generateAddonUniqueCustomPermalink(basePermalink) {
+  let uniquePermalink = basePermalink;
+  let counter = 1;
+  while (true) {
+      const existingCategory = await Adminaddons.findOne({ CustomPermalink: uniquePermalink });
+      if (!existingCategory) {
+          return uniquePermalink;
+      }
+      // Append a counter to the base permalink to make it unique
+      uniquePermalink = `${basePermalink}-${counter}`;
+      counter++;
+  }
+}
 // exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
 //   try {
 //     const userInformationData = await UserInformation.find();
