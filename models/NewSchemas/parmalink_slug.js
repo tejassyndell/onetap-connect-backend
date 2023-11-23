@@ -19,7 +19,7 @@ const parmalink_slug_Schema = new mongoose.Schema(
         ],
         companyunique_slug: [
             {
-                value: { type: String, unique: true },
+                value: { type: String, unique: true, sparse: true },
                 timestamp: { type: Date, default: Date.now },
             }
         ],
