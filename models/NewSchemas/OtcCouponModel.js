@@ -104,14 +104,14 @@ const CouponSchema = new mongoose.Schema({
     autoApply: {
         type: Boolean,
     },
-    restrictions: [{
+    restrictions: {
         allowMultipleCoupons: {
             type: Boolean,
         },
         forClients: {
             type: Boolean,
         },
-    }, ],
+    },
     plan_restrictions: [{
         plan_id: {
             type: Number,
@@ -122,14 +122,16 @@ const CouponSchema = new mongoose.Schema({
             required: true,
         },
     }, ],
-    teamPlanUsage: [
-        (minUsers = {
+    teamPlanUsage: {
+
+        minUsers : {
             type: Number,
-        }),
-        (maxUsers = {
+        },
+        maxUsers : {
             type: Number,
-        }),
-    ],
+        },
+    }
+    ,
     freeShipping: {
         type: Boolean,
         default: false,
