@@ -91,6 +91,7 @@ const {
   getOrders,
   redirectUser,
   getuniqueslugbyid,
+  sharemycard_email,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -255,5 +256,6 @@ router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
 router.get("/getallcompanies", isAuthenticatedUser, getcompanies);  
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
+router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
 // router.post('/testapii' ,Testapidummy)
 module.exports = router;

@@ -36,6 +36,7 @@ const UserInformation = require("../../models/NewSchemas/users_informationModel.
 const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js');
 const parmalinkSlug = require('../../models/NewSchemas/parmalink_slug.js');
+const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const { log } = require("console");
 const { getMaxListeners } = require("events");
 dotenv.config();
@@ -2405,20 +2406,20 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
-        subscription_details: {
-              addones: planData.addones,
-              subscription_id: planData.subscription_id,
-              total_amount: planData.total_amount,
-              plan: planData.plan,
-              endDate : planData.endDate,
-              total_user: planData.total_user,
-              billing_cycle: planData.billing_cycle,
-              recurring_amount:planData.recurring_amount,
-              renewal_date: planData.renewal_date,
-              taxRate: planData.taxRate,
-              customer_id: planData.customer_id,
-        },
-      });
+      subscription_details: {
+        addones: planData.addones,
+        subscription_id: planData.subscription_id,
+        total_amount: planData.total_amount,
+        plan: planData.plan,
+        endDate: planData.endDate,
+        total_user: planData.total_user,
+        billing_cycle: planData.billing_cycle,
+        recurring_amount: planData.recurring_amount,
+        renewal_date: planData.renewal_date,
+        taxRate: planData.taxRate,
+        customer_id: planData.customer_id,
+      },
+    });
     // userInformation.subscription_details = planData;
     // console.log(userInformation, "userInformation");
   } else {
@@ -2435,7 +2436,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       renewal_date: planData.renewal_date,
       taxRate: planData.taxRate,
       customer_id: planData.customer_id,
-  };
+    };
   }
   shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
@@ -2494,7 +2495,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
       );
     }
-    
+
   }
   let companyVar = null
   if (companyslug !== null) {
@@ -2509,7 +2510,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       );
     }
   }
-  console.log(userVar, companyVar , "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  console.log(userVar, companyVar, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   if (userVar !== null) {
     user.userurlslug = userVar.value;
   }
@@ -2524,6 +2525,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
+  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount);
 
   res.status(200).json({
     success: true,
@@ -2531,6 +2533,133 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     userInformation,
   });
 });
+async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, plandataplan, plandatacycle, plandatarenew, plandataamount, plandatatotal) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      to: orderemail,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Dear ${orderfirstname},<br/>
+          <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+          <p>Subscription Details:</p>
+          <ul>
+            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${plandataplan}</li>
+            <li><b>Duration:</b>&nbsp;&nbsp;${plandatacycle}</li>
+            <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(plandatarenew).toLocaleDateString()}</li>
+            <li><b>Amount:</b>&nbsp;&nbsp;$ ${plandataamount}</li>
+          </ul>
+
+          <!-- Invoice Table -->
+          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #e65925; color: #fff; text-align: left;">
+                    <th style="padding: 10px;">Subscription</th>
+                    <!-- <th style="padding: 10px;">Description</th> -->
+                    <!-- <th style="padding: 10px;">Unit Price</th> -->
+                    <th style="padding: 10px; text-align: center;">Quantity</th>
+                    <th></th>
+                    <th style="padding: 10px;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Add your invoice items dynamically here -->
+                <tr>
+                    <td>${plandataplan}-${plandatacycle}</td>
+                    <!-- <td>Description of Your Item</td> -->
+                    <!-- <td></td> -->
+                    <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;$ ${plandataamount}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;">Initial setup fee</td>
+                    <td>&nbsp;&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>addonname</td>
+                    <td></td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;price</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td>Payment Method:</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;method</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;"><b>Total:</b></td>
+                    <td>&nbsp;&nbsp;$ ${plandatatotal}</td>
+                </tr>
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table><br/>
+
+          <p>Please keep this email for your records.</p>
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+        </div> 
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
 
 exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
@@ -2631,17 +2760,17 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   company.address = billingdata;
   company.company_name = company_name;
   const order = new Order({
-    user: user._id, 
+    user: user._id,
     company: companyID,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
     paymentDate: new Date(),
-    type:"Subscription",
+    type: "Subscription",
     subscription_details: planData,
     shippingAddress: shippingData,
-    billingAddress:billingdata,
-    shipping_method:shipping_method
+    billingAddress: billingdata,
+    shipping_method: shipping_method
   });
 
   await user.save();
@@ -2650,6 +2779,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
+  await sendOrderconfirmationEmail(order.email, order._id, order.first_name);
 
   res.status(200).json({
     success: true,
@@ -2657,6 +2787,110 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
     userInformation,
   });
 });
+async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      to: orderemail,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+      <html>
+      
+      <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </head>
+      
+      <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+      
+          <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+              <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+              <img src="cid:logo">
+              </div>
+              <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+              <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+              <h3>Welcome to OneTapConnect!</h3>
+              <p>Dear ${ordername},<br/>
+              <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+    
+              <!-- Invoice Table -->
+              <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #e65925; color: #fff; text-align: left;">
+                        <th style="padding: 10px;">Subscription</th>
+                        <!-- <th style="padding: 10px;">Description</th> -->
+                        <!-- <th style="padding: 10px;">Unit Price</th> -->
+                        <th style="padding: 10px;text-align: center;">Quantity</th>
+                        <th></th>
+                        <th style="padding: 10px;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Add your invoice items dynamically here -->
+                    <tr>
+                        <td>&nbsp;&nbsp;&nbsp;Free</td>
+                        <!-- <td>Description of Your Item</td> -->
+                        <!-- <td></td> -->
+                        <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                        <td></td>
+                        <td>&nbsp;&nbsp;$ 0.0</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                        <td></td>
+                        <td></td>
+                        <td style="text-align: end;"><b>Total:</b></td>
+                        <td>&nbsp;&nbsp;$ 0.0</td>
+                    </tr>
+                    <!-- Add more rows as needed -->
+                </tbody>
+            </table><br/>
+    
+              <p>Please keep this email for your records.</p>
+              <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+            </div> 
+              <h3>Technical issue?</h3>
+              <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+          </div>
+      
+      </body>
+      
+      </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
@@ -4729,7 +4963,7 @@ exports.getOrders = catchAsyncErrors(async (req, res, next) => {
 
 exports.getuniqueslugbyid = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
- 
+
   const users_slug = await parmalinkSlug.findOne({ user_id: id });
 
   if (!users_slug) {
@@ -4740,4 +4974,97 @@ exports.getuniqueslugbyid = catchAsyncErrors(async (req, res, next) => {
     success: true,
     users_slug,
   });
+});
+
+exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
+  const { recipientName, recipientEmail, recipientText, UserID, frontendURL,comp_slug,useruniqueslug } = req.body.formData;
+  console.log(recipientName, recipientEmail, recipientText, UserID, useruniqueslug, comp_slug,frontendURL);
+
+  const teamlink = `${frontendURL}/${comp_slug}/${useruniqueslug}`;
+  const indilink = `${frontendURL}/${useruniqueslug}`
+  const link = comp_slug ? teamlink : indilink;
+  console.log(link)
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+  const mailOptions = {
+    from: 'OneTapConnect:developersweb001@gmail.com',
+    to: recipientEmail,
+    subject: `${recipientName} shared their digital business card.`,
+    // text: 'Body of your email'
+    html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+        </div>
+        <div style="background-color: #fff; padding: 20px; color: #333; font-size: 14px;">
+          <h3>Hi!</h3>
+          <div style="margin-top: 30px;">${recipientName} is inviting you to see their Digital Business Card.</div>
+          <div style="margin-top: 30px;">You can view the card here: ${link}</div>
+        </div>
+        <div style="background-color: #f9f9f9; border-radius: 0 0 20px 20px; padding: 20px 15px; font-size: 14px; color: #333;">
+            <div>Have a great day!</div>
+            <div style="margin-top: 5px;">The OneTapConnect team</div>
+        </div>
+        <div style="text-align: center; margin-top: 20px;"><a href="https://onetapconnect.com/" style="text-align: center; text-decoration: none;">onetapconnect.com</a></div>
+    </body>
+    </html>
+    `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+  transporter.sendMail(mailOptions, async function (error, info) {
+    if (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to send email.' });
+    } else {
+      console.log('Email sent: ' + info.response);
+
+      try {
+        await ShareCardEmail.create({
+          User_name: recipientName,
+          recipient_email: recipientEmail,
+          Text_message: recipientText,
+          user_id: UserID
+        });
+
+        res.status(200).json({ message: 'Form data saved successfully. Email sent.' });
+      } catch (dbError) {
+        console.error('Error saving data to the database:', dbError);
+        res.status(500).json({ error: 'Failed to save data to the database.' });
+      }
+    }
+  });
+
+  // await ShareCardEmail.create({
+  //   User_name:recipientName,
+  //   recipient_email:recipientEmail,
+  //   Text_message:recipientText,
+  //   user_id: UserID
+  // })
+
+  // res.status(200).json({ message: 'Form data saved successfully.' });
 });

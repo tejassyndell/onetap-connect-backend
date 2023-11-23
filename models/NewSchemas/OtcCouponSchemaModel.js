@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 
 const coupon_Schema = new mongoose.Schema(
     {
+        name: { type: String },
+        couponType: { type: String },
+        category: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "otc_categories", // Assuming you have a "productCategories" collection
+          },
+        status: { type: String, default: 'Published' },
         code: {
             type: String,
             unique: true,
@@ -20,12 +27,12 @@ const coupon_Schema = new mongoose.Schema(
             type: Date,
             required: true,
         },
-        assignedUsers: [{
-            type: Schema.Types.ObjectId,
-            ref: 'user',
-        }],
+        // assignedUsers: [{
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: 'user',
+        // }],
     },
     { timestamps: true }
 );
 
-module.exports = mongoose.model('coupon ', coupon_Schema);
+module.exports = mongoose.model('otc_coupons ', coupon_Schema);

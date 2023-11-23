@@ -37,6 +37,11 @@ const order_Schema = new mongoose.Schema(
         price: { type: Number },
       },
     ],
+    addaddons: [
+      {
+        addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" }
+      },
+    ],
     subscription_details: {
       addones: [{ type: mongoose.Schema.Types.ObjectId }],
       userCount: { type: Number },
