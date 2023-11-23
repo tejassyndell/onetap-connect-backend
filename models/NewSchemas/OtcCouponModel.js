@@ -129,19 +129,16 @@ const CouponSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        plan_type: {
-            type: String,
-            required: true,
-        },
-    },],
+    }, ],
     teamPlanUsage: {
-        minUsers: {
+        minUsers : {
             type: Number,
         },
-        maxUsers: {
+        maxUsers : {
             type: Number,
         },
-    },
+    }
+    ,
     freeShipping: {
         type: Boolean,
         default: false,

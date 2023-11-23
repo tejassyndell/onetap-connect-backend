@@ -274,12 +274,8 @@ const invoiceItem = await stripe.invoiceItems.create({
       const paymentIntent = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
-      console.log("myPayment")
-      console.log(myPayment)
-      console.log("myPayment")
-  
+      
       // Save payment ID and user details in your database after successful payment
-  
       return res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status, endDate : myPayment.current_period_end });
     }
     return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end });
@@ -641,24 +637,16 @@ const calculation = await stripe.tax.calculations.create({
   ],
 });
 
-console.log("calculation")
-console.log(calculation)
-console.log("calculation")
-
-console.log(orderData.paymentToken,"......................")
-
     let attachedPaymentMethod;
     if (!selectedCard && existingcard === false) {
-      console.log("for new card........................")
       attachedPaymentMethod = await stripe.paymentMethods.attach(orderData.paymentToken, {
        customer: orderData.customerID,
      });
    }
    let paymentIntent;
 if(!selectedCard && existingcard === false){
-  console.log("old card........................")
    paymentIntent = await stripe.paymentIntents.create({
-    amount: Math.roundcalculation.amount_total,
+    amount: calculation.amount_total,
     currency: 'usd',
     automatic_payment_methods: { enabled: true, allow_redirects: "never" },
     customer: orderData.customerID,
@@ -791,16 +779,6 @@ await shippingAddressFind.save();
       console.log("paymentIntentUpdate")
       console.log(paymentIntentUpdate)
       console.log("paymentIntentUpdate")
-
-
-
-
-
-
-
-
-
-
       res.status(201).json({
         success: true,
         message: 'Order created successfully',
@@ -959,76 +937,161 @@ exports.updateCustomerCreditBalance = catchAsyncErrors(async (req, res, next) =>
 
 
 exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
- try{
-   const userId = req.body.userId;
-   const {
-    totalAmount,
-    tax,
-    billingAddress,
-    shippingAddress,
-    addaddons,
-    selectedCard,
-    existingcard,
-    saveAddress,
-    selectedEditAddress,
-    shipping_method,
-    first_name,
-    email,
-    contact,
-    last_name,
-  } = req.body;
-  const type = (addaddons ? "AddonPurchase" : "")
-  const paymentDate = new Date();
-   const order = new Order({
-    user: userId, // Link the order to the specific user
-    shippingAddress,
-    billingAddress,
-    totalAmount,
-    tax,
-    first_name,
-    email,
-    contact,
-    last_name,
-    type,
-    addaddons,
-    paymentDate,
-    shipping_method
+  try{
+    const userId = req.body.userId;
+    const {
+     totalAmount,
+     tax,
+     billingAddress,
+     shippingAddress,
+     addaddons,
+     selectedCard,
+     existingcard,
+     saveAddress,
+     selectedEditAddress,
+     shipping_method,
+     first_name,
+     email,
+     contact,
+     last_name,
+     createOrderData
+   } = req.body;
+   const type = (addaddons ? "AddonPurchase" : "")
+   const paymentDate = new Date();
+ 
+   // payment 
+   let attachedPaymentMethod;
+   if (!selectedCard && existingcard === false) {
+     attachedPaymentMethod = await stripe.paymentMethods.attach(createOrderData.paymentToken, {
+      customer: createOrderData.customerID,
+    });
+  }
 
+  const calculation = await stripe.tax.calculations.create({
+    currency: 'usd',
+    customer_details: {
+      address: {
+        line1: shippingAddress.line1,
+        line2: shippingAddress.line,
+        postal_code: shippingAddress.postal_code,
+        state: shippingAddress.state,
+        country: shippingAddress.country,
+      },
+      address_source: 'shipping',
+    },
+    line_items: [
+      {
+        amount: totalAmount * 100,
+        reference: 'smart accessories',
+      },
+    ],
   });
 
-      // Ensure totalAmount is treated as a number
-      // const numericTotalAmount = parseFloat(totalAmount);
-
-   // Save the order to the database
-   await order.save();
-    // Update UserInformation document
-    // Update UserInformation document
-    console.log(addaddons)
-    const updatedUserInformation = await UserInformation.findOneAndUpdate(
-      { user_id: userId },
-      {
-        $push: {
-          'subscription_details.addones': { $each: addaddons.map((addon) => addon.addonId) }
-        },
-        $inc: {  'subscription_details.total_amount' : totalAmount  } 
-      },
-      { new: true } // Return the updated document
-    );
-
-
-   res.status(201).json({
-     success: true,
-     message: 'Order created successfully',
-     order,
-     userInformation: updatedUserInformation,
-    //  clientSecret : paymentIntent.client_secret
-   });
- } 
+  let paymentIntent;
+ if(!selectedCard && existingcard === false){
+  paymentIntent = await stripe.paymentIntents.create({
+   amount: calculation.amount_total,
+   currency: 'usd',
+   automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+   customer: createOrderData.customerID,
+   description: "test description",
+   // payment_method: createOrderData.paymentToken,
+   payment_method: attachedPaymentMethod.id, // when new card is used
+   receipt_email: email,
+ });
+ }else{
+  paymentIntent = await stripe.paymentIntents.create({
+   amount:calculation.amount_total,
+   currency: 'usd',
+   automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+   customer: createOrderData.customerID,
+   description: "test description",
+   payment_method: createOrderData.paymentToken,
+   // payment_method: attachedPaymentMethod.id, // when new card is used
+   receipt_email: email,
+ });
+ }
  
- catch (error) {
-  console.error(error);
-  res.status(500).json({ message: error });
-}
-})
+ console.log("paymentIntent")
+ console.log(paymentIntent)
+ console.log("paymentIntent")
+ 
+ 
+ 
+    const order = new Order({
+     user: userId, 
+     shippingAddress,
+     billingAddress,
+     totalAmount,
+     tax,
+     first_name,
+     email,
+     contact,
+     last_name,
+     type,
+     addaddons,
+     paymentDate,
+     shipping_method,
+     transactionId : paymentIntent.id
+   });
+ 
+       // Ensure totalAmount is treated as a number
+       // const numericTotalAmount = parseFloat(totalAmount);
+ 
+    // Save the order to the database
+   const orderData =  await order.save();
+
+    console.log("orderData")
+      console.log(orderData)
+      console.log("orderData")
+      const transaction = await stripe.tax.transactions.createFromCalculation({
+        calculation: calculation.id,
+        reference: orderData._id.toString(),
+      });
+      console.log("transaction")
+      console.log(transaction)
+      console.log("transaction")
+      
+      const paymentIntentUpdate = await stripe.paymentIntents.update(
+        paymentIntent.id,
+        {
+          metadata: {
+            tax_transaction: transaction.id,
+          },
+        }
+      );
+      console.log("paymentIntentUpdate")
+      console.log(paymentIntentUpdate)
+      console.log("paymentIntentUpdate")
+
+     // Update UserInformation document
+     // Update UserInformation document
+     console.log(addaddons)
+     const updatedUserInformation = await UserInformation.findOneAndUpdate(
+       { user_id: userId },
+       {
+         $push: {
+           'subscription_details.addones': { $each: addaddons.map((addon) => addon.addonId) }
+         },
+         $inc: {  'subscription_details.total_amount' : totalAmount  } 
+       },
+       { new: true } // Return the updated document
+     );
+ 
+ 
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+      userInformation: updatedUserInformation,
+      clientSecret : paymentIntent.client_secret
+    });
+  } 
+  
+  catch (error) {
+   console.error(error);
+   res.status(500).json({ message: error });
+ }
+ })
 
 
