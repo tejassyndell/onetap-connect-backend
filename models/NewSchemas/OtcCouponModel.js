@@ -5,6 +5,10 @@ const CouponSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    customPermaLink: {
+        type: String,
+        // required: true,
+    },
     code: {
         type: String,
         unique: true,
@@ -13,9 +17,13 @@ const CouponSchema = new mongoose.Schema({
     description: {
         type: String,
     },
-    type: {
+    discountType: {
         type: String,
         required: true,
+    },
+    discountAmount: {
+        type: Number,
+        // required: true,
     },
     planDiscount: [{
         plan_id: {
@@ -34,7 +42,7 @@ const CouponSchema = new mongoose.Schema({
             type: Number,
             default: null,
         },
-    }, ],
+    },],
     productDiscount: [{
         product_id: {
             type: String,
@@ -48,9 +56,9 @@ const CouponSchema = new mongoose.Schema({
             type: Number,
             default: null,
         },
-    }, ],
-    addonesDiscount: [{
-        addone_id: {
+    },],
+    addonsDiscount: [{
+        addon_id: {
             type: String,
             default: null,
         },
@@ -62,7 +70,7 @@ const CouponSchema = new mongoose.Schema({
             type: Number,
             default: null,
         },
-    }, ],
+    },],
     status: {
         type: String,
         required: true,
@@ -73,14 +81,14 @@ const CouponSchema = new mongoose.Schema({
     },
     publishedBy: {
         type: String,
-        required: true,
+        // required: true,
     },
     categories: [String],
     startDate: {
         type: Date,
         default: Date.now,
         validate: {
-            validator: function(value) {
+            validator: function (value) {
                 return value <= this.expiryDate;
             },
             message: "Start date must be before or equal to expiry date.",
@@ -89,7 +97,7 @@ const CouponSchema = new mongoose.Schema({
     expiryDate: {
         type: Date,
         validate: {
-            validator: function(value) {
+            validator: function (value) {
                 return value >= this.startDate;
             },
             message: "Expiry date must be after or equal to start date.",
@@ -104,32 +112,36 @@ const CouponSchema = new mongoose.Schema({
     autoApply: {
         type: Boolean,
     },
-    restrictions: [{
+    restrictions: {
         allowMultipleCoupons: {
             type: Boolean,
         },
         forClients: {
             type: Boolean,
         },
-    }, ],
+    },
     plan_restrictions: [{
         plan_id: {
-            type: Number,
+            type: String,
             required: true,
         },
         plan_name: {
-            type: Number,
+            type: String,
             required: true,
         },
-    }, ],
-    teamPlanUsage: [
-        (minUsers = {
+        plan_type: {
+            type: String,
+            required: true,
+        },
+    },],
+    teamPlanUsage: {
+        minUsers: {
             type: Number,
-        }),
-        (maxUsers = {
+        },
+        maxUsers: {
             type: Number,
-        }),
-    ],
+        },
+    },
     freeShipping: {
         type: Boolean,
         default: false,
@@ -144,10 +156,10 @@ const CouponSchema = new mongoose.Schema({
         countryCode: {
             type: String,
         },
-    }, ],
+    },],
 });
 
-CouponSchema.pre("validate", function(next) {
+CouponSchema.pre("validate", function (next) {
     if (!this.freeShipping) {
         this.minimumOrderPrice = undefined;
         this.freeShipCountries = [];
