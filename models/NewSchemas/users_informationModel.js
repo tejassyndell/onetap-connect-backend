@@ -18,6 +18,7 @@ const users_information = new mongoose.Schema(
         },
         website_url: {
             type: String,
+            default: ""
             // required: [true, "Please Enter The Company URL"],
         },
         global_email: {

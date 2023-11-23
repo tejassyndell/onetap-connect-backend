@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getUser, otcUpdateUserDetails
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -25,6 +25,7 @@ router.post("/admin/imageUpload",productImageUpload ,imageUpload);
 router.get("/admin/productCategory/fetch", getCategories);
 router.post("/admin/imageUpload", productImageUpload, imageUpload);
 router.get("/admin/users", isOtcAdminAuthenticatedUser, getallusers);
+router.get("/admin/user/:id", isOtcAdminAuthenticatedUser, getUser);
 router.get("/admin/companyusers/:id", getallusersofcompany);
 router.get("/admin/getcompanyuserstatus", getcompanyuserstatus);
 router.post("/admin/createproductCategory",createProductCategory);
@@ -34,4 +35,5 @@ router.get("/admin/getAddons", getAddons);
 router.post("/admin/plan/create", createPlan);
 router.get("/admin/plans", getPlans);
 router.post("/admin/coupons/create", newTestAPIS);
+router.post("/admin/user/update/:id", otcUpdateUserDetails);
 module.exports = router;

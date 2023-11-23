@@ -122,7 +122,7 @@ router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
 
-router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
+router.post("/user/update/:id",isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);

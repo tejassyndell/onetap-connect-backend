@@ -187,6 +187,36 @@ exports.getallusers = catchAsyncErrors(async (req, res, next) => {
     }
   }
 });
+exports.getUser = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  {
+    try {
+      const user = await UserInformation.find({ user_id: id})
+        .populate({
+          path: "company_ID",
+          model: "companies_information",
+          // select: "industry company_name",
+        })
+        .populate({
+          path: "user_id",
+          model: "user",
+          // select: "first_name last_name",
+        });
+      console.log(user);
+
+      // const ReverseData = userInformationTeamData.reverse();
+      // console.log(userInformationTeamData);
+
+      res.status(200).json({
+        // userInformationTeamData
+        user,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred" });
+    }
+  }
+});
 
 exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
@@ -599,4 +629,46 @@ exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
       coupons: Coupons,
   });
+});
+
+
+exports.otcUpdateUserDetails = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedUserDetails = req.body; // Assuming the updated details are provided in the request body
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    // if (user.companyID.toString() !== req.user.companyID.toString()) {
+    //   return next(
+    //     new ErrorHandler("You are not authorized to update this user", 401)
+    //   );
+    // }
+
+    // Update the user details
+    user.set(updatedUserDetails);
+    await user.save();
+
+    // const userurlslug = user.userurlslug;
+    // await parmalinkSlug.updateOne(
+    //   { user_id: id },
+    //   { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
+    // );
+    // await parmalinkSlug.updateOne(
+    //   { user_id: id },
+    //   { userurlslug: userurlslug }
+    // );
+
+    res.status(200).json({
+      success: true,
+      message: "User details updated successfully",
+      user: user,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
