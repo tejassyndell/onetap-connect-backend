@@ -1955,11 +1955,20 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
 });
 exports.updateUserInformation = async (req, res, next) => {
   const { id } = req.params; // Assuming you pass the userId as a parameter
+  console.log("////////////////////////////////////////////////////////////////")
+  console.log(id, "params id user")
+  console.log("////////////////////////////////////////////////////////////////")
+
   const updatedUserInfo = req.body; // Assuming the updated user information is provided in the request body
 
   try {
     // Try to find the user information document by userId
     let userInformation = await UserInformation.findOne({ user_id: id });
+
+  console.log("////////////////////////////////////////////////////////////////")
+console.log(userInformation)
+console.log("////////////////////////////////////////////////////////////////")
+
 
     if (!userInformation) {
       // If the document doesn't exist, create a new one
@@ -1969,6 +1978,7 @@ exports.updateUserInformation = async (req, res, next) => {
       });
     } else {
       // If the document exists, update its fields with the new data
+      console.log("else")
       Object.assign(userInformation, updatedUserInfo);
     }
 
