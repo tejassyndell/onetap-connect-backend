@@ -9,6 +9,7 @@ const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js"); 
+const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
@@ -599,4 +600,26 @@ exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
       coupons: Coupons,
   });
+});
+
+exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  {
+    try {
+      const Orderssofcompany = await Order.find({
+        company: id,
+      })
+
+      if (!Orderssofcompany) {
+        return next(new ErrorHandler("No company details Found", 404));
+      }
+      res.status(200).json({
+        success: true,
+        Orderssofcompany
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred" });
+    }
+  }
 });
