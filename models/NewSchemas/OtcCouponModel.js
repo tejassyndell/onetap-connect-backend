@@ -57,7 +57,7 @@ const CouponSchema = new mongoose.Schema({
             default: null,
         },
     },],
-    addonsDiscount: [{
+    addonDiscount: [{
         addon_id: {
             type: String,
             default: null,
