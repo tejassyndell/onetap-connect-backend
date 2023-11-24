@@ -183,9 +183,11 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   const paymentToken = req.body.paymentToken;
   const customerID = req.body.customerID;
   const Address = req.body.billingAddress;
+  const totalAddons_value = req.body.totalAddons_value;
   const selectedCard = req.body.selectedCard;
   const newUser = req.body.newUser;
   const primary_card = req.body.primary_card;
+  const initialSetupCharge = req.body.initialSetupCharge;
   console.log("..........")
   console.log(primary_card, "/////////////////////////////////////")
   console.log("..........")
@@ -211,12 +213,15 @@ if(!selectedCard){
         interval_count : 1
   },
 });
-const invoiceItem = await stripe.invoiceItems.create({
-        customer: customerID,
-        amount: 5 * 100,  // need to pass charge amount
-        currency: 'usd',
-        description: 'Initial setup fee',
-      });
+if(initialSetupCharge){
+
+  const invoiceItem = await stripe.invoiceItems.create({
+    customer: customerID,
+    amount: initialSetupCharge * 100,  // need to pass charge amount
+    currency: 'usd',
+    description: 'Initial setup fee',
+  });
+}
 
 
     try {
@@ -263,22 +268,90 @@ const invoiceItem = await stripe.invoiceItems.create({
           },
         });
       }
+      ////
+      console.log("Address")
+      console.log(Address)
+      console.log("Address")
+      const calculation = await stripe.tax.calculations.create({
+        currency: 'usd',
+        customer_details: {
+          address: {
+            line1: Address.Bstreet1,
+            line2: Address.Bstreet2,
+            postal_code: Address.BpostalCode,
+            state: Address.Bstate,
+            country: Address.Bcountry,
+          },
+          address_source: 'shipping',
+        },
+        line_items: [
+          {
+            amount: totalAddons_value * 100,
+            reference: 'addonref',
+          },
+        ],
+      });
+     
+     
+      let paymentIntent;
+      if(selectedCard){
+       paymentIntent = await stripe.paymentIntents.create({
+        amount: calculation.amount_total,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+        customer: customerID,
+        description: "Addon purchase",
+        // payment_method: createOrderData.paymentToken,
+        payment_method: paymentToken,
+      });
+      }else{
+       paymentIntent = await stripe.paymentIntents.create({
+        amount:calculation.amount_total,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+        customer: customerID,
+        description: "Addon purchase",
+        payment_method: attachedPaymentMethod.id,
+      });
+      }
+      console.log("paymentIntent")
+      console.log(paymentIntent)
+      console.log("paymentIntent")
+     
+          if(!paymentIntent){
+            throw new Error('addon purchase creation failed'); 
+          }
+          const transaction = await stripe.tax.transactions.createFromCalculation({
+           calculation: calculation.id,
+           reference: paymentIntent.id,
+         });
+         
+         const paymentIntentUpdate = await stripe.paymentIntents.update(
+           paymentIntent.id,
+           {
+             metadata: {
+               tax_transaction: transaction.id,
+             },
+           }
+         );     
+
+      ////
 
 
-      if(!myPayment){
+      if(!myPayment || !paymentIntent){
         throw new Error('Subscription creation failed'); 
       }
 
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       if(latestInvoice.payment_inten){
-      const paymentIntent = await stripe.paymentIntents.retrieve(
+      const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
       
       // Save payment ID and user details in your database after successful payment
-      return res.status(200).json({ success: true, client_secret: paymentIntent.client_secret, subscriptionID : myPayment.id, status :paymentIntent.status, endDate : myPayment.current_period_end });
+      return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : myPayment.id, status :subscriptionPaymentIntetn.status, endDate : myPayment.current_period_end, addonClient_secret : paymentIntent.client_secret, addonstatus : paymentIntent.status});
     }
-    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end });
+    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end, addonClient_secret : paymentIntent.client_secret, addonstatus : paymentIntent.status });
 
     } catch (error) {
       console.error(error);
@@ -401,9 +474,6 @@ exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
 
 exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
   // const subscription = await stripe.subscriptions.retrieve("sub_1NxkyOHsjFNmmZSijLOO4bk1");
-  const proration_date = Math.floor(Date.now() / 1000);
-  const subscription = await stripe.subscriptions.retrieve('sub_1Ny8rmHsjFNmmZSiEt08fWBz');
-
   // const price = await stripe.prices.create({
   //       currency: 'usd',
   //       unit_amount: 1200 * 100,
@@ -1095,3 +1165,108 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
  })
 
 
+ exports.addonPurchase = catchAsyncErrors(async (req, res, next) => {
+  try {
+ // const paymentintentID  = req.body.id
+ const paymentToken = req.body.paymentToken;
+ const customerID = req.body.customerID;
+ const Address = req.body.billingAddress;
+ const selectedCard = req.body.selectedCard;
+ const newUser = req.body.newUser;
+ const primary_card = req.body.primary_card;
+ const totalAddons_value = req.body.totalAddons_value;
+ console.log("..........")
+ console.log(primary_card, "/////////////////////////////////////")
+ console.log("..........")
+ 
+   let attachedPaymentMethod;
+if(!selectedCard){
+   attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+     customer: customerID,
+   });
+}
+ console.log(attachedPaymentMethod)
+
+ 
+ const calculation = await stripe.tax.calculations.create({
+   currency: 'usd',
+   customer_details: {
+     address: {
+       line1: Address.line1,
+       line2: Address.line,
+       postal_code: Address.postal_code,
+       state: Address.state,
+       country: Address.country,
+     },
+     address_source: 'shipping',
+   },
+   line_items: [
+     {
+       amount: totalAddons_value * 100,
+       reference: 'addonref',
+     },
+   ],
+ });
+
+
+ let paymentIntent;
+ if(!selectedCard && existingcard === false){
+  paymentIntent = await stripe.paymentIntents.create({
+   amount: calculation.amount_total,
+   currency: 'usd',
+   automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+   customer: createOrderData.customerID,
+   description: "test description",
+   // payment_method: createOrderData.paymentToken,
+   payment_method: attachedPaymentMethod.id, // when new card is used
+ });
+ }else{
+  paymentIntent = await stripe.paymentIntents.create({
+   amount:calculation.amount_total,
+   currency: 'usd',
+   automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+   customer: createOrderData.customerID,
+   description: "Addon purchase",
+   payment_method: paymentToken,
+   // payment_method: attachedPaymentMethod.id, // when new card is used
+ });
+ }
+
+     if(!paymentIntent){
+       throw new Error('addon purchase creation failed'); 
+     }
+     const transaction = await stripe.tax.transactions.createFromCalculation({
+      calculation: calculation.id,
+      reference: paymentIntent.id,
+    });
+    
+    const paymentIntentUpdate = await stripe.paymentIntents.update(
+      paymentIntent.id,
+      {
+        metadata: {
+          tax_transaction: transaction.id,
+        },
+      }
+    );
+  
+   return res.status(200).json({ success: true, client_secret: paymentIntent.client_secret});
+
+   } catch (error) {
+     console.error(error);
+      // handle subscription failure
+      try {
+       const detachPT =
+         attachedPaymentMethod &&
+         attachedPaymentMethod.id &&
+         (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
+ 
+       console.error(
+         'Cleanup performed after failure:',
+         detachPT,
+       );
+     } catch (cleanupError) {
+       console.error('Error during cleanup:', cleanupError);
+     }
+     res.status(500).json({ success: false, error: error.message });
+   }
+});
