@@ -1,6 +1,7 @@
 const catchAsyncErrors = require("../../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../../utils/errorHandler.js");
 const User = require("../../../models/NewSchemas/UserModel.js");
+const Team = require("../../../models/NewSchemas/Team_SchemaModel.js");
 const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
@@ -198,13 +199,18 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
       }).populate({
         path: "user_id",
         model: "user",
+        populate: {
+          path: "team",
+          model: "team", // Adjust the model name for the 'team' model
+          select: "team_name"
+        },
       });
       const companydata = await Company.findOne({ _id: id }).populate({
         path: "primary_billing",
         model: "user", // Adjust the model name as needed
         select: "first_name last_name avatar role designation",
       });
-
+      const allteams = await Team.find({ companyID: id });
       if (!userInformationTeamData) {
         return next(new ErrorHandler("No company details Found", 404));
       }
@@ -212,6 +218,7 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
         success: true,
         userInformationTeamData,
         companydata,
+        allteams
       });
     } catch (error) {
       console.error(error);
@@ -622,4 +629,70 @@ exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
       res.status(500).json({ error: "An error occurred" });
     }
   }
+});
+
+// update user team
+exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
+  const { users, team } = req.body;
+console.log(req.body)
+  // Loop through the array of user IDs
+  for (let i = 0; i < users.length; i++) {
+    const user = await User.findById(users[i]);
+
+    if (!user) {
+      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+    }
+
+    // Update the user's team based on the corresponding team value
+    // user.team = teams[i].value;
+    //comment above line because this time we only select one team not multiple
+    user.team = team;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
+exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
+  const { users, status } = req.body;
+
+  // Loop through the array of user IDs
+  for (let i = 0; i < users.length; i++) {
+    const user = await User.findById(users[i]);
+
+    if (!user) {
+      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+    }
+
+    // Update the user's status based on the corresponding status value
+    user.status = status;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
+exports.updateStatusofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { companies, status } = req.body;
+
+  // Loop through the array of user IDs
+  for (let i = 0; i < companies.length; i++) {
+    const company = await Company.findById(companies[i]);
+
+    if (!company) {
+      return next(new ErrorHandler(`No user found with ID: ${companies[i]}`, 404));
+    }
+
+    // Update the user's status based on the corresponding status value
+    company.status = status;
+    await company.save(); // Save the changes to the user
+  } 
+
+  res.status(200).json({
+    success: true,
+  });
 });
