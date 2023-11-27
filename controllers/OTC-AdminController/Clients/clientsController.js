@@ -9,6 +9,7 @@ const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js"); 
+const Team = require("../../../models/NewSchemas/Team_SchemaModel.js");
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
@@ -204,12 +205,24 @@ exports.getUser = catchAsyncErrors(async (req, res, next) => {
         });
       console.log(user);
 
+  const company_id = user[0].company_ID._id
+
+      const allteams = await Team.find({ companyID: company_id });
+
+      const userTeamData = await User.find({ _id: id}).populate({
+        path: "team",
+        model: "team",
+        // select: "first_name last_name",
+      });
+
+
+
       // const ReverseData = userInformationTeamData.reverse();
       // console.log(userInformationTeamData);
 
       res.status(200).json({
         // userInformationTeamData
-        user,
+        user, userTeamData, allteams
       });
     } catch (error) {
       console.error(error);
@@ -638,6 +651,7 @@ exports.otcUpdateUserDetails = catchAsyncErrors(async (req, res, next) => {
 
   try {
     const user = await User.findById(id);
+    
 
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
