@@ -1,6 +1,7 @@
 const catchAsyncErrors = require("../../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../../utils/errorHandler.js");
 const User = require("../../../models/NewSchemas/UserModel.js");
+const Cards = require("../../../models/NewSchemas/CardModel.js");
 const Team = require("../../../models/NewSchemas/Team_SchemaModel.js");
 const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
@@ -611,6 +612,7 @@ exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
+  console.log(id,req.body, "===============================================")
   {
     try {
       const Orderssofcompany = await Order.find({
@@ -694,5 +696,39 @@ exports.updateStatusofcompany = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+  });
+});
+
+// update company details
+exports.updateClientCompanyInformation = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  const { companyDetails } = req.body;
+  console.log(id  , companyDetails)
+
+  const company = await Company.findById(id);
+
+  if (!company) {
+    return next(new ErrorHandler("Company not found", 404));
+  }
+  company.set(companyDetails);
+  await company.save();
+
+  res.status(200).json({
+    company,
+  });
+});
+
+exports.showClientCompanyCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { userid } = req.body;
+
+  const cards = await Cards.find({ userID: userid });
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found for this user", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    cards,
   });
 });
