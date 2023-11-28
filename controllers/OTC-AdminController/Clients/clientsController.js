@@ -10,6 +10,7 @@ const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js"); 
 const Team = require("../../../models/NewSchemas/Team_SchemaModel.js");
+const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
@@ -686,3 +687,25 @@ exports.otcUpdateUserDetails = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 });
+
+
+exports.otc_getcompanies_share_referral_data = catchAsyncErrors(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = await UserInformation.find({ user_id: id})
+    const company_id = user[0].company_ID._id
+    // const { companyID } = req.user;
+    // console.log(companyID);
+    const companyShareReferData = await CompanyShareReferralModel.findOne({
+      companyID: company_id,
+    });
+    if (!companyShareReferData) {
+      return next(new ErrorHandler("No data Found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      companyShareReferData,
+    });
+  }
+);

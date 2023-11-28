@@ -109,6 +109,33 @@ const users_information = new mongoose.Schema(
             auto_renewal: { type: Boolean, default: true },
             taxRate: { type: String , default:'0'},
           },
+
+          connect_button_behaviour: {
+            type: Boolean,
+            default: false,
+          },
+          default_crm_link: {
+            value: {
+              type: String,
+              default: null,
+            },
+            permission: {
+              type: Boolean,
+              default: false,
+            },
+          },
+      
+          default_connect_msg: {
+            value: {
+              type: String,
+              default:
+                "Hi there, it’s {user_name}. Please click the link below so we can share contact info. Talk soon!",
+            },
+            permission: {
+              type: Boolean,
+              default: false,
+            },
+          },
         // addones: [{ service: { type: String }, price: { type: Number } }],
     },
     { timestamps: true }

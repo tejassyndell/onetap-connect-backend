@@ -249,7 +249,7 @@ router.post('/generate-otp', isAuthenticatedUser, generateotp )
 router.post('/verify-otp',  verifyotp) 
 router.post('/google_acc_recover',google_verify_recover_account)
 router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
-router.get('/userslugs/:id', isAuthenticatedUser, getuniqueslugbyid)
+router.get('/userslugs/:id', getuniqueslugbyid)
 
 router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
 router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
