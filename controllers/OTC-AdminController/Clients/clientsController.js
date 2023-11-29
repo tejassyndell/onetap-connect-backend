@@ -545,8 +545,9 @@ exports.getCategories = catchAsyncErrors(async (req, res, next) => {
 exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
   try {
     const { id, couponData } = req.body;
-    let customPermalink = couponData.customPermalink;
-
+    console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee",couponData)
+    let customPermaLink = couponData.customPermaLink;
+console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee",customPermaLink)
     if (id) {
       // If ID is provided, update the existing Coupon
       const existingCoupon = await Coupon.findByIdAndUpdate(id, couponData, { new: true });
@@ -555,13 +556,13 @@ exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
       }
       return res.json(existingCoupon);
     } else {
-      const isUnique = await isCouponCustomPermalinkUnique(customPermalink);
+      const isUnique = await isCouponCustomPermalinkUnique(customPermaLink);
       if (!isUnique) {
-        customPermalink = await coupongenerateUniqueCustomPermalink(customPermalink);
+        customPermaLink = await coupongenerateUniqueCustomPermalink(customPermaLink);
       }
 
       // If ID is not provided, create a new Coupon
-      const newCoupon = new Coupon({ ...couponData, customPermalink });
+      const newCoupon = new Coupon({ ...couponData, customPermaLink });
       const savedCoupon = await newCoupon.save();
       res.status(201).json({ success: true, coupons: savedCoupon });
     }
@@ -572,8 +573,8 @@ exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
   }
 })
 
-async function isCouponCustomPermalinkUnique(customPermalink) {
-  const existingCoupon = await Coupon.findOne({ customPermalink });
+async function isCouponCustomPermalinkUnique(customPermaLink) {
+  const existingCoupon = await Coupon.findOne({ customPermaLink });
   return !existingCoupon;
 }
 
@@ -582,7 +583,7 @@ async function coupongenerateUniqueCustomPermalink(basePermalink) {
   let uniquePermalink = basePermalink;
   let counter = 1;
   while (true) {
-    const existingCoupon = await Coupon.findOne({ customPermalink: uniquePermalink });
+    const existingCoupon = await Coupon.findOne({ customPermaLink: uniquePermalink });
     if (!existingCoupon) {
       return uniquePermalink;
     }

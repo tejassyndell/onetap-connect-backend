@@ -4977,8 +4977,8 @@ exports.getuniqueslugbyid = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
-  const { recipientName, recipientEmail, recipientText, UserID, frontendURL,comp_slug,useruniqueslug } = req.body.formData;
-  console.log(recipientName, recipientEmail, recipientText, UserID, useruniqueslug, comp_slug,frontendURL);
+  const { recipientName, recipientEmail, recipientText, UserID, frontendURL, comp_slug, useruniqueslug } = req.body.formData;
+  console.log(recipientName, recipientEmail, recipientText, UserID, useruniqueslug, comp_slug, frontendURL);
 
   const teamlink = `${frontendURL}/${comp_slug}/${useruniqueslug}`;
   const indilink = `${frontendURL}/${useruniqueslug}`
@@ -5067,4 +5067,35 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
   // })
 
   // res.status(200).json({ message: 'Form data saved successfully.' });
+});
+
+exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
+  const { currentPassword, NewPassWord } = req.body;
+  const { id } = req.user;
+  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", id)
+  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", currentPassword)
+  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", NewPassWord)
+
+  const fetchedUser = await User.findById(id).select("+password");
+
+  if (!fetchedUser) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  const comparePassword = await fetchedUser.comparePassword(currentPassword);
+  console.log(comparePassword);
+  if (!comparePassword) {
+    res.status(500).json({ success: false, msg: "old password is invalid" });
+    return
+    // send error that old password is invalid
+  }
+
+  fetchedUser.password = NewPassWord; // put new password heree
+
+  // update password
+  const updatePassword = await fetchedUser.save();
+  if (!updatePassword) {
+    // send error 
+  }
+  res.status(200).json({ success: true, msg: "password updated" });
+
 });
