@@ -638,7 +638,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   });
 
 //   const message = {
-//     from: "developersweb001@gmail.com",
+//     from: "otcdevelopers@gmail.com",
 //     to: email,
 //     subject: `Password recovery email`,
 //     text: `Password reset link is  :- \n\n ${process.env.FRONTEND_URL + '/reset/password/' + resetToken} \n\n If you have not requested this email then please ignore It `,
@@ -706,7 +706,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
+      from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -1138,7 +1138,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
+      from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       html: `
@@ -1306,7 +1306,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const message = {
-        from: "OneTapConnect:developersweb001@gmail.com",
+        from: "OneTapConnect:otcdevelopers@gmail.com",
         to: email,
         subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2520,7 +2520,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       );
     }
   }
-  console.log(userVar, companyVar, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   if (userVar !== null) {
     user.userurlslug = userVar.value;
   }
@@ -2557,7 +2556,7 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -2811,7 +2810,7 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -3639,7 +3638,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
+      from: "OneTapConnect:otcdevelopers@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3903,7 +3902,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "OneTapConnect:developersweb001@gmail.com",
+    from: "OneTapConnect:otcdevelopers@gmail.com",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4186,7 +4185,7 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 //     }
 
 //     const mailOptions = {
-//       from: 'developersweb001@gmail.com',
+//       from: 'otcdevelopers@gmail.com',
 //       // to: email,
 //       to: email,
 //       subject: 'Account Recovery',
@@ -4518,7 +4517,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: "OneTapConnect:developersweb001@gmail.com",
+    from: "OneTapConnect:otcdevelopers@gmail.com",
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4624,7 +4623,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: "OneTapConnect:developersweb001@gmail.com",
+        from: "OneTapConnect:otcdevelopers@gmail.com",
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
@@ -5006,7 +5005,7 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: 'OneTapConnect:developersweb001@gmail.com',
+    from: 'OneTapConnect:otcdevelopers@gmail.com',
     to: recipientEmail,
     subject: `${recipientName} shared their digital business card.`,
     // text: 'Body of your email'
