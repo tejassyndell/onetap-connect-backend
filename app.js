@@ -17,6 +17,8 @@ const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const connectDatabase = require("./db/db.js");
+const admin = require('firebase-admin');//firebase
+const serviceAccount = require('./controllers/notification/onetapconnect-231cb-firebase-adminsdk-lng9w-707bf5d62b.json');//firebase
 
 dotenv.config();
 const url = process.env.FRONTEND_URL;
@@ -152,6 +154,11 @@ app.get("/test", (req, res) => {
 
   res.send(htmlResponse);
 });
+
+// admin.initializeApp({
+//   //Firebase
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
 app.listen(process.env.PORT, () => {
   console.log("server listening on port ", process.env.PORT);

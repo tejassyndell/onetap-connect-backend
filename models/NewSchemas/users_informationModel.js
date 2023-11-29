@@ -12,6 +12,11 @@ const users_information = new mongoose.Schema(
             ref: "companies_information",
           },
         team: { type: mongoose.Schema.Types.ObjectId },
+        firebase_token: [
+            {
+                value: { type: String, default : null },
+            }
+        ],
         company_name: {
             type: String,
             // required: [true, "Please Enter Your Company Name"],
