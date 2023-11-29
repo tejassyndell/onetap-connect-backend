@@ -14,7 +14,8 @@ const {
   updateCards,
   updateCustomerCreditBalance,
   purchaseaddon,
-  fetchTaxrates
+  fetchTaxrates,
+  addonPurchase
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -27,7 +28,7 @@ router.post('/payment/switchToManualRenewal', switchToManualRenewal)
 router.post("/create-order", createOrder);
 router.post('/payment/change-plan', switchPlan)
 router.get('/payment/isactive' ,isAuthenticatedUser, isActive)
-router.post('/payment/test' , fetchTaxrates)
+router.post('/payment/test' , addonPurchase)
 router.post('/payment/cancelSubscription' , cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card',isAuthenticatedUser, updateCards)

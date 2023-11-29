@@ -92,6 +92,7 @@ const {
   redirectUser,
   getuniqueslugbyid,
   sharemycard_email,
+  verifyPassword,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -122,7 +123,7 @@ router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
 
-router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
+router.post("/user/update/:id",isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
@@ -249,7 +250,7 @@ router.post('/generate-otp', isAuthenticatedUser, generateotp )
 router.post('/verify-otp',  verifyotp) 
 router.post('/google_acc_recover',google_verify_recover_account)
 router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
-router.get('/userslugs/:id', isAuthenticatedUser, getuniqueslugbyid)
+router.get('/userslugs/:id', getuniqueslugbyid)
 
 router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
 router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
@@ -257,5 +258,10 @@ router.get("/getallcompanies", isAuthenticatedUser, getcompanies);
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
+
+
+router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
+
+
 // router.post('/testapii' ,Testapidummy)
 module.exports = router;

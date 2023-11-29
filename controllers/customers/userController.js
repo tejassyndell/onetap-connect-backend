@@ -638,7 +638,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 //   });
 
 //   const message = {
-//     from: "developersweb001@gmail.com",
+//     from: "otcdevelopers@gmail.com",
 //     to: email,
 //     subject: `Password recovery email`,
 //     text: `Password reset link is  :- \n\n ${process.env.FRONTEND_URL + '/reset/password/' + resetToken} \n\n If you have not requested this email then please ignore It `,
@@ -706,7 +706,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
+      from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -1138,7 +1138,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
+      from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       html: `
@@ -1306,7 +1306,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const message = {
-        from: "OneTapConnect:developersweb001@gmail.com",
+        from: "OneTapConnect:otcdevelopers@gmail.com",
         to: email,
         subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -1955,11 +1955,20 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
 });
 exports.updateUserInformation = async (req, res, next) => {
   const { id } = req.params; // Assuming you pass the userId as a parameter
+  console.log("////////////////////////////////////////////////////////////////")
+  console.log(id, "params id user")
+  console.log("////////////////////////////////////////////////////////////////")
+
   const updatedUserInfo = req.body; // Assuming the updated user information is provided in the request body
 
   try {
     // Try to find the user information document by userId
     let userInformation = await UserInformation.findOne({ user_id: id });
+
+  console.log("////////////////////////////////////////////////////////////////")
+console.log(userInformation)
+console.log("////////////////////////////////////////////////////////////////")
+
 
     if (!userInformation) {
       // If the document doesn't exist, create a new one
@@ -1969,6 +1978,7 @@ exports.updateUserInformation = async (req, res, next) => {
       });
     } else {
       // If the document exists, update its fields with the new data
+      console.log("else")
       Object.assign(userInformation, updatedUserInfo);
     }
 
@@ -2510,7 +2520,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       );
     }
   }
-  console.log(userVar, companyVar, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   if (userVar !== null) {
     user.userurlslug = userVar.value;
   }
@@ -2547,7 +2556,7 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -2801,7 +2810,7 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:developersweb001@gmail.com", // Replace with your email
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -3629,7 +3638,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     const message = {
-      from: "OneTapConnect:developersweb001@gmail.com",
+      from: "OneTapConnect:otcdevelopers@gmail.com",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3893,7 +3902,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "OneTapConnect:developersweb001@gmail.com",
+    from: "OneTapConnect:otcdevelopers@gmail.com",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4176,7 +4185,7 @@ exports.savecompanydata = catchAsyncErrors(async (req, res, next) => {
 //     }
 
 //     const mailOptions = {
-//       from: 'developersweb001@gmail.com',
+//       from: 'otcdevelopers@gmail.com',
 //       // to: email,
 //       to: email,
 //       subject: 'Account Recovery',
@@ -4508,7 +4517,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: "OneTapConnect:developersweb001@gmail.com",
+    from: "OneTapConnect:otcdevelopers@gmail.com",
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4614,7 +4623,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: "OneTapConnect:developersweb001@gmail.com",
+        from: "OneTapConnect:otcdevelopers@gmail.com",
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
@@ -4977,8 +4986,8 @@ exports.getuniqueslugbyid = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
-  const { recipientName, recipientEmail, recipientText, UserID, frontendURL,comp_slug,useruniqueslug } = req.body.formData;
-  console.log(recipientName, recipientEmail, recipientText, UserID, useruniqueslug, comp_slug,frontendURL);
+  const { recipientName, recipientEmail, recipientText, UserID, frontendURL, comp_slug, useruniqueslug } = req.body.formData;
+  console.log(recipientName, recipientEmail, recipientText, UserID, useruniqueslug, comp_slug, frontendURL);
 
   const teamlink = `${frontendURL}/${comp_slug}/${useruniqueslug}`;
   const indilink = `${frontendURL}/${useruniqueslug}`
@@ -4996,7 +5005,7 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: 'OneTapConnect:developersweb001@gmail.com',
+    from: 'OneTapConnect:otcdevelopers@gmail.com',
     to: recipientEmail,
     subject: `${recipientName} shared their digital business card.`,
     // text: 'Body of your email'
@@ -5067,4 +5076,35 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
   // })
 
   // res.status(200).json({ message: 'Form data saved successfully.' });
+});
+
+exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
+  const { currentPassword, NewPassWord } = req.body;
+  const { id } = req.user;
+  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", id)
+  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", currentPassword)
+  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", NewPassWord)
+
+  const fetchedUser = await User.findById(id).select("+password");
+
+  if (!fetchedUser) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  const comparePassword = await fetchedUser.comparePassword(currentPassword);
+  console.log(comparePassword);
+  if (!comparePassword) {
+    res.status(500).json({ success: false, msg: "old password is invalid" });
+    return
+    // send error that old password is invalid
+  }
+
+  fetchedUser.password = NewPassWord; // put new password heree
+
+  // update password
+  const updatePassword = await fetchedUser.save();
+  if (!updatePassword) {
+    // send error 
+  }
+  res.status(200).json({ success: true, msg: "password updated" });
+
 });
