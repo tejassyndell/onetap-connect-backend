@@ -124,7 +124,10 @@ const users_information = new mongoose.Schema(
               default: false,
             },
           },
-      
+          userProfile_edit_permission:{ 
+             type: Boolean,
+            default: true,
+          },
           default_connect_msg: {
             value: {
               type: String,

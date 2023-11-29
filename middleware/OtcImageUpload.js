@@ -208,16 +208,9 @@ exports.otcImageUpload = (req, res, next) => {
         }
 
         try {
-            const { imageType } = req.body;
+            const { imageType, companyID } = req.body;
             const { id } = req.params;
-            let companyID;
-       
-                const user = await User.find({ _id: id})
-          
-
-                companyID = user.companyID
-          
-
+ 
             const uploadedFileName = req.file ? req.file.filename : null;
 
             let base64FileName;
