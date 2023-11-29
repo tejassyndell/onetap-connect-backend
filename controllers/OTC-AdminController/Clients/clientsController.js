@@ -11,7 +11,6 @@ const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
-const Team = require("../../../models/NewSchemas/Team_SchemaModel.js");
 const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
