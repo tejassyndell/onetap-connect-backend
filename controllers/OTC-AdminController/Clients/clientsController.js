@@ -1,6 +1,8 @@
 const catchAsyncErrors = require("../../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../../utils/errorHandler.js");
 const User = require("../../../models/NewSchemas/UserModel.js");
+const Cards = require("../../../models/NewSchemas/CardModel.js");
+const Team = require("../../../models/NewSchemas/Team_SchemaModel.js");
 const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
@@ -9,6 +11,7 @@ const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js"); 
+const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
 
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
@@ -197,13 +200,18 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
       }).populate({
         path: "user_id",
         model: "user",
+        populate: {
+          path: "team",
+          model: "team", // Adjust the model name for the 'team' model
+          select: "team_name"
+        },
       });
       const companydata = await Company.findOne({ _id: id }).populate({
         path: "primary_billing",
         model: "user", // Adjust the model name as needed
         select: "first_name last_name avatar role designation",
       });
-
+      const allteams = await Team.find({ companyID: id });
       if (!userInformationTeamData) {
         return next(new ErrorHandler("No company details Found", 404));
       }
@@ -211,6 +219,7 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
         success: true,
         userInformationTeamData,
         companydata,
+        allteams
       });
     } catch (error) {
       console.error(error);
@@ -599,5 +608,128 @@ exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
   }
   res.status(200).json({
       coupons: Coupons,
+  });
+});
+
+exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  console.log(id,req.body, "===============================================")
+  {
+    try {
+      const Orderssofcompany = await Order.find({
+        company: id,
+      })
+
+      if (!Orderssofcompany) {
+        return next(new ErrorHandler("No company details Found", 404));
+      }
+      res.status(200).json({
+        success: true,
+        Orderssofcompany
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred" });
+    }
+  }
+});
+
+// update user team
+exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
+  const { users, team } = req.body;
+console.log(req.body)
+  // Loop through the array of user IDs
+  for (let i = 0; i < users.length; i++) {
+    const user = await User.findById(users[i]);
+
+    if (!user) {
+      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+    }
+
+    // Update the user's team based on the corresponding team value
+    // user.team = teams[i].value;
+    //comment above line because this time we only select one team not multiple
+    user.team = team;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
+exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
+  const { users, status } = req.body;
+
+  // Loop through the array of user IDs
+  for (let i = 0; i < users.length; i++) {
+    const user = await User.findById(users[i]);
+
+    if (!user) {
+      return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
+    }
+
+    // Update the user's status based on the corresponding status value
+    user.status = status;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
+exports.updateStatusofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { companies, status } = req.body;
+
+  // Loop through the array of user IDs
+  for (let i = 0; i < companies.length; i++) {
+    const company = await Company.findById(companies[i]);
+
+    if (!company) {
+      return next(new ErrorHandler(`No user found with ID: ${companies[i]}`, 404));
+    }
+
+    // Update the user's status based on the corresponding status value
+    company.status = status;
+    await company.save(); // Save the changes to the user
+  } 
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
+// update company details
+exports.updateClientCompanyInformation = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  const { companyDetails } = req.body;
+  console.log(id  , companyDetails)
+
+  const company = await Company.findById(id);
+
+  if (!company) {
+    return next(new ErrorHandler("Company not found", 404));
+  }
+  company.set(companyDetails);
+  await company.save();
+
+  res.status(200).json({
+    company,
+  });
+});
+
+exports.showClientCompanyCardDetails = catchAsyncErrors(async (req, res, next) => {
+  const { userid } = req.body;
+
+  const cards = await Cards.find({ userID: userid });
+
+  if (!cards) {
+    return next(new ErrorHandler("No card details found for this user", 404));
+  }
+
+  res.status(201).json({
+    success: true,
+    cards,
   });
 });
