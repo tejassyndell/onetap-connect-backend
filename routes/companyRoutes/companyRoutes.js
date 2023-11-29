@@ -92,6 +92,7 @@ const {
   redirectUser,
   getuniqueslugbyid,
   sharemycard_email,
+  verifyPassword,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -257,5 +258,10 @@ router.get("/getallcompanies", isAuthenticatedUser, getcompanies);
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
+
+
+router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
+
+
 // router.post('/testapii' ,Testapidummy)
 module.exports = router;
