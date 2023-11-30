@@ -37,7 +37,8 @@ const GuestCustomer = require("../../models/NewSchemas/GuestCustomer.js");
 const Order = require('../../models/NewSchemas/orderSchemaModel.js');
 const parmalinkSlug = require('../../models/NewSchemas/parmalink_slug.js');
 const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
-const { log } = require("console");
+const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
+
 const { getMaxListeners } = require("events");
 dotenv.config();
 const usedCodes = new Set();
@@ -2350,7 +2351,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     planData,
     cardDetails,
     saveAddress,
-    selectedEditAddress
+    selectedEditAddress,
+    couponData
   } = req.body;
 
   const existingCards = await Cards.find({ userID: id });
@@ -2526,7 +2528,19 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (companyVar !== null) {
     company.companyurlslug = companyVar.value;
   }
-
+  if (couponData !== null && Object.keys(couponData).length !== 0) {
+    order.isCouponUsed = true;
+    order.coupons = {
+        code: couponData.appliedCouponCode,
+        value: couponData.discountValue
+    };
+    const logCoupons = await UserCouponAssociation.findOneAndUpdate(
+      {userId : user._id, couponCode : couponData.appliedCouponCode },
+      {$setOnInsert : {userId : user._id} , $inc :{usageCount : 1} },
+      {upsert : true, new : true, setDefaultsOnInsert : true}
+    )
+    console.log(logCoupons);
+}
   await user.save();
   await card.save();
   await company.save();
