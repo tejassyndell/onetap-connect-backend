@@ -38,7 +38,6 @@ router.get("/admin/getAddons", getAddons);
 router.post("/admin/plan/create", createPlan);
 router.get("/admin/plans", getPlans);
 router.post("/admin/getorderssofcompany", getOrderssofcompany);
-router.post("/admin/coupons/create", newTestAPIS);
 
 router.get("/admin/getCoupon", getCoupon);
 router.post("/admin/coupon/create", createCoupon);
