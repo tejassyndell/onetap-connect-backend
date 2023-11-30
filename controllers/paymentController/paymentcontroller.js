@@ -372,7 +372,7 @@ if(initialSetupCharge){
         );
   
         console.error(
-          'Cleanup performed after failure:',
+          'Cleanup perform  ed after failure:',
           deleteCustomer,
           deletedInvoiceItem,
           detachPT,
