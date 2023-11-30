@@ -5081,10 +5081,7 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
 exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
   const { currentPassword, NewPassWord } = req.body;
   const { id } = req.user;
-  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", id)
-  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", currentPassword)
-  console.log("hereeeeeeeeeeeeeeeeeeeeeeeeeee", NewPassWord)
-
+ 
   const fetchedUser = await User.findById(id).select("+password");
 
   if (!fetchedUser) {

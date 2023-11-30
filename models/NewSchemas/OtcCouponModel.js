@@ -185,7 +185,7 @@ const CouponSchema = new mongoose.Schema({
             type: String,
         },
     },],
-});
+}, { timestamps: true });
 
 CouponSchema.pre("validate", function (next) {
     if (!this.freeShipping) {
