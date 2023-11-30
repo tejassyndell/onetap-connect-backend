@@ -72,6 +72,11 @@ const order_Schema = new mongoose.Schema(
     transactionId: {
       type: String,
     },
+    isCouponUsed :  { type: Boolean, default: false },
+    coupons : {
+      code : {type : String, default : null},
+      value : {type : Number, default : null}
+    },
     shippingAddress: [
       {
         address_name: { type: String, default: "Default" },
