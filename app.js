@@ -8,6 +8,7 @@ const paymentRoutes = require("./routes/paymentRoutes/paymentRoutes.js");
 const productRoutes = require("./routes/ProductRoutes/ProductRoutes.js");
 const SuperAdminRoutes = require("./routes/SuperAdminRoutes/superAdminRoutes.js");
 const OTCAdminRoutes = require("./routes/OTC-AdminRoutes/adminRoutes.js")
+const couponRoutes = require("./routes/OTC-AdminRoutes/couponRoutes.js")
 const AccountRoutes = require("./routes/accountSwitch/accountRoutes.js");
 const { webhookHandler } = require("./controllers/webhook/webhookController.js");
 const errorMiddleware = require("./middleware/error.js");
@@ -91,6 +92,7 @@ app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
 app.use("/api/v1", paymentRoutes);
 app.use("/api/v1", productRoutes);
+app.use("/api/v1", couponRoutes);
 // app.use('/api/v1',AccountRoutes)
 app.use(errorMiddleware);
 

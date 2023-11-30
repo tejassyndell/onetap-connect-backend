@@ -88,7 +88,11 @@ const CouponSchema = new mongoose.Schema({
             type: String,
             default: null,
         },
-        discountedPrice: {
+        price: {
+            type: Number,
+            default: null,
+        },
+        value: {
             type: Number,
             default: null,
         },
@@ -174,7 +178,7 @@ const CouponSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    minimumOrderPrice: {
+    minimumOrderPrice:   {
         type: Number,
     },
     freeShipCountries: [{
@@ -185,12 +189,22 @@ const CouponSchema = new mongoose.Schema({
             type: String,
         },
     },],
-});
+}, { timestamps: true });
 
 CouponSchema.pre("validate", function (next) {
     if (!this.freeShipping) {
         this.minimumOrderPrice = undefined;
         this.freeShipCountries = [];
+    }
+    next();
+});
+CouponSchema.pre('save', function (next) {
+    if (this.type === 'test') {
+        this.price = this.value; 
+        this.monthly = undefined; 
+        this.yearly = undefined;
+    } else if (this.type === 'test1') {
+        this.value = undefined; 
     }
     next();
 });

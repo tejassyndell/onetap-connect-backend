@@ -596,10 +596,10 @@ exports.getCategories = catchAsyncErrors(async (req, res, next) => {
 
 exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { id, couponData } = req.body;
-    console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee",couponData)
+    const { id, couponData, name } = req.body;
+    console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee", couponData)
     let customPermaLink = couponData.customPermaLink;
-console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee",customPermaLink)
+    console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee", customPermaLink)
     if (id) {
       // If ID is provided, update the existing Coupon
       const existingCoupon = await Coupon.findByIdAndUpdate(id, couponData, { new: true });
@@ -656,7 +656,7 @@ exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-  console.log(id,req.body, "===============================================")
+  console.log(id, req.body, "===============================================")
   {
     try {
       const Orderssofcompany = await Order.find({
@@ -680,7 +680,7 @@ exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
 // update user team
 exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
   const { users, team } = req.body;
-console.log(req.body)
+  console.log(req.body)
   // Loop through the array of user IDs
   for (let i = 0; i < users.length; i++) {
     const user = await User.findById(users[i]);
@@ -736,7 +736,7 @@ exports.updateStatusofcompany = catchAsyncErrors(async (req, res, next) => {
     // Update the user's status based on the corresponding status value
     company.status = status;
     await company.save(); // Save the changes to the user
-  } 
+  }
 
   res.status(200).json({
     success: true,
@@ -747,7 +747,7 @@ exports.updateStatusofcompany = catchAsyncErrors(async (req, res, next) => {
 exports.updateClientCompanyInformation = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
   const { companyDetails } = req.body;
-  console.log(id  , companyDetails)
+  console.log(id, companyDetails)
 
   const company = await Company.findById(id);
 
@@ -843,34 +843,34 @@ exports.otc_getcompanies_share_referral_data = catchAsyncErrors(
 
 
 exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
-    try {
-      const { userId, companyID, userurlslug } = req.body;
+  try {
+    const { userId, companyID, userurlslug } = req.body;
 
-      // Check if the redirect link already exists for the given user
-      let redirectLink = await RedirectLinksModal.findOne({ user_id: userId });
+    // Check if the redirect link already exists for the given user
+    let redirectLink = await RedirectLinksModal.findOne({ user_id: userId });
 
-      if (!redirectLink) {
-        // If it doesn't exist, create a new redirect link
-        redirectLink = new RedirectLink({
-          user_id: userId,
-          companyID: companyID,
-          userurlslug: userurlslug,
-          user_slugs: [{ value: userurlslug }],
-        });
+    if (!redirectLink) {
+      // If it doesn't exist, create a new redirect link
+      redirectLink = new RedirectLink({
+        user_id: userId,
+        companyID: companyID,
+        userurlslug: userurlslug,
+        user_slugs: [{ value: userurlslug }],
+      });
 
-        await redirectLink.save();
-      } else {
-        // If it already exists, update the user_slugs array
-        redirectLink.user_slugs.push({ value: userurlslug });
-        redirectLink.userurlslug = userurlslug; // Update userurlslug value
-        await redirectLink.save();
-      }
-
-      res.status(201).json({ message: "Redirect link created/updated successfully" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Internal Server Error" });
+      await redirectLink.save();
+    } else {
+      // If it already exists, update the user_slugs array
+      redirectLink.user_slugs.push({ value: userurlslug });
+      redirectLink.userurlslug = userurlslug; // Update userurlslug value
+      await redirectLink.save();
     }
 
+    res.status(201).json({ message: "Redirect link created/updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
+
+}
 );
