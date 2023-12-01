@@ -9,6 +9,7 @@ const productRoutes = require("./routes/ProductRoutes/ProductRoutes.js");
 const SuperAdminRoutes = require("./routes/SuperAdminRoutes/superAdminRoutes.js");
 const OTCAdminRoutes = require("./routes/OTC-AdminRoutes/adminRoutes.js")
 const AccountRoutes = require("./routes/accountSwitch/accountRoutes.js");
+const notificationRoutes = require("./routes/notificationRoutes/notificationRoutes");
 const { webhookHandler } = require("./controllers/webhook/webhookController.js");
 const errorMiddleware = require("./middleware/error.js");
 const app = express();
@@ -18,7 +19,7 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const connectDatabase = require("./db/db.js");
 const admin = require('firebase-admin');//firebase
-const serviceAccount = require('./controllers/notification/onetapconnect-231cb-firebase-adminsdk-lng9w-707bf5d62b.json');//firebase
+const serviceAccount = require('./controllers/notification/onetapconnect-85196-firebase-adminsdk-d6ogv-3805b3b9d6.json');//firebase
 
 dotenv.config();
 const url = process.env.FRONTEND_URL;
@@ -93,6 +94,7 @@ app.use("/api/v1", companyRoutes);
 app.use("/api/v1", SuperAdminRoutes);
 app.use("/api/v1", paymentRoutes);
 app.use("/api/v1", productRoutes);
+app.use("/api/v1", notificationRoutes );
 // app.use('/api/v1',AccountRoutes)
 app.use(errorMiddleware);
 
