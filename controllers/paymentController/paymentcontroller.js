@@ -272,10 +272,13 @@ if(initialSetupCharge){
       console.log("Address")
       console.log(Address)
       console.log("Address")
-      const calculation = await stripe.tax.calculations.create({
-        currency: 'usd',
-        customer_details: {
-          address: {
+      let paymentIntent;
+      if(totalAddons_value > 0){
+
+        const calculation = await stripe.tax.calculations.create({
+          currency: 'usd',
+          customer_details: {
+            address: {
             line1: Address.Bstreet1,
             line2: Address.Bstreet2,
             postal_code: Address.BpostalCode,
@@ -291,11 +294,10 @@ if(initialSetupCharge){
           },
         ],
       });
-     
-     
-      let paymentIntent;
+      
+      
       if(selectedCard){
-       paymentIntent = await stripe.paymentIntents.create({
+        paymentIntent = await stripe.paymentIntents.create({
         amount: calculation.amount_total,
         currency: 'usd',
         automatic_payment_methods: { enabled: true, allow_redirects: "never" },
@@ -313,45 +315,53 @@ if(initialSetupCharge){
         description: "Addon purchase",
         payment_method: attachedPaymentMethod.id,
       });
+    }
+    console.log("paymentIntent")
+    console.log(paymentIntent)
+    console.log("paymentIntent")
+    
+    if(!paymentIntent){
+      throw new Error('addon purchase creation failed'); 
+    }
+    const transaction = await stripe.tax.transactions.createFromCalculation({
+      calculation: calculation.id,
+      reference: paymentIntent.id,
+    });
+    
+    const paymentIntentUpdate = await stripe.paymentIntents.update(
+      paymentIntent.id,
+      {
+        metadata: {
+          tax_transaction: transaction.id,
+        },
       }
-      console.log("paymentIntent")
-      console.log(paymentIntent)
-      console.log("paymentIntent")
-     
-          if(!paymentIntent){
-            throw new Error('addon purchase creation failed'); 
-          }
-          const transaction = await stripe.tax.transactions.createFromCalculation({
-           calculation: calculation.id,
-           reference: paymentIntent.id,
-         });
-         
-         const paymentIntentUpdate = await stripe.paymentIntents.update(
-           paymentIntent.id,
-           {
-             metadata: {
-               tax_transaction: transaction.id,
-             },
-           }
-         );     
-
+      );     
+      
       ////
-
-
+      
+      
       if(!myPayment || !paymentIntent){
         throw new Error('Subscription creation failed'); 
       }
+    }
+
+    if(!myPayment){
+      throw new Error('Subscription creation failed'); 
+    }
 
       const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
       if(latestInvoice.payment_inten){
       const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
+
+
+        // Save payment ID and user details in your database after successful payment
+        return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : myPayment.id, status :subscriptionPaymentIntetn.status, endDate : myPayment.current_period_end, addonClient_secret : paymentIntent && paymentIntent.client_secret, addonstatus : paymentIntent && paymentIntent.status});
       
-      // Save payment ID and user details in your database after successful payment
-      return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : myPayment.id, status :subscriptionPaymentIntetn.status, endDate : myPayment.current_period_end, addonClient_secret : paymentIntent.client_secret, addonstatus : paymentIntent.status});
     }
-    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end, addonClient_secret : paymentIntent.client_secret, addonstatus : paymentIntent.status });
+
+    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end, addonClient_secret : paymentIntent && paymentIntent.client_secret, addonstatus : paymentIntent && paymentIntent.status });
 
     } catch (error) {
       console.error(error);
