@@ -102,6 +102,7 @@ const saveBase64Image = async (base64Data, filePath) => {
     }
 };
 const saveimageDatabase = async (type, userID, companyID, imagePath) => {
+    console.log(companyID,"--------------------------------------------------------------------------------------------------")
     const company = await Company.findById(companyID);
     if (type === "logo") {
         const oldLogoPath = company.logopath;
@@ -182,7 +183,7 @@ const saveimageDatabase = async (type, userID, companyID, imagePath) => {
 };
 
 exports.otcImageUpload = (req, res, next) => {
-    console.log("called");
+    console.log("calledd" , req.body);
 
     upload(req, res, async (err) => {
         if (err) {
@@ -208,9 +209,11 @@ exports.otcImageUpload = (req, res, next) => {
         }
 
         try {
-            const { imageType, companyID } = req.body;
+            const { imageType } = req.body;
             const { id } = req.params;
- 
+            const { companyID } = req.body;
+            console.log(companyID , imageType ,"========================================================================================")
+            
             const uploadedFileName = req.file ? req.file.filename : null;
 
             let base64FileName;

@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, AdmininviteTeamMember
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
 
 const {newTestAPIS} = require('../../controllers/OTC-AdminController/Clients/couponController');
-const { uploadProfilePicture } = require("../../controllers/customers/userController");
+const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
 const { otcImageUpload } = require("../../middleware/OtcImageUpload");
 
 router.get("/admin/test", testAPIS);
@@ -38,7 +38,7 @@ router.get("/admin/getAddons", getAddons);
 router.post("/admin/plan/create", createPlan);
 router.get("/admin/plans", getPlans);
 router.post("/admin/getorderssofcompany", getOrderssofcompany);
-router.post("/admin/coupons/create", newTestAPIS);
+// router.post("/admin/coupons/create", newTestAPIS);
 
 router.get("/admin/getCoupon", getCoupon);
 router.post("/admin/coupon/create", createCoupon);
@@ -55,6 +55,18 @@ router.post(
   otcImageUpload,
   uploadProfilePicture
 );
+router.post(
+  "/admin/upload-logo-picture",
+  // isOtcAdminAuthenticatedUser,
+  otcImageUpload,
+  uploadLogo
+);
+router.post(
+  "/admin/upload-favicon-picture",
+  isOtcAdminAuthenticatedUser,
+  otcImageUpload,
+  uploadfavicon
+);
 router.post("/admin/user/update-redirect-link", updateRedirectLink);
-
+router.post("/admin/invite/user", AdmininviteTeamMember);
 module.exports = router;
