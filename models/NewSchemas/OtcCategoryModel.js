@@ -20,20 +20,23 @@ const categorySchema = new mongoose.Schema({
   // },
   CustomPermalink: {
     type: String,
+    default : ''
   },
   description: {
     type: String,
+    default : ''
   },
   categoryType: {
     type: String,
   },
   image: {
     type: String,
+    default : ''
     // default:""
   },
 
-  imageName: { type: String },
-  altText: { type: String },
+  imageName: { type: String, default : '' },
+  altText: { type: String, default : '' },
   status: {
     type: String,
     default: 'Published', // Set your default status value here
@@ -42,8 +45,8 @@ const categorySchema = new mongoose.Schema({
     type: String,
     default: 'Public', // Set your default visibility value here
   },
-  publishedDate: { type: Date },
-  activitylog: { type: String }
+  publishedDate: { type: Date, default : Date.now() },
+  activitylog: { type: String, default : '' }
 
 }, { timestamps: true });
 
