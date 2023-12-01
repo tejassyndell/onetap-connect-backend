@@ -529,14 +529,15 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
 //login user
 exports.login = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(email, password);
+  const lowercaseEmail = email.toLowerCase();
+  console.log(lowercaseEmail, password);
   // checking if user has given password and email both
 
   if (!email || !password) {
     return next(new ErrorHandler("Please Enter Email & Password", 400));
   }
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email :lowercaseEmail }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("User does not found. ", 401));
@@ -1414,7 +1415,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       let companyslug = null;
       const username = firstName;
       const userlastname = lastName;
-      const companyName = company_name;
+      const companyName = company.company_name;
       // console.log(userlastname, username, "---------------------------------------------------")
 
       const first_Name = username.toLowerCase().replace(/[^a-z0-9-]/g, "");

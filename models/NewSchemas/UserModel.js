@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       validate: [validator.isEmail, "Please enter valid Email"],
+      lowercase: true,
+      set: function(email) {
+        return email.toLowerCase(); 
+      }
     },
     businessemail: {
       type: String,
