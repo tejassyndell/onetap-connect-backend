@@ -1414,7 +1414,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       let companyslug = null;
       const username = firstName;
       const userlastname = lastName;
-      const companyName = company_name;
+      const companyName = company.company_name;
       // console.log(userlastname, username, "---------------------------------------------------")
 
       const first_Name = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
