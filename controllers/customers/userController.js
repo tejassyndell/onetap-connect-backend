@@ -707,6 +707,8 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save();
     await user.save({ validateBeforeSave: false });
 
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const message = {
       from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email, // Replace with the recipient's email
@@ -725,8 +727,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
   <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
     <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
-      <img src="https://onetapconnect.sincprojects.com/static/media/logo_black.c86b89fa53055b765e09537ae9e94687.svg">
-
+      <img src="cid:logo">
     </div>
     <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
       <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
@@ -749,6 +750,13 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
 </html>
       `,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
     };
     // <div>
     //   <h3>Dear User</h3>
