@@ -915,146 +915,147 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
 );
 
 
-// exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-//   const { memberData ,companyID } = req.body;
-//   // const { companyID } = req.user;
-//   // console.log(manage_superadmin, "*****************************")
+exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
+  const { memberData ,companyID , manager_firstname , manager_email } = req.body;
+  // const { companyID } = req.user;
+  // console.log(manage_superadmin, "*****************************")
 
-//   // Check if CSVMemberData is an array and contains data
-//   if (!Array.isArray(memberData) || memberData.length === 0) {
-//     return next(new ErrorHandler("No user data provided", 400));
-//   }
+  // Check if CSVMemberData is an array and contains data
+  if (!Array.isArray(memberData) || memberData.length === 0) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
 
-//   const transporter = nodemailer.createTransport({
-//     service: "Gmail",
-//     port: 587,
-//     auth: {
-//       user: process.env.NODMAILER_EMAIL,
-//       pass: process.env.NODEMAILER_PASS,
-//     },
-//   });
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
 
-//   const company = await Company.findById(companyID);
+  const company = await Company.findById(companyID);
 
-//   for (const userData of memberData) {
-//     const { email, first_name, last_name, team } = userData;
+  for (const userData of memberData) {
+    const { email, first_name, last_name, team } = userData;
 
-//     // Check if email is already in use
-//     const existingUser = await InvitedTeamMemberModel.findOne({ email });
-//     const existingUserinusers = await User.findOne({ email });
+    // Check if email is already in use
+    const existingUser = await InvitedTeamMemberModel.findOne({ email });
+    const existingUserinusers = await User.findOne({ email });
 
 
 
-//     if (!email || !first_name || !last_name) {
-//       if (!email) {
-//         return next(new ErrorHandler("Please Enter Email", 400));
-//       }
-//       if (!first_name) {
-//         return next(new ErrorHandler("Please Enter First Name", 400));
-//       }
-//       if (!last_name) {
-//         return next(new ErrorHandler("Please Enter Last Name", 400));
-//       } else {
-//         return next(new ErrorHandler("Please fill out all details", 400));
-//       }
-//     }
-//     if (email) {
-//       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-//       if (emailPattern.test(email) === false) {
-//         return next(new ErrorHandler("Please enter valid email"));
-//       }
-//     }
-//     if (existingUserinusers || existingUser) {
-//       return next(new ErrorHandler("This email is already in use."));
-//     }
+    if (!email || !first_name || !last_name) {
+      if (!email) {
+        return next(new ErrorHandler("Please Enter Email", 400));
+      }
+      if (!first_name) {
+        return next(new ErrorHandler("Please Enter First Name", 400));
+      }
+      if (!last_name) {
+        return next(new ErrorHandler("Please Enter Last Name", 400));
+      } else {
+        return next(new ErrorHandler("Please fill out all details", 400));
+      }
+    }
+    if (email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailPattern.test(email) === false) {
+        return next(new ErrorHandler("Please enter valid email"));
+      }
+    }
+    if (existingUserinusers || existingUser) {
+      return next(new ErrorHandler("This email is already in use."));
+    }
 
-//     let invitationToken = crypto.randomBytes(20).toString("hex");
+    let invitationToken = crypto.randomBytes(20).toString("hex");
 
-//     const currentDate = new Date();
+    const currentDate = new Date();
 
-//     // Calculate the expiry date by adding 5 days
-//     const expiryDate = new Date(currentDate);
-//     expiryDate.setDate(currentDate.getDate() + 5);
+    // Calculate the expiry date by adding 5 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 5);
 
-//     // Convert the expiry date to ISO string format
-//     // const expiryDateString = expiryDate.toISOString();
-//     const rootDirectory = process.cwd();
-//     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+    // Convert the expiry date to ISO string format
+    // const expiryDateString = expiryDate.toISOString();
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
-//     const message = {
-//       from: "OneTapConnect:otcdevelopers@gmail.com",
-//       to: email,
-//       subject: `${company.company_name} Invited you to join OneTapConnect`,
-//       html: `
-//   <!DOCTYPE html>
-//   <html>
+    const message = {
+      from: "OneTapConnect:otcdevelopers@gmail.com",
+      to: email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+      html: `
+  <!DOCTYPE html>
+  <html>
   
-//   <head>
-//       <meta charset="utf-8" />
-//       <meta name="viewport" content="initial-scale=1, width=device-width" />
-//   </head>
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
   
-//   <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
   
-//       <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
-//           <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-//           <img src="cid:logo">
-//           </div>
-//           <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-//           <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-//           <h3>Welcome to OneTapConnect!</h3>
-//           <p>Hi ${first_name},<br/>
-//           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
-//           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
-//           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-//             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
-//                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
-//             </div>
-//             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
-//                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
-//             </div>
-//         </div> <br/>
-//           <h3>Technical issue?</h3>
-//           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
-//       </div>
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Hi ${first_name},<br/>
+          You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+            </div>
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
+                <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+            </div>
+        </div> <br/>
+        <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
   
-//   </body>
+  </body>
   
-//   </html>
-// `,
-//       attachments: [
-//         {
-//           filename: "Logo.png",
-//           path: uploadsDirectory,
-//           cid: "logo",
-//         },
-//       ],
-//     };
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
 
-//     transporter.sendMail(message, (err, info) => {
-//       if (err) {
-//         console.log(err);
-//       } else {
-//         console.log(info.response);
-//       }
-//     });
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
 
-//     await InvitedTeamMemberModel.create({
-//       email: email,
-//       first_name: first_name,
-//       last_name: last_name,
-//       team: team,
-//       companyId: companyID,
-//       invitationToken: invitationToken,
-//       invitationExpiry: expiryDate,
-//     });
-//   }
+    await InvitedTeamMemberModel.create({
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      team: team,
+      companyId: companyID,
+      invitationToken: invitationToken,
+      invitationExpiry: expiryDate,
+    });
+  }
 
-//   res.status(201).json({
-//     success: true,
-//     message: "Invitaion Email sent Successfully",
-//   });
-// });
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+  });
+});
 
 exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
   const { CSVMemberData ,id } = req.body;
@@ -1260,5 +1261,202 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
     success: true,
     message: "Invitaion Email sent Successfully",
     existingMails: existingMails,
+  });
+});
+
+exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next) => {
+  const { formData , id  } = req.body;
+  // const { companyID, id } = req.user;
+  // console.log(formData);
+
+  if (formData == null) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const company = await Company.findById(id);
+  // const userInfo = await User.findById(id);
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+  const password = generatePassword();
+  const {
+    email,
+    firstname,
+    lastname,
+    contact,
+    designation,
+    website_url,
+    team,
+    avatar,
+    address,
+    user_line1_address_permission,
+    user_line2_apartment_permission,
+    user_city_permission,
+    user_state_permission,
+    user_postal_code_permission,
+  } = formData;
+  // console.log(formData);
+
+  // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
+  //   return next(new ErrorHandler("Please fill out all user details", 400));
+  // }
+  if (!email || !firstname || !lastname) {
+    return next(new ErrorHandler("Please fill out all user details", 400));
+  }
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return next(new ErrorHandler("Please enter a valid email", 400));
+  }
+
+  const message = {
+    from: "OneTapConnect:otcdevelopers@gmail.com",
+    to: email,
+    subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+    html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="cid:logo">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstname}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex;">
+            <a href="${process.env.FRONTEND_URL}/login"  style="display: inline-block; ; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Click here to Login</a> </div><br/><br/>
+            Your temporary password is: ${password}<br/><br/>
+            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${company.company_name}
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+
+  transporter.sendMail(message, (err, info) => {
+    if (err) {
+      console.log(`Error sending email to ${email}: ${err}`);
+    } else {
+      console.log(`Email sent to ${email}: ${info.response}`);
+    }
+  });
+
+  const generatedCode = generateUniqueCode();
+
+  const userData = await User.create({
+    email: email, // This line is removed to prevent email storage
+    first_name: firstname,
+    last_name: lastname,
+    contact: contact,
+    designation: designation,
+    team: team,
+    website_url: website_url,
+    user_line1_address_permission: user_line1_address_permission,
+    user_line2_apartment_permission: user_line2_apartment_permission,
+    user_city_permission: user_city_permission,
+    user_state_permission: user_state_permission,
+    user_postal_code_permission: user_postal_code_permission,
+    address: {
+      country: address.country,
+      line1: address.line1,
+      line2: address.line2,
+      city: address.city,
+      state: address.state,
+      postal_code: address.postal_code,
+    },
+    companyID: id,
+    password: password,
+    userurlslug: generatedCode,
+    role: "teammember",
+  });
+  // console.log("called")
+  const userInformationData = {
+    user_id: userData._id,
+    website_url: website_url,
+    company_ID: userData.companyID
+    // Add other fields from formData if needed
+  };
+  await UserInformation.create(userInformationData);
+
+  // console.log(userData._id)
+  const user_parmalink = await parmalinkSlug.create({
+    user_id: userData._id,
+    companyID: userData.companyID,
+    unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+    userurlslug: generatedCode,
+  })
+  await user_parmalink.save();
+
+  // const userplan = planData.plan;
+  // console.log(userplan,"))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))") 
+  let slug = null;
+  const username = firstname;
+  const userlastname = lastname;
+  // console.log(userlastname, username, "---------------------------------------------------")
+  const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  slug = `${firstName}${lastName}`;
+  // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+
+  if (slug !== null) {
+    // Check for duplicates in user_parmalink collection before saving
+    const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+    if (!isDuplicate) {
+      // Save the slug
+      const uniqueSlug = { value: slug, timestamp: Date.now() };
+      await parmalinkSlug.updateOne(
+        { user_id: userData._id },
+        { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+      );
+      await User.updateOne(
+        { _id: userData._id },
+        { userurlslug: slug },
+      );
+    }
+  }
+  // User.userurlslug = generatedCode;
+  // await User.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+    userID: userData._id,
   });
 });

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, AdmininviteTeamMemberByCSV
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -68,6 +68,7 @@ router.post(
   uploadfavicon
 );
 router.post("/admin/user/update-redirect-link", updateRedirectLink);
-// router.post("/admin/invite/user", AdmininviteTeamMember);
+router.post("/admin/invite/user", AdmininviteTeamMember);
 router.post("/admin/invite/userByCSV", AdmininviteTeamMemberByCSV);
+router.post("/admin/invite/manual", inviteTeamMembermanuallybyadmin);
 module.exports = router;
