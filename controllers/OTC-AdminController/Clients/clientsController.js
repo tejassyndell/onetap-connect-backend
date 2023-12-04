@@ -875,3 +875,34 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
 
 }
 );
+
+
+exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
+  // const { id } = req.user;
+  try {
+    // Find orders by user ID
+    const orders = await Order.find().populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    });
+
+
+    // Create an array to store user data for each order
+    const ordersWithUserData = [];
+
+    for (const order of orders) {
+      // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
+      const user = await User.findOne({ _id: order.user });
+  
+      const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
+      // Add the user data to the order document
+      const orderWithUserData = { ...order.toObject(), userdata };
+      ordersWithUserData.push(orderWithUserData);
+    }
+
+    res.status(200).json({ success: true, allOrders: ordersWithUserData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
