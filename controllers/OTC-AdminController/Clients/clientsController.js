@@ -1266,8 +1266,6 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
 
 exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next) => {
   const { formData , id  } = req.body;
-  // const { companyID, id } = req.user;
-  // console.log(formData);
 
   if (formData == null) {
     return next(new ErrorHandler("No user data provided", 400));
@@ -1459,4 +1457,41 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next
     message: "Invitaion Email sent Successfully",
     userID: userData._id,
   });
+});
+
+exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+console.log(id , "====================" , req.body)
+  try {
+    // Fetch invited users based on companyID    
+    const invitedusers = await InvitedTeamMemberModel.find({
+      companyId: id,
+    });
+
+    // console.log(invitedusers, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+    if (invitedusers.length === 0) {
+      return next(new ErrorHandler("No invited users found", 404));
+    }
+
+    for (const user of invitedusers) {
+      if (user.status === 'pending' && user.invitationExpiry < new Date()) {
+        // If status is pending and invitation has expired
+        const newData = await InvitedTeamMemberModel.findOneAndUpdate(
+          { _id: user._id },
+          { status: 'unresponsive' },
+          { new: true }
+        );
+        // Update the user in the array of invited users
+        invitedusers[invitedusers.indexOf(user)] = newData;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      invitedusers,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
 });
