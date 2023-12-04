@@ -27,49 +27,84 @@ const CouponSchema = new mongoose.Schema({
     },
     planDiscount: [{
         plan_id: {
-            type: String,
-            default: null,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'otc_plans',
         },
-        usageLimit: {
-            type: Number,
-            default: null,
+        monthly: {
+            usageLimit: {
+                type: Number,
+                default: null,
+            },
+            // discountValue: {
+            //     type: Number,
+            //     default: null,
+            // },
+            discountedPrice: {
+                type: Number,
+                default: null,
+            },
         },
-        discountValue: {
-            type: Number,
-            default: null,
+        yearly: {
+            usageLimit: {
+                type: Number,
+                default: null,
+            },
+            // discountValue: {
+            //     type: Number,
+            //     default: null,
+            // },
+            discountedPrice: {
+                type: Number,
+                default: null,
+            },
         },
-        discountedPrice: {
-            type: Number,
-            default: null,
-        },
-    },],
+    }],
     productDiscount: [{
         product_id: {
-            type: String,
-            default: null,
-        },
-        discountValue: {
-            type: Number,
-            default: null,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'product',
         },
         discountedPrice: {
             type: Number,
             default: null,
         },
+        variations: [{
+            variation_id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'product',
+            },
+            variationDiscountedPrice: {
+                type: Number,
+                default: null,
+            },
+        }],
     },],
-    addonsDiscount: [{
+    addonDiscount: [{
         addon_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'otc_addons',
+        },
+        type: {
             type: String,
             default: null,
         },
-        discountValue: {
+        price: {
             type: Number,
             default: null,
         },
-        discountedPrice: {
+        value: {
             type: Number,
             default: null,
         },
+        monthlyDiscountedPrice: {
+            type: Number,
+            default: null,
+        },
+        yearlyDiscountedPrice: {
+            type: Number,
+            default: null,
+        },
+
     },],
     status: {
         type: String,
@@ -129,12 +164,12 @@ const CouponSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-    }, ],
+    },],
     teamPlanUsage: {
-        minUsers : {
+        minUsers: {
             type: Number,
         },
-        maxUsers : {
+        maxUsers: {
             type: Number,
         },
     }
@@ -143,7 +178,7 @@ const CouponSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    minimumOrderPrice: {
+    minimumOrderPrice:   {
         type: Number,
     },
     freeShipCountries: [{
@@ -154,12 +189,22 @@ const CouponSchema = new mongoose.Schema({
             type: String,
         },
     },],
-});
+}, { timestamps: true });
 
 CouponSchema.pre("validate", function (next) {
     if (!this.freeShipping) {
         this.minimumOrderPrice = undefined;
         this.freeShipCountries = [];
+    }
+    next();
+});
+CouponSchema.pre('save', function (next) {
+    if (this.type === 'test') {
+        this.price = this.value; 
+        this.monthly = undefined; 
+        this.yearly = undefined;
+    } else if (this.type === 'test1') {
+        this.value = undefined; 
     }
     next();
 });

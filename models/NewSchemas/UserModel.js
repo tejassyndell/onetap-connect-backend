@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       validate: [validator.isEmail, "Please enter valid Email"],
+      lowercase: true,
+      set: function(email) {
+        return email.toLowerCase(); 
+      }
     },
     businessemail: {
       type: String,
@@ -136,7 +140,7 @@ const userSchema = new mongoose.Schema(
       completepersonalsetupstep3: { type: Boolean, default: false },
       completedesigncardstep4: { type: Boolean, default: false },
       sharewithworldstep5: { type: Boolean, default: false },
-    },    
+    },
     keywords: { type: String, default: null },
     userurlslug: {
       type: String,
@@ -172,6 +176,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
+    console.log("ADSFD")
     next();
   }
   console.log(this);
@@ -186,7 +191,7 @@ userSchema.methods.getJWTToken = function () {
 };
 
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  console.log(enteredPassword, this.password);
+  console.log(enteredPassword, this);
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

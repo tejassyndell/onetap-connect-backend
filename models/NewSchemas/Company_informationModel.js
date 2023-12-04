@@ -37,7 +37,8 @@ const Company_information = new mongoose.Schema(
         return this.company_name.toLowerCase().replace(/[^a-z0-9-]/g, "");
       },
     },
-    keywords: { type: String },
+    keywords: { type: String , default: "" },
+    team_size: { type: String },
     website_url: {
       type: String,
       default: "",
@@ -99,10 +100,10 @@ const Company_information = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    company_logo_name: { type: String, default: null },
-    logo_alt: { type: String, default: null },
+    company_logo_name: { type: String, default: "" },
+    logo_alt: { type: String, default: "" },
     logopath: { type: String, default: "" },
-    fav_icon: { type: String, default: null },
+    fav_icon: { type: String, default: "" },
     fav_icon_path: { type: String, default: "" },
     additional_colors: [
         {
@@ -170,6 +171,7 @@ const Company_information = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      status: { type: String, default: "active" },
   },
   { timestamps: true }
 );

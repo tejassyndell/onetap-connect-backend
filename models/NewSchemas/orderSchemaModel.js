@@ -9,6 +9,11 @@ const order_Schema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
+      default: null,
+    },
+    isGuest: {
+      type: Boolean,
+      default: false,
     },
     first_name: {
       type: String,
@@ -21,7 +26,7 @@ const order_Schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default:"Processing"
+      default: "Processing"
     },
     company: {
       type: mongoose.Schema.Types.ObjectId,
@@ -72,6 +77,11 @@ const order_Schema = new mongoose.Schema(
     transactionId: {
       type: String,
     },
+    isCouponUsed: { type: Boolean, default: false },
+    coupons: {
+      code: { type: String, default: null },
+      value: { type: Number, default: null }
+    },
     shippingAddress: [
       {
         address_name: { type: String, default: "Default" },
@@ -116,6 +126,6 @@ order_Schema.pre("save", async function (next) {
     this.orderNumber = highestOrder ? highestOrder.orderNumber + 1 : 1;
   }
   next();
-}); 
+});
 
 module.exports = mongoose.model("order", order_Schema);

@@ -20,7 +20,7 @@ function generatePassword() {
   const minLength = 8;
   const maxLength = 15;
   const remainingLength = getRandomInt(minLength - 4, maxLength - 4);
-  for (let i = 0; i < remainingLength; i++) {
+  for (let i = 0; i < remainingLength  + 4; i++) {
     password += getRandomChar(allCharacters);
   }
 
