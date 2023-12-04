@@ -1921,6 +1921,8 @@ exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
 exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const updatedUserDetails = req.body; // Assuming the updated details are provided in the request body
+  // console.log('caled caled caled caled caled caled caled')
+  // console.log(updatedUserDetails, "called callllled")
 
   try {
     const user = await User.findById(id);
@@ -1949,6 +1951,10 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
       { userurlslug: userurlslug }
     );
 
+    if (updatedUserDetails.status === 'inactive') {
+      await sendInactiveUserEmail(user);
+    }
+
     res.status(200).json({
       success: true,
       message: "User details updated successfully",
@@ -1958,6 +1964,65 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 });
+const sendInactiveUserEmail = async (user) => {
+  const userEmail = user.email;
+  const firstname = user.first_name;
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+  const message = {
+    from: "OneTapConnect:otcdevelopers@gmail.com",
+    to: userEmail,
+    // to: 'tarun.syndell@gmail.com',
+    subject: "Account Deactivation Mail",
+    html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+        </div>
+        <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <p>Hi ${firstname},<br/><br/>
+            We hope this message finds you well. We are writing to inform you that your account with [Your Company Name] has been deactivated.</p>
+    
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+        </div>
+    
+    </body>
+    
+    </html>
+`,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+  await transporter.sendMail(message);
+  console.log('Account deactivation email sent successfully');
+  return res.status(200).json({ success: true, message: 'Account deactivation email sent successfully' });
+};
 exports.updateUserInformation = async (req, res, next) => {
   const { id } = req.params; // Assuming you pass the userId as a parameter
   const updatedUserInfo = req.body; // Assuming the updated user information is provided in the request body

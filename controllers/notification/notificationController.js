@@ -9,6 +9,7 @@ const Notification = require('../../models/NewSchemas/Notification_model.js');
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
+// const socketIO = require('../../app.js');
 
 exports.save_Firebase_Token = catchAsyncErrors(async (req, res, next) => {
     const { firebase_token } = req.body;
@@ -16,7 +17,7 @@ exports.save_Firebase_Token = catchAsyncErrors(async (req, res, next) => {
     console.log(firebase_token, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     console.log(id, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
-    try {   
+    try {
         // Find the user with the provided user_id
         const user = await UserInformation.findOne({ user_id: id });
         // console.log(user, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -132,30 +133,70 @@ const storeNotification = async (title, body, recipientIDs) => {
 
 exports.getmessages = catchAsyncErrors(async (req, res, next) => {
     const userId = req.user.id;
-    const compId = req.user.companyID;
-    const curntRole = req.user.role;
-    console.log(`userid ${userId}`,compId,curntRole );
+    console.log(`userid ${userId}`);
 
     try {
-        // const userData = await UserInformation.find({company_ID:compId})
+        const notify = await Notification.find({ userId });
 
-        // if(curntRole === 'manager'){
-
-        // }else if (curntRole === 'administrator'){
-
-        // }
-
-        const user = await Notification.find({ userId });
-
-        if (!user || user.length === 0) {
+        if (!notify || notify.length === 0) {
             return next(new ErrorHandler("User not found", 404));
         }
         res.status(200).json({
             success: true,
-            user,
+            notify,
         });
     } catch (error) {
         console.error('Error fetching user:', error);
         next(new ErrorHandler("Internal Server Error", 500));
+    }
+});
+
+exports.setnotifystatus = catchAsyncErrors(async (req, res, next) => {
+    const { notificationId, status } = req.body;
+    console.log(notificationId, status, "////////////////////////////////////")
+
+    try {
+        // Assuming you have a Notification model
+
+        if (status === 'delete') {
+            console.log('calld')
+            const notification = await Notification.findByIdAndDelete({ _id: notificationId });
+            // await notification.remove();
+            if (!notification) {
+                return res.status(404).json({ message: "Notification not found" });
+            }
+            return res.status(200).json({ success: true, message: 'Notification deleted successfully' });
+        } else {
+            // If status is 'archive' or 'seen', update the status
+            const notification = await Notification.findById({ _id: notificationId });
+
+            if (!notification) {
+                return res.status(404).json({ error: 'Notification not found' });
+            }
+            notification.status = status;
+            await notification.save();
+            return res.status(200).json({ success: true, message: 'Notification status updated successfully' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+exports.deleteallNotify = catchAsyncErrors(async (req, res, next) => {
+    const { notificationIds } = req.body;
+    console.log(notificationIds, "///////////////////////////////////////")
+    
+    try{
+        for (const notificationId of notificationIds) {
+            const notification = await Notification.findByIdAndDelete({ _id: notificationId });
+
+            if (!notification) {
+                return res.status(404).json({ message: `Notification with ID ${notificationId} not found` });
+            }
+        }
+        return res.status(200).json({ success: true, message: 'Notifications deleted successfully' });
+    }catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+        console.log(error)
     }
 });

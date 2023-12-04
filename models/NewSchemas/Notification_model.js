@@ -7,7 +7,8 @@ const Notification_schema = new mongoose.Schema(
             required: true
         },
         title: { type: String },
-        body: { type: String }
+        body: { type: String },
+        status:{ type: String, default:null },
     },
     { timestamps: true }
 );
