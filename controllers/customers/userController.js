@@ -4426,6 +4426,12 @@ exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     cardDetails,
   } = req.body;
 
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+
   const guestCustomer = new GuestCustomer({
     first_name: userData.first_name,
     last_name: userData.last_name,
