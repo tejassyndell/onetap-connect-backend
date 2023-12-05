@@ -537,7 +537,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Please Enter Email & Password", 400));
   }
 
-  const user = await User.findOne({ email :lowercaseEmail }).select("+password");
+  const user = await User.findOne({ email: lowercaseEmail }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("User does not found. ", 401));
@@ -1925,8 +1925,7 @@ exports.deleteTeam = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const updatedUserDetails = req.body; // Assuming the updated details are provided in the request body
-
+  const { userDetails, selectedUserForRedirect } = req.body; // Assuming the updated details are provided in the request body
   try {
     const user = await User.findById(id);
 
@@ -1941,8 +1940,41 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     }
 
     // Update the user details
-    user.set(updatedUserDetails);
+    user.set(userDetails);
     await user.save();
+
+    if (selectedUserForRedirect) {
+      const permalinkUpdateResult = await parmalinkSlug.updateMany(
+        { user_id: { $in: userDetails.users } },
+        {
+          $set: {
+            isactive: true,
+            redirectUserId: selectedUserForRedirect[0]._id,
+          },
+        }
+      );
+    }
+    if (userDetails.status === "active") {
+      const permalinkUpdateResult = await parmalinkSlug.updateMany(
+        { user_id: { $in: userDetails.users } },
+        {
+          $set: {
+            isactive: false,
+            redirectUserId: null,
+          },
+        }
+      );
+    }
+    // const permalink = await parmalinkSlug.findOneAndUpdate(
+    //   { user_id: id },
+    //   {
+    //     $set: {
+    //       isactive: true,
+    //       redirectUserId: selectedUserForRedirect._id,
+    //     },
+    //   },
+    //   { new: true }
+    // );
 
     // const userurlslug = user.userurlslug;
     // await parmalinkSlug.updateOne(
@@ -1963,6 +1995,7 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 });
+
 exports.updateUserInformation = async (req, res, next) => {
   const { id } = req.params; // Assuming you pass the userId as a parameter
   console.log("////////////////////////////////////////////////////////////////")
@@ -1975,9 +2008,9 @@ exports.updateUserInformation = async (req, res, next) => {
     // Try to find the user information document by userId
     let userInformation = await UserInformation.findOne({ user_id: id });
 
-  console.log("////////////////////////////////////////////////////////////////")
-console.log(userInformation)
-console.log("////////////////////////////////////////////////////////////////")
+    console.log("////////////////////////////////////////////////////////////////")
+    console.log(userInformation)
+    console.log("////////////////////////////////////////////////////////////////")
 
 
     if (!userInformation) {
@@ -2540,16 +2573,16 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (couponData !== null && Object.keys(couponData).length !== 0) {
     order.isCouponUsed = true;
     order.coupons = {
-        code: couponData.appliedCouponCode,
-        value: couponData.discountValue
+      code: couponData.appliedCouponCode,
+      value: couponData.discountValue
     };
     const logCoupons = await UserCouponAssociation.findOneAndUpdate(
-      {userId : user._id, couponCode : couponData.appliedCouponCode },
-      {$setOnInsert : {userId : user._id} , $inc :{usageCount : 1} },
-      {upsert : true, new : true, setDefaultsOnInsert : true}
+      { userId: user._id, couponCode: couponData.appliedCouponCode },
+      { $setOnInsert: { userId: user._id }, $inc: { usageCount: 1 } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     )
     console.log(logCoupons);
-}
+  }
   await user.save();
   await card.save();
   await company.save();
@@ -3730,21 +3763,25 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
-
-  const { id } = req.user;
-
-  const userInfo = await UserInformation.find({ user_id: id });
-
-  if (!userInfo || userInfo.length === 0) {
-    return next(new ErrorHandler("User Information Not Found", 401));
+  try {
+    const { id } = req.user;
+    
+    const userInfo = await UserInformation.find({ user_id: id });
+    
+    if (!userInfo || userInfo.length === 0) {
+      return next(new ErrorHandler("User Information Not Found", 401));
+    }
+    
+    const firstuserInfo = userInfo[0];
+    
+    res.status(200).json({
+      success: true,
+      firstuserInfo,  
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error, 501));
+  
   }
-
-  const firstuserInfo = userInfo[0];
-
-  res.status(200).json({
-    success: true,
-    firstuserInfo,
-  });
 });
 
 // exports.getTeam = catchAsyncErrors(async (req, res, next) => {
@@ -4393,6 +4430,12 @@ exports.guestcheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     cardDetails,
   } = req.body;
 
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+  console.log("--------------------------------");
+
   const guestCustomer = new GuestCustomer({
     first_name: userData.first_name,
     last_name: userData.last_name,
@@ -4920,22 +4963,33 @@ exports.getcompanies = catchAsyncErrors(async (req, res, next) => {
 
 exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
   const { slug } = req.body;
-
   try {
     const permalink = await parmalinkSlug.findOne({ 'unique_slugs.value': slug });
+
 
     if (!permalink) {
       return res.status(404).json({ success: false, message: 'No user found' });
     }
 
-    if (permalink.unique_slugs.length === 1 || slug === permalink.unique_slugs[0].value) {
-      console.log("called1");
-      return res.status(200).json({ success: true, slug: permalink.unique_slugs[0].value });
-    }
+    if (permalink.isactive) {
+      const latestSlug = await parmalinkSlug
+        .findOne({ user_id: permalink.redirectUserId });
 
-    if (permalink.unique_slugs.length > 1) {
-      console.log("called2");
-      return res.status(200).json({ success: true, slug: permalink.unique_slugs[permalink.unique_slugs.length - 1].value });
+      if (latestSlug) {
+        return res.status(200).json({ success: true, slug: latestSlug.unique_slugs[latestSlug.unique_slugs.length - 1].value });
+      } else {
+        return res.status(500).json({ success: false, message: 'No user found' });
+      }
+    } else {
+      if (permalink.unique_slugs.length === 1 || slug === permalink.unique_slugs[0].value) {
+        console.log("called1");
+        return res.status(200).json({ success: true, slug: permalink.unique_slugs[0].value });
+      }
+
+      if (permalink.unique_slugs.length > 1) {
+        console.log("called2");
+        return res.status(200).json({ success: true, slug: permalink.unique_slugs[permalink.unique_slugs.length - 1].value });
+      }
     }
 
     console.log("called3");
@@ -5104,7 +5158,7 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
 exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
   const { currentPassword, NewPassWord } = req.body;
   const { id } = req.user;
- 
+
   const fetchedUser = await User.findById(id).select("+password");
 
   if (!fetchedUser) {
