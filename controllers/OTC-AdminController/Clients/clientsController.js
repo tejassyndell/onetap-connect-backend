@@ -14,6 +14,9 @@ const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
 const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
+// const { default: mongoose } = require("mongoose");
+
+const { Types } = require('mongoose');
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
@@ -906,3 +909,92 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
+// Import necessary modules and models
+
+// Update multiple orders
+// exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
+//   const { orderIds, orderData } = req.body;
+// console.log("?????????????????????????//****************")
+//   console.log(orderData)
+//   console.log("?????????????????????????//****************")
+// console.log(orderIds, "ids.....")
+//   try {
+//     // Convert orderIds to an array of ObjectId
+//     const objectIdOrderIds =  orderIds.map(orderId => new Types.ObjectId(orderId));
+
+//     console.log(objectIdOrderIds, "_----------------------------------------")
+
+//     // Use the updateMany function to update multiple orders based on their IDs
+//     // const result = await Order.updateMany({ _id: { $in: objectIdOrderIds } }, orderData);
+//     const result = await Order.updateMany({ _id: { $in: objectIdOrderIds } }, { $set: orderData });
+
+//     if (result.nModified > 0) {
+//       res.status(200).json({ success: true, message: 'Orders updated successfully' });
+//     } else {
+//       res.status(404).json({ success: false, message: 'No orders found for the provided IDs' });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// });
+
+
+exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
+  const { orderIds, orderData } = req.body;
+console.log("?????????????????????????//****************")
+  console.log(orderData)
+  console.log("?????????????????????????//****************")
+console.log(orderIds, "ids.....")
+// const statusData  = await orderData.map((e)=> e.status)
+// console.log(statusData, "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+  try {
+    // Loop through the array of order IDs
+    for (let i = 0; i < orderIds.length; i++) {
+      const orderId = orderIds[i];
+      const updatedData = orderData[i];
+
+      const order = await Order.findById(orderId);
+
+      console.log(order)
+
+      if (!order) {
+        return res.status(404).json({ success: false, message: `No order found with ID: ${orderId}` });
+      }
+
+      // Update the order based on the orderData
+      // You might need to adjust this depending on your orderData structure
+      Object.assign(order, updatedData);
+
+      await order.save(); // Save the changes to the order
+      console.log(order, "order updated data")
+      res.status(200).json({ success: true, message: 'Orders updated successfully' , order });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
+
+exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
+  const { orderIds } = req.body;
+
+  try {
+    const result = await Order.deleteMany({ _id: { $in: orderIds } });
+    if (result.deletedCount > 0) {
+      res.status(200).json({ success: true, message: 'Orders deleted successfully' });
+    } else {
+      res.status(404).json({ success: false, message: 'No orders found for the provided IDs' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
