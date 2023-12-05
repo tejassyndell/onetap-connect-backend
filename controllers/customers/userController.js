@@ -3722,21 +3722,25 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
-
-  const { id } = req.user;
-
-  const userInfo = await UserInformation.find({ user_id: id });
-
-  if (!userInfo || userInfo.length === 0) {
-    return next(new ErrorHandler("User Information Not Found", 401));
+  try {
+    const { id } = req.user;
+    
+    const userInfo = await UserInformation.find({ user_id: id });
+    
+    if (!userInfo || userInfo.length === 0) {
+      return next(new ErrorHandler("User Information Not Found", 401));
+    }
+    
+    const firstuserInfo = userInfo[0];
+    
+    res.status(200).json({
+      success: true,
+      firstuserInfo,  
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error, 501));
+  
   }
-
-  const firstuserInfo = userInfo[0];
-
-  res.status(200).json({
-    success: true,
-    firstuserInfo,
-  });
 });
 
 // exports.getTeam = catchAsyncErrors(async (req, res, next) => {
