@@ -21,7 +21,7 @@ const guestCustomerSchema = new mongoose.Schema(
         },
         email: {
             type: String,
-            unique: true,
+            // unique: true,
             validate: [validator.isEmail, "Please enter valid Email"],
         },
         contact: { type: Number, default: null },

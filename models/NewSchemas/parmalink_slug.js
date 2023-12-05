@@ -31,6 +31,15 @@ const parmalink_slug_Schema = new mongoose.Schema(
             type: String,
             ref: 'company',
         },
+        isactive:{
+            type: Boolean,
+            default: true,
+        },
+        redirectUserId : {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'user',
+            default: null,
+        }
     },
     { timestamps: true }
 );

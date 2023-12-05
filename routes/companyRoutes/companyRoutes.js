@@ -253,7 +253,7 @@ router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
 router.get('/userslugs/:id', getuniqueslugbyid)
 
 router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
-router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
+router.post('/cancel_invitation' ,CancelInvitedUser)
 router.get("/getallcompanies", isAuthenticatedUser, getcompanies);  
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)

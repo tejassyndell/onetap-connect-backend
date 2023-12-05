@@ -100,10 +100,10 @@ const Company_information = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    company_logo_name: { type: String, default: null },
-    logo_alt: { type: String, default: null },
+    company_logo_name: { type: String, default: "" },
+    logo_alt: { type: String, default: "" },
     logopath: { type: String, default: "" },
-    fav_icon: { type: String, default: null },
+    fav_icon: { type: String, default: "" },
     fav_icon_path: { type: String, default: "" },
     additional_colors: [
         {
