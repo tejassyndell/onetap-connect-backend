@@ -1459,6 +1459,110 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next
   });
 });
 
+exports.resendemailinvitationbyadmin = catchAsyncErrors(async (req, res, next) => {
+  const { userid, manager_email, manager_firstname,companyID } = req.body;
+
+  console.log(userid);
+  for (const id of userid) {
+    const user = await InvitedTeamMemberModel.findById(id);
+    if (!user) {
+      console.log(`User with ID ${id} not found`);
+      continue; // Continue to the next iteration if user is not found
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const company = await Company.findById(companyID);
+    let invitationToken = crypto.randomBytes(20).toString("hex");
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const currentDate = new Date();
+
+    // Calculate the expiry date by adding 5 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 5);
+    // console.log(expiryDate, "===============================================================================")
+    // Update the user object with the new fields
+    user.invitationToken = invitationToken;
+    user.invitationExpiry = expiryDate;
+    user.status = "pending";
+    // Save the updated user object
+    await user.save();
+
+    const message = {
+      from: "OneTapConnect:otcdevelopers@gmail.com",
+      to: user.email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">          
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Hi ${user.first_name}<br/>
+          You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+            </div>
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; width:30%;">
+            <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+            </div>
+        </div>
+          <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
+          <h5>Technical issue?</h5>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+  
+  
+  `,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+    console.log(user);
+  }
+
+  res.status(200).json({ message: "Email Sent" });
+});
 exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
 console.log(id , "====================" , req.body)
