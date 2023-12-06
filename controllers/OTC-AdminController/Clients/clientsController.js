@@ -1596,7 +1596,162 @@ console.log(id , "====================" , req.body)
       success: true,
       invitedusers,
     });
-  } catch (error) {
+  } catch (error) {         
     return next(new ErrorHandler(error.message, 500));
   }
+});
+
+exports.getTeamofCompany = catchAsyncErrors(async (req, res, next) => {
+  const{ id }= req.body;
+  console.log(id, "sadadas")
+
+  const team = await Team.find({ companyID: id });
+  // console.log(team ,"teamname")
+  res.status(200).json({ message: "Users updated successfully", team });
+});
+
+exports.updateTeamNamebyAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers, team } = req.body;
+
+  // Loop through the array of selected user IDs
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    // Update the user's team with the new team name
+    user.team = team;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({ message: "Users updated successfully" });
+});
+
+// Remove Team from Users
+exports.removeTeamFromUsersByadmin = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers } = req.body;
+
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    user.team = null; // Remove the team association
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Team removed from users successfully" });
+});
+
+
+exports.deleteteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  const { teamId } = req.body; // Assuming you have the team's unique ID available
+
+  // Find and delete the team by its ID
+  const deletedTeam = await Team.findByIdAndDelete(teamId);
+
+  if (!deletedTeam) {
+    return res.status(404).json({ message: "Team not found" });
+  }
+
+  // Find users belonging to the deleted team
+  const usersToDelete = await User.find({ team: deletedTeam._id });
+  const companyID = usersToDelete?.[0]?.companyID;
+
+  // Remove the team association from the users
+  for (const user of usersToDelete) {
+    user.team = null; // You can set it to an empty string or null if needed
+    await user.save();
+  }
+  // Find remaining teams of the company
+  const remainingTeams = await Team.find({ companyID });
+
+  res.status(200).json({ message: "Team deleted successfully" , remainingTeams});
+});
+
+exports.renameteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  const { teamId, newTeamName } = req.body; // Assuming you have the team's unique ID and the new team name available
+
+  try {
+    // Find the team by its ID
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Check if the new team name already exists
+    const isExistingTeam = await Team.exists({
+      _id: { $ne: teamId }, // Exclude the current team from the check
+      name: newTeamName,
+    });
+
+    if (isExistingTeam) {
+      return res.status(400).json({ message: "New team name already exists" });
+    }
+
+    // Update the team name
+    team.team_name = newTeamName;
+    await team.save();
+
+    // Update user's team name
+    // const usersToUpdate = await User.find({ team: teamId }); // Find users belonging to the old team
+    // for (const user of usersToUpdate) {
+    //   user.team = newTeamName;
+    //   await user.save();
+    // }
+
+    res.status(200).json({ message: "Team renamed successfully", team });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+exports.createNewteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  console.log("team");
+  // console.log(req.user,"wdsafeg")
+  // const companyID = req.user.companyID;
+  // const userID = req.user._id;
+  const { team_name , companyID } = req.body;
+  console.log(companyID);
+  console.log(team_name);
+  const teamData = {
+    team_name: team_name,
+    companyID: companyID,
+  };
+
+  const team = await Team.create(teamData);
+  const latestTeamId = team._id;
+  // console.log(userID);
+
+
+  console.log("Updated User Informationhg", team);
+
+  if (!team) {
+    return res.status(404).json({ message: "Team not created" });
+  }
+
+  // const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
+  // const company = await team.findOne() // Replace with proper query
+
+  // if (!company) {
+  //   return res.status(404).json({ message: "Company not found" });
+  // }
+
+  // if (company.teams?.includes(team_name)) {
+  //   return res.status(400).json({ message: "This team already exists" });
+  // }
+
+  // company.team?.push(team_name);
+  // await company.save();
+
+  res.status(201).json({ message: "Team created successfully", team });
 });
