@@ -85,7 +85,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const message = {
     from: process.env.NODMAILER_EMAIL,
     to: email,
-    subject: `Verify your email address`,
+    subject: `OneTapConnect Verify your email address`,
     //   text: `Your Verification code is ${code}`,
     html: `
     <!DOCTYPE html>
@@ -717,7 +717,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const message = {
       from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email, // Replace with the recipient's email
-      subject: "Password Recovery Email",
+      subject: "OneTapConnect Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
       html: `
       <!DOCTYPE html>
@@ -2032,7 +2032,7 @@ const sendInactiveUserEmail = async (user) => {
     from: "OneTapConnect:otcdevelopers@gmail.com",
     to: userEmail,
     // to: 'tarun.syndell@gmail.com',
-    subject: "Account Deactivation Mail",
+    subject: "OneTapConnect Account Deactivation Mail",
     html: `
     <!DOCTYPE html>
     <html>
@@ -4652,7 +4652,7 @@ const sendOtpEmail = (email, otp, firstname) => {
     from: "OneTapConnect:otcdevelopers@gmail.com",
     to: email,
     // to: "tarun.syndell@gmail.com",
-    subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
+    subject: 'OneTapConnect One-Time Password (OTP) for Account Deletion',
     // text: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
     html: `
     <!DOCTYPE html>
@@ -4725,14 +4725,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
     // console.log(userEmail, "@@@@@@@@@@@@@@@@@@@@@@@");
     const userotp = decodedToken.otp;
     // console.log(userotp, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      port: 587,
-      auth: {
-        user: process.env.NODMAILER_EMAIL,
-        pass: process.env.NODEMAILER_PASS,
-      },
-    });
+    
     if (otp === userotp) {
       const recoveryToken = jwt.sign(
         { _id: userid },
@@ -4752,7 +4745,36 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      const rootDirectory = process.cwd();
+      sendRecoveryEmail(email, firstname, recoveryToken);
+      scheduleTokenExpiration(recoveryToken, userid, companyid);
+      res.cookie("token", null, {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+      });
+      return res.status(200).json({ success: true, message: 'OTP verified' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Incorrect OTP' });
+    }
+  } catch (error) {
+    // console.error('Error:', error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ success: false, message: 'OTP has expired' });
+    }
+    // console.error('Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+const sendRecoveryEmail = async (email, firstname, recoveryToken) => {
+  // console.log(',,,,,,,,,,,,,,,,,,,,,,,,,', email, firstname, recoveryToken)
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+  const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
         from: "OneTapConnect:otcdevelopers@gmail.com",
@@ -4814,28 +4836,12 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         ],
       };
       await transporter.sendMail(mailOptions);
-      res.cookie("token", null, {
-        expires: new Date(Date.now()),
-        httpOnly: true,
-      });
-      return res.status(200).json({ success: true, message: 'OTP verified' });
-      scheduleTokenExpiration(recoveryToken, userid, companyid);
-    } else {
-      return res.status(400).json({ success: false, message: 'Incorrect OTP' });
-    }
-  } catch (error) {
-    // console.error('Error:', error);
-    if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ success: false, message: 'OTP has expired' });
-    }
-    // console.error('Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
+
+};
 function scheduleTokenExpiration(token, userid, companyid) {
   const { exp } = jwt.decode(token);
   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
-  console.log(expirationTime, ".....expiring time")
+  // console.log(expirationTime, ".....expiring time")
   setTimeout(async () => {
     try {
       const user = await User.findOne({ _id: userid });
