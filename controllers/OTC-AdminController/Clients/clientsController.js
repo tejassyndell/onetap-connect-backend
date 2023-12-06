@@ -874,3 +874,37 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
 
 }
 );
+
+
+
+exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
+  try {
+    const subscriptions = await Order.find({ type: "Subscription" }).select({
+      first_name: 1,
+      last_name: 1,
+      status: 1,
+      "subscription_details.recurring_amount": 1,
+      "subscription_details.plan": 1,
+      "subscription_details.renewal_date": 1,
+      orderNumber:1
+    });
+
+    // Do something with the retrieved subscriptions
+    res.status(200).json(subscriptions);
+  } catch (error) {
+    console.error('Error fetching subscription details:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+exports.getsubscriptiondetails = async (req,res,next) => {
+  const {id} = req.body
+  console.log(id,"idd")
+  try {
+    const subscriptions = await Order.findById(id);
+    res.json(subscriptions);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+
