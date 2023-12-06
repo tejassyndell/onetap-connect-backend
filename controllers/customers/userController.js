@@ -5182,3 +5182,45 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, msg: "password updated" });
 
 });
+
+
+const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
+<Orders pages="1">
+  <Order>
+    <OrderID>orderid</OrderID>
+    <OrderNumber>order number</OrderNumber>
+    <OrderDate>orderdate: 11/25/2020 14:30 PM</OrderDate>
+    <OrderStatus>paid</OrderStatus>
+    <LastModified> last modified 12/8/2011 12:56 PM</LastModified>
+    <ShippingMethod>USPSPriorityMail</ShippingMethod>
+    <PaymentMethod>Credit Card</PaymentMethod>
+    <CurrencyCode>EUR</CurrencyCode> 
+<OrderTotal>123.45</OrderTotal>
+<TaxAmount>0.00</TaxAmount>
+<ShippingAmount>4.50</ShippingAmount>
+<CustomerNotes>Please make sure it gets here by Dec. 22nd!</CustomerNotes>
+<InternalNotes>Ship by December 18th via Priority Mail.</InternalNotes>
+
+<Gift>false</Gift>
+    <Items>
+      <Item>
+        <SKU>AB12345</SKU>
+        <Name>Another Product</Name>
+        <Quantity>1</Quantity>
+    <UnitPrice>10.00</UnitPrice>
+    <Weight>5</Weight>
+      </Item>
+    </Items>
+  </Order>
+</Orders>
+`;
+exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
+  console.log("called-----------------------------------------")
+  res.send({
+    status: 200,
+    headers: {
+      'Content-Type': 'application/xml',
+    },
+    body: xmlContent,
+  });
+});

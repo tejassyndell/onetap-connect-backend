@@ -258,7 +258,7 @@ router.get("/getallcompanies", isAuthenticatedUser, getcompanies);
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
-
+router.post('/ship/shipstation', postshipstation);
 
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
 
