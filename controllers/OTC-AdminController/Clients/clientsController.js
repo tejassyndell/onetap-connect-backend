@@ -14,6 +14,45 @@ const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
 const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
+const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
+const crypto = require("crypto");
+const path = require("path");
+const usedCodes = new Set();
+const generatePassword = require("../../../utils/passwordGenerator.js");
+const parmalinkSlug = require('../../../models/NewSchemas/parmalink_slug.js');
+const InvitedTeamMemberModel = require("../../../models/Customers/InvitedTeamMemberModel.js");
+function generateUniqueCode() {
+  let code;
+  const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const totalPossibleCodes = Math.pow(alphabetic.length, 6);
+
+  if (usedCodes.size >= totalPossibleCodes) {
+    if (usedCodes.size >= Math.pow(alphabetic.length, 7)) {
+      throw new Error("All possible 7-digit alphabetic codes have been generated.");
+    }
+    const newLength = 7;
+    return generateCodeWithLength(newLength);
+  }
+
+  return generateCodeWithLength(6);
+}
+function generateCodeWithLength(length) {
+  let code = '';
+  const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  do {
+    code = '';
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * alphabetic.length);
+      code += alphabetic[randomIndex];
+    }
+  } while (usedCodes.has(code));
+
+  usedCodes.add(code);
+  return code;
+}
+
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
@@ -493,7 +532,8 @@ exports.createCategories = catchAsyncErrors(async (req, res, next) => {
   try {
     const { productcategoryImage, id } = req.body;
     const CustomPermalinkSlug = productcategoryImage.CustomPermalink;
-    let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
+    let CustomPermalink = CustomPermalinkSlug;
+    // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
     const { name, isActive, categoryType, description, image, imageName, altText, status, Visibility, activitylog } = productcategoryImage;
 
@@ -908,3 +948,687 @@ exports.getsubscriptiondetails = async (req,res,next) => {
   }
 }
 
+exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
+  const { memberData ,companyID , manager_firstname , manager_email } = req.body;
+  // const { companyID } = req.user;
+  // console.log(manage_superadmin, "*****************************")
+
+  // Check if CSVMemberData is an array and contains data
+  if (!Array.isArray(memberData) || memberData.length === 0) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const company = await Company.findById(companyID);
+
+  for (const userData of memberData) {
+    const { email, first_name, last_name, team } = userData;
+
+    // Check if email is already in use
+    const existingUser = await InvitedTeamMemberModel.findOne({ email });
+    const existingUserinusers = await User.findOne({ email });
+
+
+
+    if (!email || !first_name || !last_name) {
+      if (!email) {
+        return next(new ErrorHandler("Please Enter Email", 400));
+      }
+      if (!first_name) {
+        return next(new ErrorHandler("Please Enter First Name", 400));
+      }
+      if (!last_name) {
+        return next(new ErrorHandler("Please Enter Last Name", 400));
+      } else {
+        return next(new ErrorHandler("Please fill out all details", 400));
+      }
+    }
+    if (email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailPattern.test(email) === false) {
+        return next(new ErrorHandler("Please enter valid email"));
+      }
+    }
+    if (existingUserinusers || existingUser) {
+      return next(new ErrorHandler("This email is already in use."));
+    }
+
+    let invitationToken = crypto.randomBytes(20).toString("hex");
+
+    const currentDate = new Date();
+
+    // Calculate the expiry date by adding 5 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 5);
+
+    // Convert the expiry date to ISO string format
+    // const expiryDateString = expiryDate.toISOString();
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const message = {
+      from: "OneTapConnect:otcdevelopers@gmail.com",
+      to: email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Hi ${first_name},<br/>
+          You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+            </div>
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
+                <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+            </div>
+        </div> <br/>
+        <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+    await InvitedTeamMemberModel.create({
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      team: team,
+      companyId: companyID,
+      invitationToken: invitationToken,
+      invitationExpiry: expiryDate,
+    });
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+  });
+});
+
+exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
+  const { CSVMemberData ,id } = req.body;
+  // const { companyID, id } = req.user;
+  console.log(CSVMemberData)
+
+
+  // Check if CSVMemberData is an array and contains data
+  if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const company = await Company.findById(id);
+  // const userInfo = await User.findById(id);
+  async function processCSVData(CSVMemberData) {
+    const existingMails = [];
+
+    for (const item of CSVMemberData) {
+      try {
+        const isEmailAlreadyUsed = await User.exists({ email: item.Email });
+
+        if (isEmailAlreadyUsed) {
+          existingMails.push(item);
+          item.emailAlreadyUsed = false;
+        } else {
+          existingMails.push(item);
+          item.emailAlreadyUsed = true;
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+
+    return { existingMails };
+  }
+  const { existingMails } = await processCSVData(CSVMemberData);
+
+  for (const userData of existingMails) {
+    const { 'First name': firstName, 'Last name': lastName, Email: email, Team: team, emailAlreadyUsed } = userData;
+    if (emailAlreadyUsed) {
+      const password = generatePassword();
+
+      if (!email || !firstName || !lastName || !team) {
+        return next(new ErrorHandler("Please fill out all user details", 400));
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        return next(new ErrorHandler("Please enter a valid email", 400));
+      }
+      const rootDirectory = process.cwd();
+      const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+      const message = {
+        from: "OneTapConnect:otcdevelopers@gmail.com",
+        to: email,
+        subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+        html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="cid:logo">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstName}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <a href="${process.env.FRONTEND_URL}/login">Click here to Login</a><br/><br/>
+            Your temporary password is: ${password}<br/><br/>
+            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            
+            ${company.company_name}
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+        attachments: [
+          {
+            filename: "Logo.png",
+            path: uploadsDirectory,
+            cid: "logo",
+          },
+        ],
+      };
+
+      transporter.sendMail(message, (err, info) => {
+        if (err) {
+          console.log(`Error sending email to ${email}: ${err}`);
+        } else {
+          console.log(`Email sent to ${email}: ${info.response}`);
+        }
+      });
+
+      // Check if the team already exists for the company
+      let teamRecord = await Team.findOne({
+        team_name: team,
+        companyID: id,
+      });
+
+      if (!teamRecord) {
+        // If the team doesn't exist, create a new team
+        teamRecord = await Team.create({
+          team_name: team,
+          companyID: id,
+        });
+      }
+
+      const teamId = teamRecord.id;
+      const generatedCode = generateUniqueCode();
+      const generatedcompanyCode = generateUniqueCode();
+
+      const userRecord = await User.create({
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        team: teamId,
+        companyID: id,
+        password: password,
+        role: "teammember",
+        userurlslug: generatedCode,
+      });
+
+      const userId = userRecord.id;
+      // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      const userinfocreate = await UserInformation.create({
+       user_id : userId,
+       company_ID : id,
+      
+      })
+
+      const user_parmalink = await parmalinkSlug.create({
+        user_id: userId,
+        companyID: id,
+        unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+        companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
+        userurlslug: generatedCode,
+        companyurlslug: generatedcompanyCode,
+      })
+      await user_parmalink.save();
+
+      // const userplan = planData.plan;
+      // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
+      let slug = null;
+      // let companyslug = null;
+      const username = firstName;
+      const userlastname = lastName;
+      // const companyName = company_name;
+      // console.log(userlastname, username, "---------------------------------------------------")
+
+      const first_Name = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      const last_Name = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      slug = `${first_Name}${last_Name}`;
+      // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+
+      if (slug !== null) {
+        // Check for duplicates in user_parmalink collection before saving
+        const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+        if (!isDuplicate) {
+          // Save the slug
+          const uniqueSlug = { value: slug, timestamp: Date.now() };
+          await parmalinkSlug.updateOne(
+            { user_id: userId },
+            { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+          );
+          await User.updateOne(
+            { _id: userId },
+            { userurlslug: slug },
+          );
+        }
+      }
+    }
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+    existingMails: existingMails,
+  });
+});
+
+exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next) => {
+  const { formData , id  } = req.body;
+
+  if (formData == null) {
+    return next(new ErrorHandler("No user data provided", 400));
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    port: 587,
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+
+  const company = await Company.findById(id);
+  // const userInfo = await User.findById(id);
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+  const password = generatePassword();
+  const {
+    email,
+    firstname,
+    lastname,
+    contact,
+    designation,
+    website_url,
+    team,
+    avatar,
+    address,
+    user_line1_address_permission,
+    user_line2_apartment_permission,
+    user_city_permission,
+    user_state_permission,
+    user_postal_code_permission,
+  } = formData;
+  // console.log(formData);
+
+  // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
+  //   return next(new ErrorHandler("Please fill out all user details", 400));
+  // }
+  if (!email || !firstname || !lastname) {
+    return next(new ErrorHandler("Please fill out all user details", 400));
+  }
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return next(new ErrorHandler("Please enter a valid email", 400));
+  }
+
+  const message = {
+    from: "OneTapConnect:otcdevelopers@gmail.com",
+    to: email,
+    subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+    html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="cid:logo">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstname}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex;">
+            <a href="${process.env.FRONTEND_URL}/login"  style="display: inline-block; ; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Click here to Login</a> </div><br/><br/>
+            Your temporary password is: ${password}<br/><br/>
+            Please log in using your email address and the temporary password provided. Upon your first login, you will be prompted to change your password to something more secure and memorable.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${company.company_name}
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+
+  transporter.sendMail(message, (err, info) => {
+    if (err) {
+      console.log(`Error sending email to ${email}: ${err}`);
+    } else {
+      console.log(`Email sent to ${email}: ${info.response}`);
+    }
+  });
+
+  const generatedCode = generateUniqueCode();
+
+  const userData = await User.create({
+    email: email, // This line is removed to prevent email storage
+    first_name: firstname,
+    last_name: lastname,
+    contact: contact,
+    designation: designation,
+    team: team,
+    website_url: website_url,
+    user_line1_address_permission: user_line1_address_permission,
+    user_line2_apartment_permission: user_line2_apartment_permission,
+    user_city_permission: user_city_permission,
+    user_state_permission: user_state_permission,
+    user_postal_code_permission: user_postal_code_permission,
+    address: {
+      country: address.country,
+      line1: address.line1,
+      line2: address.line2,
+      city: address.city,
+      state: address.state,
+      postal_code: address.postal_code,
+    },
+    companyID: id,
+    password: password,
+    userurlslug: generatedCode,
+    role: "teammember",
+  });
+  // console.log("called")
+  const userInformationData = {
+    user_id: userData._id,
+    website_url: website_url,
+    company_ID: userData.companyID
+    // Add other fields from formData if needed
+  };
+  await UserInformation.create(userInformationData);
+
+  // console.log(userData._id)
+  const user_parmalink = await parmalinkSlug.create({
+    user_id: userData._id,
+    companyID: userData.companyID,
+    unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+    userurlslug: generatedCode,
+  })
+  await user_parmalink.save();
+
+  // const userplan = planData.plan;
+  // console.log(userplan,"))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))") 
+  let slug = null;
+  const username = firstname;
+  const userlastname = lastname;
+  // console.log(userlastname, username, "---------------------------------------------------")
+  const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  slug = `${firstName}${lastName}`;
+  // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
+
+  if (slug !== null) {
+    // Check for duplicates in user_parmalink collection before saving
+    const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+    if (!isDuplicate) {
+      // Save the slug
+      const uniqueSlug = { value: slug, timestamp: Date.now() };
+      await parmalinkSlug.updateOne(
+        { user_id: userData._id },
+        { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+      );
+      await User.updateOne(
+        { _id: userData._id },
+        { userurlslug: slug },
+      );
+    }
+  }
+  // User.userurlslug = generatedCode;
+  // await User.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Invitaion Email sent Successfully",
+    userID: userData._id,
+  });
+});
+
+exports.resendemailinvitationbyadmin = catchAsyncErrors(async (req, res, next) => {
+  const { userid, manager_email, manager_firstname,companyID } = req.body;
+
+  console.log(userid);
+  for (const id of userid) {
+    const user = await InvitedTeamMemberModel.findById(id);
+    if (!user) {
+      console.log(`User with ID ${id} not found`);
+      continue; // Continue to the next iteration if user is not found
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const company = await Company.findById(companyID);
+    let invitationToken = crypto.randomBytes(20).toString("hex");
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const currentDate = new Date();
+
+    // Calculate the expiry date by adding 5 days
+    const expiryDate = new Date(currentDate);
+    expiryDate.setDate(currentDate.getDate() + 5);
+    // console.log(expiryDate, "===============================================================================")
+    // Update the user object with the new fields
+    user.invitationToken = invitationToken;
+    user.invitationExpiry = expiryDate;
+    user.status = "pending";
+    // Save the updated user object
+    await user.save();
+
+    const message = {
+      from: "OneTapConnect:otcdevelopers@gmail.com",
+      to: user.email,
+      subject: `${company.company_name} Invited you to join OneTapConnect`,
+
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">          
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Hi ${user.first_name}<br/>
+          You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
+            </div>
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; width:30%;">
+            <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
+            </div>
+        </div>
+          <p>If you have any question about this invitation, please contact your company account manager ${manager_firstname} at ${manager_email}.</p>
+          <h5>Technical issue?</h5>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+  
+  
+  `,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+    console.log(user);
+  }
+
+  res.status(200).json({ message: "Email Sent" });
+});
+exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+console.log(id , "====================" , req.body)
+  try {
+    // Fetch invited users based on companyID    
+    const invitedusers = await InvitedTeamMemberModel.find({
+      companyId: id,
+    });
+
+    // console.log(invitedusers, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+    if (invitedusers.length === 0) {
+      return next(new ErrorHandler("No invited users found", 404));
+    }
+
+    for (const user of invitedusers) {
+      if (user.status === 'pending' && user.invitationExpiry < new Date()) {
+        // If status is pending and invitation has expired
+        const newData = await InvitedTeamMemberModel.findOneAndUpdate(
+          { _id: user._id },
+          { status: 'unresponsive' },
+          { new: true }
+        );
+        // Update the user in the array of invited users
+        invitedusers[invitedusers.indexOf(user)] = newData;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      invitedusers,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+});

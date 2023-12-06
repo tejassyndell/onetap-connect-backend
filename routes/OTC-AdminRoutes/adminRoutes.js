@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
 
 const {newTestAPIS} = require('../../controllers/OTC-AdminController/Clients/couponController');
-const { uploadProfilePicture } = require("../../controllers/customers/userController");
+const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
 const { otcImageUpload } = require("../../middleware/OtcImageUpload");
 
 router.get("/admin/test", testAPIS);
@@ -55,8 +55,25 @@ router.post(
   otcImageUpload,
   uploadProfilePicture
 );
+router.post(
+  "/admin/upload-logo-picture",
+  // isOtcAdminAuthenticatedUser,
+  otcImageUpload,
+  uploadLogo
+);
+router.post(
+  "/admin/upload-favicon-picture",
+  isOtcAdminAuthenticatedUser,
+  otcImageUpload,
+  uploadfavicon
+);
 router.post("/admin/user/update-redirect-link", updateRedirectLink);
 router.post("/admin/GetSubscriptionDetailsForAdmin",GetSubscriptionDetailsForAdmin)
 router.post("/admin/SubsciptiondetialsofiD",getsubscriptiondetails)
 
+router.post("/admin/invite/user", AdmininviteTeamMember);
+router.post("/admin/invite/userByCSV", AdmininviteTeamMemberByCSV);
+router.post("/admin/invite/manual", inviteTeamMembermanuallybyadmin);
+router.post("/admin/getinvitedUsersbyadmin", getinvitedUsersbyadmin);
+router.post("/admin/resendemailinvitationbyadmin", resendemailinvitationbyadmin);
 module.exports = router;
