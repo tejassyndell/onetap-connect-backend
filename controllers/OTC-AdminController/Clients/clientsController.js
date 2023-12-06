@@ -944,12 +944,6 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds, orderData } = req.body;
-console.log("?????????????????????????//****************")
-  console.log(orderData)
-  console.log("?????????????????????????//****************")
-console.log(orderIds, "ids.....")
-// const statusData  = await orderData.map((e)=> e.status)
-// console.log(statusData, "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
   try {
     // Loop through the array of order IDs
     for (let i = 0; i < orderIds.length; i++) {
@@ -980,8 +974,6 @@ console.log(orderIds, "ids.....")
 });
 
 
-
-
 exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds } = req.body;
 
@@ -998,3 +990,34 @@ exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+
+exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  console.log("........................................................................")
+  console.log(id)
+  console.log("........................................................................")
+
+  try {
+    // Find orders by user ID
+    const order = await Order.findById({_id : id}).populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    });
+    console.log("??????????/****************")
+console.log(order, "order")
+console.log("??????????/****************")
+
+    const userdata = await User.findOne({ _id: order.user });
+    const userInformation = await UserInformation.findOne({ user_id : order.user });
+    const companydata = await Company.findOne({ _id: order.company });
+  
+    // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
+    // const companydata = { companyName : company.company_name }
+    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation}
+
+    res.status(200).json({ success: true, order: orderWithUserData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});

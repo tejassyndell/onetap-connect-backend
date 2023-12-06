@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, getAllOrders, updateOrders, deleteOrders
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, getAllOrders, updateOrders, deleteOrders, getSingleOrder
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -59,5 +59,7 @@ router.post("/admin/user/update-redirect-link", updateRedirectLink);
 router.get("/admin/orders",isOtcAdminAuthenticatedUser, getAllOrders);
 router.post("/admin/orders/update",isOtcAdminAuthenticatedUser, updateOrders);
 router.post("/admin/orders/delete",isOtcAdminAuthenticatedUser, deleteOrders);
+router.get("/admin/order/:id", isOtcAdminAuthenticatedUser, getSingleOrder);
+
 
 module.exports = router;
