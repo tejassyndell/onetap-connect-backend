@@ -5184,38 +5184,106 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
-<Orders pages="1">
-  <Order>
-    <OrderID>orderid</OrderID>
-    <OrderNumber>order number</OrderNumber>
-    <OrderDate>orderdate: 11/25/2020 14:30 PM</OrderDate>
-    <OrderStatus>paid</OrderStatus>
-    <LastModified> last modified 12/8/2011 12:56 PM</LastModified>
-    <ShippingMethod>USPSPriorityMail</ShippingMethod>
-    <PaymentMethod>Credit Card</PaymentMethod>
-    <CurrencyCode>EUR</CurrencyCode> 
-<OrderTotal>123.45</OrderTotal>
-<TaxAmount>0.00</TaxAmount>
-<ShippingAmount>4.50</ShippingAmount>
-<CustomerNotes>Please make sure it gets here by Dec. 22nd!</CustomerNotes>
-<InternalNotes>Ship by December 18th via Priority Mail.</InternalNotes>
+exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
+  // console.log("called-----------------------------------------");
+  const id = '656ae9c15fdd2c4e744a1ce4';
 
+  const allorders = await Order.find({user: id});  
+  console.log(allorders)
+
+  const orderID = allorders[1]._id;
+  // console.log('orderId', orderID);
+  const odrNum = allorders[1].orderNumber
+  // console.log('odrNum', odrNum);
+  const OrderDate = allorders[1].createdAt;
+  const localOrderDate = OrderDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
+  // console.log('OrderDate', OrderDate, localOrderDate);
+  const OrderStatus = allorders[1].status;
+  // console.log('OrderStatus', OrderStatus);
+  const LastModified = allorders[1].updatedAt;
+  const localmodifiedDate = OrderDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
+  // console.log('LastModified', LastModified, localmodifiedDate);
+  const OrderTotal = allorders[1].totalAmount;
+  // console.log('OrderTotal', OrderTotal);
+  const TaxAmount = allorders[1].tax;
+  // console.log('TaxAmount', TaxAmount);
+
+  const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
+<Orders pages="1">
+<Order>
+<OrderID><![CDATA[${orderID}]]></OrderID>
+<OrderNumber><![CDATA[${odrNum}]]></OrderNumber>
+<OrderDate>${localOrderDate}</OrderDate>
+<OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
+<LastModified>${localmodifiedDate}</LastModified>
+<ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
+<PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
+<CurrencyCode>USD</CurrencyCode> 
+<OrderTotal>${OrderTotal}</OrderTotal>
+<TaxAmount>${TaxAmount}</TaxAmount>
+<ShippingAmount>0.00</ShippingAmount>
+<CustomerNotes><![CDATA[Please make sure it gets here by Dec. 22nd!]]></CustomerNotes>
+<InternalNotes><![CDATA[Ship by December 18th via Priority Mail.]]></InternalNotes>
 <Gift>false</Gift>
-    <Items>
-      <Item>
-        <SKU>AB12345</SKU>
-        <Name>Another Product</Name>
-        <Quantity>1</Quantity>
-    <UnitPrice>10.00</UnitPrice>
-    <Weight>5</Weight>
-      </Item>
-    </Items>
-  </Order>
+<GiftMessage></GiftMessage>
+<CustomField1></CustomField1>
+<CustomField2></CustomField2>
+<CustomField3></CustomField3>
+<Customer>
+  <CustomerCode><![CDATA[customer@mystore.com]]></CustomerCode>
+  <BillTo>
+    <Name><![CDATA[The President]]></Name>
+    <Company><![CDATA[US Govt]]></Company>
+    <Phone><![CDATA[512-555-5555]]></Phone>
+    <Email><![CDATA[customer@mystore.com]]></Email>
+  </BillTo>
+  <ShipTo>
+    <Name><![CDATA[The President]]></Name>
+    <Company><![CDATA[US Govt]]></Company>
+    <Address1><![CDATA[1600 Pennsylvania Ave]]></Address1>
+    <Address2></Address2>
+    <City><![CDATA[Washington]]></City>
+    <State><![CDATA[DC]]></State>
+    <PostalCode><![CDATA[20500]]></PostalCode>
+    <Country><![CDATA[US]]></Country>
+    <Phone><![CDATA[512-555-5555]]></Phone>
+  </ShipTo>
+</Customer>
+<Items>
+  <Item>
+    <SKU><![CDATA[FD88821]]></SKU>
+    <Name><![CDATA[My Product Name]]></Name>
+    <ImageUrl><![CDATA[http://www.mystore.com/products/12345.jpg]]></ImageUrl>
+    <Weight>8</Weight>
+    <WeightUnits>Ounces</WeightUnits>
+    <Quantity>2</Quantity>
+    <UnitPrice>13.99</UnitPrice>
+    <Location><![CDATA[A1-B2]]></Location>
+    <Options>
+      <Option>
+        <Name><![CDATA[Size]]></Name>
+        <Value><![CDATA[Large]]></Value>
+        <Weight>10</Weight>
+      </Option>
+      <Option>
+        <Name><![CDATA[Color]]></Name>
+        <Value><![CDATA[Green]]></Value>
+        <Weight>5</Weight>
+      </Option>
+    </Options>
+  </Item>
+  <Item>
+    <SKU></SKU>
+    <Name><![CDATA[$10 OFF]]></Name>
+    <Quantity>1</Quantity>
+    <UnitPrice>-10.00</UnitPrice>
+    <Adjustment>true</Adjustment>
+  </Item>
+</Items>
+</Order>
 </Orders>
 `;
-exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
-  console.log("called-----------------------------------------")
+
   res.send({
     status: 200,
     headers: {
