@@ -1224,6 +1224,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
         companyurlslug: generatedcompanyCode,
       })
       await user_parmalink.save();
+      await userinfocreate.save();
 
       // const userplan = planData.plan;
       // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
