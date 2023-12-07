@@ -5283,11 +5283,6 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   </Order>
 </Orders>`
 
-  res.send({
-    status: 200,
-    headers: {
-      'Content-Type': 'application/xml',
-    },
-    body: xmlContent,
-  });
+res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
+
