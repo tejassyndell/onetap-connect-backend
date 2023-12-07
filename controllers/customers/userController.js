@@ -5209,80 +5209,79 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   // console.log('TaxAmount', TaxAmount);
 
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
-<Orders pages="1">
-<Order>
-<OrderID><![CDATA[${orderID}]]></OrderID>
-<OrderNumber><![CDATA[${odrNum}]]></OrderNumber>
-<OrderDate>${localOrderDate}</OrderDate>
-<OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
-<LastModified>${localmodifiedDate}</LastModified>
-<ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
-<PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
-<CurrencyCode>USD</CurrencyCode> 
-<OrderTotal>${OrderTotal}</OrderTotal>
-<TaxAmount>${TaxAmount}</TaxAmount>
-<ShippingAmount>0.00</ShippingAmount>
-<CustomerNotes><![CDATA[Please make sure it gets here by Dec. 22nd!]]></CustomerNotes>
-<InternalNotes><![CDATA[Ship by December 18th via Priority Mail.]]></InternalNotes>
-<Gift>false</Gift>
-<GiftMessage></GiftMessage>
-<CustomField1></CustomField1>
-<CustomField2></CustomField2>
-<CustomField3></CustomField3>
-<Customer>
-  <CustomerCode><![CDATA[customer@mystore.com]]></CustomerCode>
-  <BillTo>
-    <Name><![CDATA[The President]]></Name>
-    <Company><![CDATA[US Govt]]></Company>
-    <Phone><![CDATA[512-555-5555]]></Phone>
-    <Email><![CDATA[customer@mystore.com]]></Email>
-  </BillTo>
-  <ShipTo>
-    <Name><![CDATA[The President]]></Name>
-    <Company><![CDATA[US Govt]]></Company>
-    <Address1><![CDATA[1600 Pennsylvania Ave]]></Address1>
-    <Address2></Address2>
-    <City><![CDATA[Washington]]></City>
-    <State><![CDATA[DC]]></State>
-    <PostalCode><![CDATA[20500]]></PostalCode>
-    <Country><![CDATA[US]]></Country>
-    <Phone><![CDATA[512-555-5555]]></Phone>
-  </ShipTo>
-</Customer>
-<Items>
-  <Item>
-    <SKU><![CDATA[FD88821]]></SKU>
-    <Name><![CDATA[My Product Name]]></Name>
-    <ImageUrl><![CDATA[http://www.mystore.com/products/12345.jpg]]></ImageUrl>
-    <Weight>8</Weight>
-    <WeightUnits>Ounces</WeightUnits>
-    <Quantity>2</Quantity>
-    <UnitPrice>13.99</UnitPrice>
-    <Location><![CDATA[A1-B2]]></Location>
-    <Options>
-      <Option>
-        <Name><![CDATA[Size]]></Name>
-        <Value><![CDATA[Large]]></Value>
-        <Weight>10</Weight>
-      </Option>
-      <Option>
-        <Name><![CDATA[Color]]></Name>
-        <Value><![CDATA[Green]]></Value>
-        <Weight>5</Weight>
-      </Option>
-    </Options>
-  </Item>
-  <Item>
-    <SKU></SKU>
-    <Name><![CDATA[$10 OFF]]></Name>
-    <Quantity>1</Quantity>
-    <UnitPrice>-10.00</UnitPrice>
-    <Adjustment>true</Adjustment>
-  </Item>
-</Items>
-</Order>
-</Orders>
-`;
+  <Orders pages="1">
+  <Order>
+  <OrderID><![CDATA[${orderID}]]></OrderID>
+  <OrderNumber><![CDATA[${odrNum}]]></OrderNumber>
+  <OrderDate>${localOrderDate}</OrderDate>
+  <OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
+  <LastModified>${localmodifiedDate}</LastModified>
+  <ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
+  <PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
+  <CurrencyCode>USD</CurrencyCode> 
+  <OrderTotal>${OrderTotal}</OrderTotal>
+  <TaxAmount>${TaxAmount}</TaxAmount>
+  <ShippingAmount>0.00</ShippingAmount>
+  <CustomerNotes><![CDATA[Please make sure it gets here by Dec. 22nd!]]></CustomerNotes>
+  <InternalNotes><![CDATA[Ship by December 18th via Priority Mail.]]></InternalNotes>
+  <Gift>false</Gift>
+  <GiftMessage></GiftMessage>
+  <CustomField1></CustomField1>
+  <CustomField2></CustomField2>
+  <CustomField3></CustomField3>
+  <Customer>
+      <CustomerCode><![CDATA[dummy_customer123@example.com]]></CustomerCode>
+      <BillTo>
+        <Name><![CDATA[The President]]></Name>
+        <Company><![CDATA[US Govt]]></Company>
+        <Phone><![CDATA[512-555-5555]]></Phone>
+        <Email><![CDATA[customer@mystore.com]]></Email>
+      </BillTo>
+      <ShipTo>
+        <Name><![CDATA[The President]]></Name>
+        <Company><![CDATA[US Govt]]></Company>
+        <Address1><![CDATA[1600 Pennsylvania Ave]]></Address1>
+        <Address2></Address2>
+        <City><![CDATA[Washington]]></City>
+        <State><![CDATA[DC]]></State>
+        <PostalCode><![CDATA[20500]]></PostalCode>
+        <Country><![CDATA[US]]></Country>
+        <Phone><![CDATA[512-555-5555]]></Phone>
+      </ShipTo>
+    </Customer>
+    <Items>
+      <Item>
+        <SKU><![CDATA[FD88821]]></SKU>
+        <Name><![CDATA[Sample Product]]></Name>
+        <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
+        <Weight>16</Weight>
+        <WeightUnits>Ounces</WeightUnits>
+        <Quantity>3</Quantity>
+        <UnitPrice>29.99</UnitPrice>
+        <Location><![CDATA[C3-D4]]></Location>
+        <Options>
+          <Option>
+            <Name><![CDATA[Size]]></Name>
+            <Value><![CDATA[Medium]]></Value>
+            <Weight>20</Weight>
+          </Option>
+          <Option>
+            <Name><![CDATA[Color]]></Name>
+            <Value><![CDATA[Blue]]></Value>
+            <Weight>15</Weight>
+          </Option>
+        </Options>
+      </Item>
+      <Item>
+        <SKU></SKU>
+        <Name><![CDATA[Discount]]></Name>
+        <Quantity>1</Quantity>
+        <UnitPrice>-5.00</UnitPrice>
+        <Adjustment>true</Adjustment>
+      </Item>
+    </Items>
+  </Order>
+</Orders>`
 
   res.send({
     status: 200,
