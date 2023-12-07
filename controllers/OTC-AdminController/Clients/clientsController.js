@@ -1632,3 +1632,187 @@ console.log(id , "====================" , req.body)
     return next(new ErrorHandler(error.message, 500));
   }
 });
+exports.getCompanyDetailsforAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.body;
+  const company = await Company.findById(companyID)
+    .populate("primary_account")
+    .populate("primary_manager")
+    .populate("primary_billing");
+  if (!company) {
+    return next(new ErrorHandler("No company details Found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    company,
+  });
+});
+
+exports.checkcompanyurlslugavailiblityAdminside = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyurlslug } = req.body;
+    const { companyID } = req.body;
+
+    //     console.log(companyurlslug);
+    // console.log(req.user.companyID);
+    console.log("check is hit");
+    console.log(companyurlslug);
+    console.log(companyID)
+
+    // Assuming you have access to the current company's ID
+    const currentCompanyId = companyID; // Modify this line based on how you store the current company's ID in your application
+
+    // Check for existing URL slugs that are not the current company's
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug,
+    });
+
+    if (existingcompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+    });
+
+    if (caseSensitivecompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    return res.status(200).json({ message: "companyurlslug is available." });
+  }
+);
+
+
+exports.UpdateCompanySlugFromAdmin = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyurlslug, companyID } = req.body;
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Update the CompanySlug using findOneAndUpdate
+      const updatedCompany = await Company.findOneAndUpdate(
+        { _id: companyID }, // Find the company by ID
+        { companyurlslug: companyurlslug }, // Update the CompanySlug
+        { new: true } // Return the updated document
+      );
+
+      // Check if the company was found and updated
+      if (!updatedCompany) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      // Send the updated company data in the response
+      res.status(200).json("updated");
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+exports.UpdateCompanySettings = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID, user_profile_edit_permission } = req.body;
+      console.log(companyID , user_profile_edit_permission,"body", req.body)
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Update the CompanySlug using findOneAndUpdate
+      const updatedCompany = await Company.findOneAndUpdate(
+        { _id: companyID }, // Find the company by ID
+        { user_profile_edit_permission: user_profile_edit_permission }, // Update the CompanySlug
+        { new: true } // Return the updated document
+      );
+
+      // Check if the company was found and updated
+      if (!updatedCompany) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      // Send the updated company data in the response
+      res.status(200).json("updated url edit permission");
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+
+exports.getsharereferalSettingsAdmin = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID } = req.body;
+      console.log(companyID, "body");
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Find the CompanyShareReferralModel by companyId
+      const companyShareReferral = await CompanyShareReferralModel.findOne({
+        companyID: companyID
+      });
+
+      // Check if the companyShareReferral was found
+      if (!companyShareReferral) {
+        return res.status(404).json({ error: 'Company Share Referral settings not found' });
+      }
+
+      // Send the data in the response
+      res.status(200).json(companyShareReferral);
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+exports.UpdateLeadCaptureSettings = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID, updateValues } = req.body;
+      console.log(updateValues,"bodydyy")
+
+      // Validate if companyID and updateValues are provided
+      if (!companyID || !updateValues) {
+        return res.status(400).json({ error: 'Company ID and update values are required' });
+      }
+
+      // Find the CompanyShareReferralModel by companyId
+      const companyShareReferral = await CompanyShareReferralModel.findOne({
+        companyID: companyID
+      });
+
+      // Check if the companyShareReferral was found
+      if (!companyShareReferral) {
+        return res.status(404).json({ error: 'Company Share Referral settings not found' });
+      }
+
+      companyShareReferral.set(updateValues)
+      await companyShareReferral.save();
+
+      // Send the updated data in the response
+      res.status(200).json(companyShareReferral);
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
