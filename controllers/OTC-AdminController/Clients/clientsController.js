@@ -17,6 +17,8 @@ const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
 // const { default: mongoose } = require("mongoose");
 
 const { Types } = require('mongoose');
+const user_billing_addressModel = require("../../../models/NewSchemas/user_billing_addressModel.js");
+const user_shipping_addressesModel = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
 exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
@@ -1010,10 +1012,11 @@ console.log("??????????/****************")
     const userdata = await User.findOne({ _id: order.user });
     const userInformation = await UserInformation.findOne({ user_id : order.user });
     const companydata = await Company.findOne({ _id: order.company });
+
   
     // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
     // const companydata = { companyName : company.company_name }
-    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation}
+    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation }
 
     res.status(200).json({ success: true, order: orderWithUserData });
   } catch (error) {
