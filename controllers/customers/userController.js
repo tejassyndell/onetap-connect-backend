@@ -5196,12 +5196,12 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   const odrNum = allorders[1].orderNumber
   // console.log('odrNum', odrNum);
   const OrderDate = allorders[1].createdAt;
-  const localOrderDate = OrderDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;                          
   // console.log('OrderDate', OrderDate, localOrderDate);
   const OrderStatus = allorders[1].status;
   // console.log('OrderStatus', OrderStatus);
   const LastModified = allorders[1].updatedAt;
-  const localmodifiedDate = OrderDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const formattedlastDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
   // console.log('LastModified', LastModified, localmodifiedDate);
   const OrderTotal = allorders[1].totalAmount;
   // console.log('OrderTotal', OrderTotal);
@@ -5213,9 +5213,9 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   <Order>
   <OrderID><![CDATA[${orderID}]]></OrderID>
   <OrderNumber><![CDATA[${odrNum}]]></OrderNumber>
-  <OrderDate>${localOrderDate}</OrderDate>
+  <OrderDate>${formattedOrderDate}</OrderDate>
   <OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
-  <LastModified>${localmodifiedDate}</LastModified>
+  <LastModified>${formattedlastDate}</LastModified>
   <ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
   <PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
   <CurrencyCode>USD</CurrencyCode> 
