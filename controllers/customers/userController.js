@@ -508,7 +508,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
-  if (user.status === "inactive") {
+  if (user.status === "Deactivate") {
     return next(
       new ErrorHandler(
         "Your account has been deactivated by administrator.",
@@ -557,7 +557,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-  if (user.status === "inactive") {
+  if (user.status === "Deactivate") {
     return next(
       new ErrorHandler(
         "Your account has been deactivated by administrator.",
@@ -1402,10 +1402,16 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         password: password,
         role: "teammember",
         userurlslug: generatedCode,
+        status: "inactive"
       });
 
       const userId = userRecord.id;
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      const userinfocreate = await UserInformation.create({
+        user_id : userId,
+        company_ID : id,
+       
+       })
 
       const user_parmalink = await parmalinkSlug.create({
         user_id: userId,
@@ -1416,6 +1422,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         companyurlslug: generatedcompanyCode,
       })
       await user_parmalink.save();
+      await userinfocreate.save();
 
       // const userplan = planData.plan;
       // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
@@ -3510,6 +3517,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isPaidUser: true,
       companyID: userdetails.companyId,
       role: "teammember",
+      status: "inactive"
     };
 
     const user = await User.create(userdetails);
@@ -3580,7 +3588,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
 exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   const { invitedUserData } = req.body;
-  const { token, userData } = invitedUserData;
+  let { token, userData } = invitedUserData;
   const { _id, companyId, email: userEmail, status } = userData;
   console.log(userEmail);
   // Check the status field
@@ -3617,6 +3625,7 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
     isIndividual: false,
     isPaidUser: true,
     userurlslug: generatedCode,
+    status: "inactive"
   };
   const existingUser = await User.findOne({ email: userData.email });
 
@@ -4049,6 +4058,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     password: password,
     userurlslug: generatedCode,
     role: "teammember",
+    status: "inactive"
   });
   // console.log("called")
   const userInformationData = {
