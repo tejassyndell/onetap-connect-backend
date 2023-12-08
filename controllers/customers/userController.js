@@ -1951,11 +1951,10 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
     const userurlslug = user.userurlslug;
     await parmalinkSlug.updateOne(
       { user_id: id },
-      { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
-    );
-    await parmalinkSlug.updateOne(
-      { user_id: id },
-      { userurlslug: userurlslug }
+      {
+        $push: { unique_slugs: { $each: [{ value: userurlslug }] } },
+        $set: { userurlslug: userurlslug },
+      }
     );
 
     if (userDetails.status === 'inactive') {
@@ -1983,26 +1982,6 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
         }
       );
     }
-    // const permalink = await parmalinkSlug.findOneAndUpdate(
-    //   { user_id: id },
-    //   {
-    //     $set: {
-    //       isactive: true,
-    //       redirectUserId: selectedUserForRedirect._id,
-    //     },
-    //   },
-    //   { new: true }
-    // );
-
-    // const userurlslug = user.userurlslug;
-    // await parmalinkSlug.updateOne(
-    //   { user_id: id },
-    //   { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
-    // );
-    // await parmalinkSlug.updateOne(
-    //   { user_id: id },
-    //   { userurlslug: userurlslug }
-    // );
 
     res.status(200).json({
       success: true,
@@ -2297,7 +2276,7 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
 
 exports.checkurlslugavailiblity = catchAsyncErrors(async (req, res, next) => {
   const { companyurlslug, userurlslug } = req.body;
-  console.log(companyurlslug, "!!")
+  console.log(userurlslug, "!!")
   const currentCompanyId = req.user.companyID;
   console.log(currentCompanyId, "@@")
   const currentUserId = req.user.id;
