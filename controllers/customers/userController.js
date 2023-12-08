@@ -5467,72 +5467,19 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
            </ShipTo>
         </Customer>
         <Items>${xmlItems}</Items>
-        </Order>
       </Order>`;
   }).join('');
 
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
   <Orders pages="${allorders.length}">
-      ${xmlOrders}
+    ${xmlOrders}
   </Orders>`;
 
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
 
+exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
+  console.log('Received ShipStation Webhook:', req.body);
 
-
-
-{/* <Items>
-      <Item>
-        <SKU><![CDATA[FD88821]]></SKU>
-        <Name><![CDATA[Sample Product]]></Name>
-        <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
-        <Weight>16</Weight>
-        <WeightUnits>Ounces</WeightUnits>
-        <Quantity>3</Quantity>
-        <UnitPrice>29.99</UnitPrice>
-        <Location><![CDATA[C3-D4]]></Location>
-        <Options>
-          <Option>
-            <Name><![CDATA[Size]]></Name>
-            <Value><![CDATA[Medium]]></Value>
-            <Weight>20</Weight>
-          </Option>
-          <Option>
-            <Name><![CDATA[Color]]></Name>
-            <Value><![CDATA[Blue]]></Value>
-            <Weight>15</Weight>
-          </Option>
-        </Options>
-      </Item>
-      <Item>
-        <SKU></SKU>
-        <Name><![CDATA[Discount]]></Name>
-        <Quantity>1</Quantity>
-        <UnitPrice>-5.00</UnitPrice>
-        <Adjustment>true</Adjustment>
-      </Item>
-    </Items> */}
-
-
-
-// <Item>
-//   <SKU><![CDATA[${item.sku}]]></SKU>
-//   <Name><![CDATA[${item.name}]]></Name>
-//   <ImageUrl><![CDATA[${item.imageUrl}]]></ImageUrl>
-//   <Weight>${item.weight}</Weight>
-//   <WeightUnits><![CDATA[${item.weightUnits}]]></WeightUnits>
-//   <Quantity>${item.quantity}</Quantity>
-//   <UnitPrice>${item.unitPrice}</UnitPrice>
-//   <Location><![CDATA[${item.location}]]></Location>
-//   <Options>
-//     ${item.options.map(option => {
-//     return `
-//         <Option>
-//           <Name><![CDATA[${option.name}]]></Name>
-//           <Value><![CDATA[${option.value}]]></Value>
-//           <Weight>${option.weight}</Weight>
-//         </Option>`;
-//   }).join('')}
-//   </Options>
-// </Item>`;
+  res.status(200).json({ message: 'Webhook received successfully' });
+});
