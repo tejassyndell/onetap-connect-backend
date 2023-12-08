@@ -995,19 +995,16 @@ exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
 
 exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  console.log("........................................................................")
-  console.log(id)
-  console.log("........................................................................")
-
   try {
     // Find orders by user ID
     const order = await Order.findById({_id : id}).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
-    });
-    console.log("??????????/****************")
-console.log(order, "order")
-console.log("??????????/****************")
+    }).populate({
+      path: 'subscription_details.addones',
+      modal: 'otc_addons',
+    })
+
 
     const userdata = await User.findOne({ _id: order.user });
     const userInformation = await UserInformation.findOne({ user_id : order.user });
@@ -1024,3 +1021,23 @@ console.log("??????????/****************")
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
+exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedOrderData = req.body; // Assuming the updated details are provided in the request body
+
+
+  try {
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return next(new ErrorHandler("order not found", 404));
+    }
+    order.set(updatedOrderData);
+    await order.save();
+    res.status(200).json({success: true,message: "order details updated successfully",order: order, });
+  } catch (error) {
+    next(error);
+  }
+})
