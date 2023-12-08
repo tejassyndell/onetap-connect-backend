@@ -4725,7 +4725,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
     // console.log(userEmail, "@@@@@@@@@@@@@@@@@@@@@@@");
     const userotp = decodedToken.otp;
     // console.log(userotp, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    
+
     if (otp === userotp) {
       const recoveryToken = jwt.sign(
         { _id: userid },
@@ -4775,14 +4775,14 @@ const sendRecoveryEmail = async (email, firstname, recoveryToken) => {
     },
   });
   const rootDirectory = process.cwd();
-      const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
-      const mailOptions = {
-        from: "OneTapConnect:otcdevelopers@gmail.com",
-        to: email,
-        // to: "tarun.syndell@gmail.com",
-        subject: 'OneTap Connect Account Recovery',
-        // text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
-        html: `
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+  const mailOptions = {
+    from: "OneTapConnect:otcdevelopers@gmail.com",
+    to: email,
+    // to: "tarun.syndell@gmail.com",
+    subject: 'OneTap Connect Account Recovery',
+    // text: `Click the following link to recover your account: ${process.env.FRONTEND_URL}/login?token=${recoveryToken}`,
+    html: `
       <!DOCTYPE html>
       <html>
       
@@ -4827,15 +4827,15 @@ const sendRecoveryEmail = async (email, firstname, recoveryToken) => {
       </body>
       </html>
     `,
-        attachments: [
-          {
-            filename: "Logo.png",
-            path: uploadsDirectory,
-            cid: "logo",
-          },
-        ],
-      };
-      await transporter.sendMail(mailOptions);
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+  await transporter.sendMail(mailOptions);
 
 };
 function scheduleTokenExpiration(token, userid, companyid) {
@@ -5369,3 +5369,170 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, msg: "password updated" });
 
 });
+
+
+
+
+
+exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
+  // console.log("called-----------------------------------------");
+  const allorders = await Order.find({ type: 'smartAccessories' });
+  console.log(allorders)
+
+  const xmlOrders = allorders.map(order => {
+    const orderID = order._id;
+    const odrNum = order.orderNumber;
+    const OrderDate = order.createdAt;
+    const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
+    const OrderStatus = order.status;
+    const LastModified = order.updatedAt;
+    const formattedLastDate = `${(LastModified.getMonth() + 1).toString().padStart(2, '0')}/${LastModified.getDate().toString().padStart(2, '0')}/${LastModified.getFullYear()} ${LastModified.getHours().toString().padStart(2, '0')}:${LastModified.getMinutes().toString().padStart(2, '0')} ${LastModified.getHours() >= 12 ? 'PM' : 'AM'}`;
+    const OrderTotal = order.totalAmount;
+    const TaxAmount = order.tax;
+    const fname = order?.shippingAddress[0]?.first_name;
+    const lname = order?.shippingAddress[0]?.last_name;
+    // const email = order?.shippingAddress?.email;
+    const compName = order?.shippingAddress[0]?.company_name;
+    const Line1 = order?.shippingAddress[0]?.line1;
+    const Line2 = order?.shippingAddress[0]?.line2;
+    const City = order?.shippingAddress[0]?.city;
+    const state = order?.shippingAddress[0]?.state;
+    const cntry = order?.shippingAddress[0]?.country;
+    const Pcode = order?.shippingAddress[0]?.postal_code;
+
+    const xmlItems = order?.smartAccessories.map(item => {
+      return `
+    <Item>
+      <SKU><![CDATA[FD88821]]></SKU>
+      <Name><![CDATA[Sample Product]]></Name>
+      <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
+      <Weight>16</Weight>
+      <WeightUnits>Ounces</WeightUnits>
+      <Quantity>${item.quantity}</Quantity>
+      <UnitPrice>${item.price}</UnitPrice>
+      <Location><![CDATA[C3-D4]]></Location>
+      <Options>
+          <Option>
+            <Name><![CDATA[Size]]></Name>
+            <Value><![CDATA[Medium]]></Value>
+            <Weight>20</Weight>
+          </Option>
+          <Option>
+            <Name><![CDATA[Color]]></Name>
+            <Value><![CDATA[Blue]]></Value>
+            <Weight>15</Weight>
+          </Option>
+        </Options>
+    </Item>`;
+    }).join('');
+
+    return `
+      <Order>
+        <OrderID><![CDATA[${orderID}]]></OrderID>
+        <OrderNumber><![CDATA[${odrNum}]]></OrderNumber>
+        <OrderDate>${formattedOrderDate}</OrderDate>
+        <OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
+        <LastModified>${formattedLastDate}</LastModified>
+        <ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
+        <PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
+        <CurrencyCode>USD</CurrencyCode> 
+        <OrderTotal>${OrderTotal}</OrderTotal>
+        <TaxAmount>${TaxAmount}</TaxAmount>
+        <ShippingAmount>0.00</ShippingAmount>
+        <CustomerNotes></CustomerNotes>
+        <InternalNotes></InternalNotes>
+        <Gift>false</Gift>
+        <GiftMessage></GiftMessage>
+        <CustomField1></CustomField1>
+        <CustomField2></CustomField2>
+        <CustomField3></CustomField3>
+        <Customer>
+      <CustomerCode></CustomerCode>
+      <BillTo>
+        <Name><![CDATA[${fname}${lname}]]></Name>
+        <Company><![CDATA[${compName}]]></Company>
+        <Phone><![CDATA[512-555-5555]]></Phone>
+        <Email><![CDATA[customer@mystore.com]]></Email>
+      </BillTo>
+      <ShipTo>
+        <Name><![CDATA[${fname}${lname}]]></Name>
+        <Company><![CDATA[${compName}]]></Company>
+        <Address1><![CDATA[${Line1}]]></Address1>
+        <Address2><![CDATA[${Line2}]]></Address2>
+        <City><![CDATA[${City}]]></City>
+        <State><![CDATA[${state}]]></State>
+        <PostalCode><![CDATA[${Pcode}]]></PostalCode>
+        <Country><![CDATA[${cntry}]]></Country>
+        <Phone><![CDATA[512-555-5555]]></Phone>
+      </ShipTo>
+    </Customer>
+    <Items>${xmlItems}</Items>
+  </Order>
+      </Order>`;
+  }).join('');
+
+  const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
+  <Orders pages="${allorders.length}">
+      ${xmlOrders}
+    </Orders>`;
+
+  res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
+});
+
+
+
+
+{/* <Items>
+      <Item>
+        <SKU><![CDATA[FD88821]]></SKU>
+        <Name><![CDATA[Sample Product]]></Name>
+        <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
+        <Weight>16</Weight>
+        <WeightUnits>Ounces</WeightUnits>
+        <Quantity>3</Quantity>
+        <UnitPrice>29.99</UnitPrice>
+        <Location><![CDATA[C3-D4]]></Location>
+        <Options>
+          <Option>
+            <Name><![CDATA[Size]]></Name>
+            <Value><![CDATA[Medium]]></Value>
+            <Weight>20</Weight>
+          </Option>
+          <Option>
+            <Name><![CDATA[Color]]></Name>
+            <Value><![CDATA[Blue]]></Value>
+            <Weight>15</Weight>
+          </Option>
+        </Options>
+      </Item>
+      <Item>
+        <SKU></SKU>
+        <Name><![CDATA[Discount]]></Name>
+        <Quantity>1</Quantity>
+        <UnitPrice>-5.00</UnitPrice>
+        <Adjustment>true</Adjustment>
+      </Item>
+    </Items> */}
+
+
+
+// <Item>
+//   <SKU><![CDATA[${item.sku}]]></SKU>
+//   <Name><![CDATA[${item.name}]]></Name>
+//   <ImageUrl><![CDATA[${item.imageUrl}]]></ImageUrl>
+//   <Weight>${item.weight}</Weight>
+//   <WeightUnits><![CDATA[${item.weightUnits}]]></WeightUnits>
+//   <Quantity>${item.quantity}</Quantity>
+//   <UnitPrice>${item.unitPrice}</UnitPrice>
+//   <Location><![CDATA[${item.location}]]></Location>
+//   <Options>
+//     ${item.options.map(option => {
+//     return `
+//         <Option>
+//           <Name><![CDATA[${option.name}]]></Name>
+//           <Value><![CDATA[${option.value}]]></Value>
+//           <Weight>${option.weight}</Weight>
+//         </Option>`;
+//   }).join('')}
+//   </Options>
+// </Item>`;

@@ -96,6 +96,7 @@ const {
   getUsers_info,
   get_firebase_token,
   verifyPassword,
+  postshipstation,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -260,7 +261,8 @@ router.post('/cancel_invitation', isAuthenticatedUser ,CancelInvitedUser)
 router.get("/getallcompanies", isAuthenticatedUser, getcompanies);  
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
-router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
+router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email);
+router.get('/ship/shipstation', postshipstation);
 // router.post('/save_firebasetoken',isAuthenticatedUser, save_Firebase_Token)
 // router.post('/getUsers_info', isAuthenticatedUser, getUsers_info)
 // router.post ('/send_firebase_token', isAuthenticatedUser, get_firebase_token)
