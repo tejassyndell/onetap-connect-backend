@@ -5284,7 +5284,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
   <Orders pages="${allorders.length}">
       ${xmlOrders}
-    </Orders>`;
+  </Orders>`;
 
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
