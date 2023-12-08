@@ -5277,13 +5277,12 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
            </ShipTo>
         </Customer>
         <Items>${xmlItems}</Items>
-        </Order>
       </Order>`;
   }).join('');
 
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
   <Orders pages="${allorders.length}">
-      ${xmlOrders}
+    ${xmlOrders}
   </Orders>`;
 
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
