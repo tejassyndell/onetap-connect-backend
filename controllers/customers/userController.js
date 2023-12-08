@@ -5303,3 +5303,9 @@ exports.sendTestData = catchAsyncErrors(async (req, res, next) => {
     
   }
 });
+
+exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
+  console.log('Received ShipStation Webhook:', req.body);
+
+  res.status(200).json({ message: 'Webhook received successfully' });
+});
