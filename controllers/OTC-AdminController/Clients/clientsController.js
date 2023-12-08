@@ -174,25 +174,37 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
           // select: "first_name last_name",
         });
       console.log(userInformationTeamData);
-      // Create a map to track seen company IDs
-      const seenCompanyIDs = new Map();
-      const filteredUserInformationTeamData = [];
+      // // Create a map to track seen company IDs
+      // const seenCompanyIDs = new Map();
+      // const filteredUserInformationTeamData = [];
 
-      for (const data of userInformationTeamData) {
-        const companyID = data.company_ID._id;
+      // for (const data of userInformationTeamData) {
+      //   const companyID = data.company_ID._id;
 
-        // If the company ID is not in the map, add it to the map and add the data to the filtered array
-        if (!seenCompanyIDs.has(companyID)) {
-          seenCompanyIDs.set(companyID, true);
-          filteredUserInformationTeamData.push(data);
+      //   // If the company ID is not in the map, add it to the map and add the data to the filtered array
+      //   if (!seenCompanyIDs.has(companyID)) {
+      //     seenCompanyIDs.set(companyID, true);
+      //     filteredUserInformationTeamData.push(data);
+      //   }
+      // }
+      // const ReverseData = filteredUserInformationTeamData.reverse();
+      // console.log(filteredUserInformationTeamData);
+      const filteredUserInformationTeamData = userInformationTeamData.reduce((accumulator, current) => {
+        // Check if company_ID is present and has _id property
+        if (current.company_ID && current.company_ID._id) {
+          const companyId = current.company_ID._id.toString();
+          if (!accumulator.has(companyId)) {
+            accumulator.set(companyId, current);
+          }
         }
-      }
-      const ReverseData = filteredUserInformationTeamData.reverse();
-      console.log(filteredUserInformationTeamData);
-
+        return accumulator;
+      }, new Map());
+  const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
+  const ReverseData = uniqueUserInformationTeamData.reverse();
       res.status(200).json({
         // userInformationTeamData
         userInformationTeamData: ReverseData,
+        userInformation:userInformationTeamData
       });
     } catch (error) {
       console.error(error);
