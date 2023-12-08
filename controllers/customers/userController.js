@@ -5422,7 +5422,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
             <Value><![CDATA[Blue]]></Value>
             <Weight>15</Weight>
           </Option>
-        </Options>
+      </Options>
     </Item>`;
     }).join('');
 
@@ -5447,34 +5447,34 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
         <CustomField2></CustomField2>
         <CustomField3></CustomField3>
         <Customer>
-      <CustomerCode></CustomerCode>
-      <BillTo>
-        <Name><![CDATA[${fname}${lname}]]></Name>
-        <Company><![CDATA[${compName}]]></Company>
-        <Phone><![CDATA[512-555-5555]]></Phone>
-        <Email><![CDATA[customer@mystore.com]]></Email>
-      </BillTo>
-      <ShipTo>
-        <Name><![CDATA[${fname}${lname}]]></Name>
-        <Company><![CDATA[${compName}]]></Company>
-        <Address1><![CDATA[${Line1}]]></Address1>
-        <Address2><![CDATA[${Line2}]]></Address2>
-        <City><![CDATA[${City}]]></City>
-        <State><![CDATA[${state}]]></State>
-        <PostalCode><![CDATA[${Pcode}]]></PostalCode>
-        <Country><![CDATA[${cntry}]]></Country>
-        <Phone><![CDATA[512-555-5555]]></Phone>
-      </ShipTo>
-    </Customer>
-    <Items>${xmlItems}</Items>
-  </Order>
+           <CustomerCode></CustomerCode>
+           <BillTo>
+             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Company><![CDATA[${compName}]]></Company>
+             <Phone><![CDATA[512-555-5555]]></Phone>
+             <Email><![CDATA[customer@mystore.com]]></Email>
+           </BillTo>
+           <ShipTo>
+             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Company><![CDATA[${compName}]]></Company>
+             <Address1><![CDATA[${Line1}]]></Address1>
+             <Address2><![CDATA[${Line2}]]></Address2>
+             <City><![CDATA[${City}]]></City>
+             <State><![CDATA[${state}]]></State>
+             <PostalCode><![CDATA[${Pcode}]]></PostalCode>
+             <Country><![CDATA[${cntry}]]></Country>
+             <Phone><![CDATA[512-555-5555]]></Phone>
+           </ShipTo>
+        </Customer>
+        <Items>${xmlItems}</Items>
+        </Order>
       </Order>`;
   }).join('');
 
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
   <Orders pages="${allorders.length}">
       ${xmlOrders}
-    </Orders>`;
+  </Orders>`;
 
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
