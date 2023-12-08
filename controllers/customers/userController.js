@@ -5287,3 +5287,19 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
+
+exports.sendTestData = catchAsyncErrors(async (req, res, next) => {
+
+  try {
+    const data = [{ id: 1, name: 'POONAM' , position:'CEO'}, { id: 2, name: 'AAA', position:'COO'},  { id: 3, name: 'BBB',position:'COO'},  { id:4 , name: 'ZZZZ', position:'COO'}];
+
+    res.status(200).json({ success: true, data : data });
+    return
+
+    
+  } catch (error) {
+    res.status(500).json({ success: false, msg: "Internal Server Error" });
+    return
+    
+  }
+});
