@@ -94,6 +94,7 @@ const {
   sharemycard_email,
   verifyPassword,
   postshipstation,
+  sendTestData,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -262,6 +263,10 @@ router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
 router.get('/ship/shipstation', postshipstation);
 
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
+
+// test wordpress route
+router.get('/wp/getdata', sendTestData)
+
 
 
 // router.post('/testapii' ,Testapidummy)
