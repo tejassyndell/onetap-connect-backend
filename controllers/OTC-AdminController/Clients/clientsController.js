@@ -22,6 +22,9 @@ const usedCodes = new Set();
 const generatePassword = require("../../../utils/passwordGenerator.js");
 const parmalinkSlug = require('../../../models/NewSchemas/parmalink_slug.js');
 const InvitedTeamMemberModel = require("../../../models/Customers/InvitedTeamMemberModel.js");
+const { Types } = require('mongoose');
+const user_billing_addressModel = require("../../../models/NewSchemas/user_billing_addressModel.js");
+const user_shipping_addressesModel = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -1600,3 +1603,133 @@ console.log(id , "====================" , req.body)
     return next(new ErrorHandler(error.message, 500));
   }
 });
+
+exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
+  // const { id } = req.user;
+  try {
+    // Find orders by user ID
+    const orders = await Order.find().populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    });
+
+
+    // Create an array to store user data for each order
+    const ordersWithUserData = [];
+
+    for (const order of orders) {
+      // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
+      const user = await User.findOne({ _id: order.user });
+  
+      const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
+      // Add the user data to the order document
+      const orderWithUserData = { ...order.toObject(), userdata };
+      ordersWithUserData.push(orderWithUserData);
+    }
+
+    res.status(200).json({ success: true, allOrders: ordersWithUserData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
+exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
+  const { orderIds, orderData } = req.body;
+  try {
+    // Loop through the array of order IDs
+    for (let i = 0; i < orderIds.length; i++) {
+      const orderId = orderIds[i];
+      const updatedData = orderData[i];
+
+      const order = await Order.findById(orderId);
+
+      console.log(order)
+
+      if (!order) {
+        return res.status(404).json({ success: false, message: `No order found with ID: ${orderId}` });
+      }
+
+      // Update the order based on the orderData
+      // You might need to adjust this depending on your orderData structure
+      Object.assign(order, updatedData);
+
+      await order.save(); // Save the changes to the order
+      console.log(order, "order updated data")
+      res.status(200).json({ success: true, message: 'Orders updated successfully' , order });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
+  const { orderIds } = req.body;
+
+  try {
+    const result = await Order.deleteMany({ _id: { $in: orderIds } });
+    if (result.deletedCount > 0) {
+      res.status(200).json({ success: true, message: 'Orders deleted successfully' });
+    } else {
+      res.status(404).json({ success: false, message: 'No orders found for the provided IDs' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    // Find orders by user ID
+    const order = await Order.findById({_id : id}).populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    }).populate({
+      path: 'subscription_details.addones',
+      modal: 'otc_addons',
+    })
+
+
+    const userdata = await User.findOne({ _id: order.user });
+    const userInformation = await UserInformation.findOne({ user_id : order.user });
+    const companydata = await Company.findOne({ _id: order.company });
+
+  
+    // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
+    // const companydata = { companyName : company.company_name }
+    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation }
+
+    res.status(200).json({ success: true, order: orderWithUserData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedOrderData = req.body; // Assuming the updated details are provided in the request body
+
+
+  try {
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return next(new ErrorHandler("order not found", 404));
+    }
+    order.set(updatedOrderData);
+    await order.save();
+    res.status(200).json({success: true,message: "order details updated successfully",order: order, });
+  } catch (error) {
+    next(error);
+  }
+})
