@@ -7,6 +7,13 @@ const user_billing_address = new mongoose.Schema(
             ref: 'user',
             required: true,
         },
+        // companyId : {
+        //     type: mongoose.Types.ObjectId,
+        //     require: false,
+        //     set: (v) => (v === "" ? null : v),
+        //     ref: 'companies_information',
+        //     // required: true,
+        // },
           billing_address: {
             first_name:{ type: String, default: null },
             last_name:{ type: String, default: null },
