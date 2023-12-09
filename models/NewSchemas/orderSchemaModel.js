@@ -131,6 +131,7 @@ const order_Schema = new mongoose.Schema(
       type: { type: String },
       price: { type: Number }
     }],
+    tracking_number: {type: String},
   },
   { timestamps: true }
 );
