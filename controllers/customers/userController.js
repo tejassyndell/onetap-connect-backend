@@ -5296,18 +5296,14 @@ exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ message: 'Webhook received successfully' });
 });
 
-exports.sendTestData = catchAsyncErrors(async (req, res, next) => {
-
+exports.sendTestData = async (req, res, next) => {
   try {
-    const data = [{ id: 1, name: 'POONAM' , position:'CEO'}, { id: 2, name: 'AAA', position:'COO'},  { id: 3, name: 'BBB',position:'COO'},  { id:4 , name: 'ZZZZ', position:'COO'}];
+    const latestUsers = await User.find({}, 'first_name last_name email address _id')
+      .sort({ createdAt: -1 })
+      .limit(5);
 
-    res.status(200).json({ success: true, data : data });
-    return
-
-    
+    res.status(200).json({ success: true, data: latestUsers });
   } catch (error) {
     res.status(500).json({ success: false, msg: "Internal Server Error" });
-    return
-    
   }
-});
+};
