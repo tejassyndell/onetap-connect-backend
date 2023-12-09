@@ -2420,6 +2420,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
+      // companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -2761,6 +2762,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
+      // companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -5288,6 +5290,12 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
 
+exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
+  console.log('Received ShipStation Webhook:', req.body);
+
+  res.status(200).json({ message: 'Webhook received successfully' });
+});
+
 exports.sendTestData = catchAsyncErrors(async (req, res, next) => {
 
   try {
@@ -5302,10 +5310,4 @@ exports.sendTestData = catchAsyncErrors(async (req, res, next) => {
     return
     
   }
-});
-
-exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
-  console.log('Received ShipStation Webhook:', req.body);
-
-  res.status(200).json({ message: 'Webhook received successfully' });
 });
