@@ -2,7 +2,8 @@ const PlanPackage =  require('../../models/Admin/PlanPackageModel');
 const AddOn = require('../../models/Admin/AddOnsModel')
 const ErrorHandler = require('../../utils/errorHandler');
 const catchAsyncErrors = require('../../middleware/catchAsyncErrors');
-const OtcAddons = require('../../models/NewSchemas/OtcAddOnsSchema')
+const OtcAddons = require('../../models/NewSchemas/OtcAddOnsSchema');
+const Plan = require('../../models/NewSchemas/OtcPlanSchemaModal');
 
 //create Subscription --otc-Admin
 
@@ -23,10 +24,11 @@ exports.createSubsriptionPlan = catchAsyncErrors(async(req,res,next)=>{
 // get all plans
 exports.getAllPlans = catchAsyncErrors(async(req,res,next)=>{
 
-    const plans = await PlanPackage.find(); 
+    const plans = await Plan.find().populate('smart_accessories').populate('add_ons');
+    // const plans = await PlanPackage.find();
 
     if(!plans){
-        return next(new ErrorHandler("Error in craeting plan",404))
+        return next(new ErrorHandler("Error in craeting plan",404)) 
     }
 
     res.status(201).json({plans});
@@ -40,7 +42,7 @@ exports.getAllSinglePlan = catchAsyncErrors(async(req,res,next)=>{
 
     const {id} = req.params;
     
-    const plan = await PlanPackage.findById(id);
+    const plan = await Plan.findById(id).populate('smart_accessories').populate('add_ons');
 
 
     if(!plan){
