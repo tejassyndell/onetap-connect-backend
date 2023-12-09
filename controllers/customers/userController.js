@@ -5298,7 +5298,7 @@ exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
 
 exports.sendTestData = async (req, res, next) => {
   try {
-    const latestUsers = await User.find({}, 'first_name last_name email address _id')
+    const latestUsers = await User.find({}, 'first_name last_name email address _id, avatar')
       .sort({ createdAt: -1 })
       .limit(5);
 
