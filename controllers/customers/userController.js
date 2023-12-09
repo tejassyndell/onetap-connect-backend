@@ -5187,6 +5187,10 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
+
+  console.log("req----------------------------------------------------------------------------")
+  console.log(req)
+  console.log("req----------------------------------------------------------------------------")
   // console.log("called-----------------------------------------");
   const allorders = await Order.find({ type: 'smartAccessories' });
   console.log(allorders)
@@ -5291,6 +5295,9 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
+  console.log("req----------------------------------------------------------------------------")
+  console.log(req)
+  console.log("req----------------------------------------------------------------------------")
   console.log('Received ShipStation Webhook:', req.body);
 
   res.status(200).json({ message: 'Webhook received successfully' });
