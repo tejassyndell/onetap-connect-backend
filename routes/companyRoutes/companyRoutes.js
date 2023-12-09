@@ -262,7 +262,8 @@ router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
 router.get('/ship/shipstation', postshipstation);
-router.post('/ship/shipstation/webhook', getchangesoforder);
+router.post('/ship/shipstation', getchangesoforder);
+// router.post('/ship/shipstation/webhook', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
 
 // test wordpress route
