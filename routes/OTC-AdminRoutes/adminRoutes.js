@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin
-} = require("../../controllers/OTC-AdminController/Clients/clientsController");
+ , getAllOrders, updateOrders, deleteOrders, getSingleOrder, updateOrder} = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -73,4 +73,11 @@ router.post("/admin/invite/userByCSV", AdmininviteTeamMemberByCSV);
 router.post("/admin/invite/manual", inviteTeamMembermanuallybyadmin);
 router.post("/admin/getinvitedUsersbyadmin", getinvitedUsersbyadmin);
 router.post("/admin/resendemailinvitationbyadmin", resendemailinvitationbyadmin);
+router.get("/admin/orders",isOtcAdminAuthenticatedUser, getAllOrders);
+router.post("/admin/orders/update",isOtcAdminAuthenticatedUser, updateOrders);
+router.post("/admin/orders/delete",isOtcAdminAuthenticatedUser, deleteOrders);
+router.get("/admin/order/:id", isOtcAdminAuthenticatedUser, getSingleOrder);
+router.post("/admin/order/update/:id", isOtcAdminAuthenticatedUser, updateOrder);
+
+
 module.exports = router;
