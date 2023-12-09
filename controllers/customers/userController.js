@@ -2420,7 +2420,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
-      companyId: user.companyID,
+      // companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -2762,7 +2762,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
-      companyId: user.companyID,
+      // companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
