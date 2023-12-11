@@ -53,6 +53,13 @@ app.get("/api/v1/profile/img/:filename", (req, res) => {
   const filePath = path.join(__dirname, "/uploads/profileImages", filename);
   res.sendFile(filePath);
 });
+app.get("/api/v1/adminprofile/img/:filename", (req, res) => {
+  const filename = req.params.filename;
+  console.log(filename);
+
+  const filePath = path.join(__dirname, "/uploads/otcadminsprofileimages", filename);
+  res.sendFile(filePath);
+});
 
 app.get("/api/v1/product/img/:filename", (req, res) => {
   const filename = req.params.filename;
