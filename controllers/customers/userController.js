@@ -5330,6 +5330,28 @@ exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
   }
   res.status(200).json({ message: 'Webhook received successfully' });
 });
+const apiKey = '4631a6eafe2e4771b4ceb4981881d1f1';
+
+// ShipStation API endpoint for retrieving shipping rates
+const ratesEndpoint = 'https://ssapi.shipstation.com/shipments/getrates';
+
+exports.getrateoforder = catchAsyncErrors(async (req, res, next) => {
+  const {shipmentData}=req.body;
+  // Make API request to get rates
+  axios.post(ratesEndpoint, shipmentData, {
+    headers: {
+      Authorization: apiKey,
+    },
+  })
+    .then(response => {
+      // Handle the response data (rates)
+      console.log('Rates:', response.data);
+    })
+    .catch(error => {
+      // Handle errors
+      console.error('Errorr:', error.response.data);
+    });
+});
 
 exports.sendTestData = async (req, res, next) => {
   try {
