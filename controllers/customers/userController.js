@@ -40,6 +40,8 @@ const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
 
 const { getMaxListeners } = require("events");
+const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
+const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js")
 dotenv.config();
 const usedCodes = new Set();
 
@@ -508,7 +510,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
-  if (user.status === "inactive") {
+  if (user.status === "Deactivate") {
     return next(
       new ErrorHandler(
         "Your account has been deactivated by administrator.",
@@ -557,7 +559,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     console.log("2");
     return next(new ErrorHandler("Please enter valid password.", 401));
   }
-  if (user.status === "inactive") {
+  if (user.status === "Deactivate") {
     return next(
       new ErrorHandler(
         "Your account has been deactivated by administrator.",
@@ -1402,10 +1404,16 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         password: password,
         role: "teammember",
         userurlslug: generatedCode,
+        status: "inactive"
       });
 
       const userId = userRecord.id;
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      const userinfocreate = await UserInformation.create({
+        user_id : userId,
+        company_ID : id,
+       
+       })
 
       const user_parmalink = await parmalinkSlug.create({
         user_id: userId,
@@ -1416,6 +1424,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
         companyurlslug: generatedcompanyCode,
       })
       await user_parmalink.save();
+      await userinfocreate.save();
 
       // const userplan = planData.plan;
       // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
@@ -3512,6 +3521,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       isPaidUser: true,
       companyID: userdetails.companyId,
       role: "teammember",
+      status: "inactive"
     };
 
     const user = await User.create(userdetails);
@@ -3582,7 +3592,7 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
 exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   const { invitedUserData } = req.body;
-  const { token, userData } = invitedUserData;
+  let { token, userData } = invitedUserData;
   const { _id, companyId, email: userEmail, status } = userData;
   console.log(userEmail);
   // Check the status field
@@ -3619,6 +3629,7 @@ exports.invitedUserGoogleSignup = catchAsyncErrors(async (req, res, next) => {
     isIndividual: false,
     isPaidUser: true,
     userurlslug: generatedCode,
+    status: "inactive"
   };
   const existingUser = await User.findOne({ email: userData.email });
 
@@ -4051,6 +4062,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
     password: password,
     userurlslug: generatedCode,
     role: "teammember",
+    status: "inactive"
   });
   // console.log("called")
   const userInformationData = {
@@ -5318,6 +5330,28 @@ exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
   }
   res.status(200).json({ message: 'Webhook received successfully' });
 });
+const apiKey = '4631a6eafe2e4771b4ceb4981881d1f1';
+
+// ShipStation API endpoint for retrieving shipping rates
+const ratesEndpoint = 'https://ssapi.shipstation.com/shipments/getrates';
+
+exports.getrateoforder = catchAsyncErrors(async (req, res, next) => {
+  const {shipmentData}=req.body;
+  // Make API request to get rates
+  axios.post(ratesEndpoint, shipmentData, {
+    headers: {
+      Authorization: apiKey,
+    },
+  })
+    .then(response => {
+      // Handle the response data (rates)
+      console.log('Rates:', response.data);
+    })
+    .catch(error => {
+      // Handle errors
+      console.error('Errorr:', error.response.data);
+    });
+});
 
 exports.sendTestData = async (req, res, next) => {
   try {
@@ -5330,3 +5364,48 @@ exports.sendTestData = async (req, res, next) => {
     res.status(500).json({ success: false, msg: "Internal Server Error" });
   }
 };
+exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
+  try {
+    const { orderNumber, user } = req.body;
+    // console.log(orderNumber , user,"req.body")
+
+    if (!orderNumber || !user) {
+      return res.status(400).json({ error: 'Both orderNumber and userId are required in the request body' });
+    }
+
+    // Fetch order details from the database based on order number and user ID
+    const orderDetails = await Order.findOne({ orderNumber, user });
+
+    if (!orderDetails) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Return the order details
+    res.status(200).json({ orderDetails });
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+
+})
+
+exports.getAddonsForOrderSummary = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const {addonIds} = req.body;
+    console.log(addonIds, "add on ids");
+
+    // Assuming you have a MongoDB model named Addon
+    const addonDetails = await Adminaddonsschema.find({ _id: { $in: addonIds } });
+
+    console.log(addonDetails, "Details");
+
+    if (!addonDetails || addonDetails.length === 0) {
+      return res.status(404).json({ message: 'Add-on details not found' });
+    }
+
+    return res.status(200).json(addonDetails);
+  } catch (error) {
+    console.error('Error fetching add-on details:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+

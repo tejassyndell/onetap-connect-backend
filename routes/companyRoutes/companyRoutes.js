@@ -96,6 +96,9 @@ const {
   postshipstation,
   sendTestData,
   getchangesoforder,
+  getorderdetails,
+  getAddonsForOrderSummary,
+  getrateoforder,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -265,7 +268,9 @@ router.get('/ship/shipstation', postshipstation);
 router.post('/ship/shipstation', getchangesoforder);
 // router.post('/ship/shipstation/webhook', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
-
+router.post('/getorderdetails',getorderdetails)
+router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
+router.post('/ship/rate', getrateoforder)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
 

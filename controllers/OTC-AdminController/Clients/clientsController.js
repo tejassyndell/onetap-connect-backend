@@ -177,22 +177,33 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
           // select: "first_name last_name",
         });
       console.log(userInformationTeamData);
-      // Create a map to track seen company IDs
-      const seenCompanyIDs = new Map();
-      const filteredUserInformationTeamData = [];
+      // // Create a map to track seen company IDs
+      // const seenCompanyIDs = new Map();
+      // const filteredUserInformationTeamData = [];
 
-      for (const data of userInformationTeamData) {
-        const companyID = data.company_ID._id;
+      // for (const data of userInformationTeamData) {
+      //   const companyID = data.company_ID._id;
 
-        // If the company ID is not in the map, add it to the map and add the data to the filtered array
-        if (!seenCompanyIDs.has(companyID)) {
-          seenCompanyIDs.set(companyID, true);
-          filteredUserInformationTeamData.push(data);
+      //   // If the company ID is not in the map, add it to the map and add the data to the filtered array
+      //   if (!seenCompanyIDs.has(companyID)) {
+      //     seenCompanyIDs.set(companyID, true);
+      //     filteredUserInformationTeamData.push(data);
+      //   }
+      // }
+      // const ReverseData = filteredUserInformationTeamData.reverse();
+      // console.log(filteredUserInformationTeamData);
+      const filteredUserInformationTeamData = userInformationTeamData.reduce((accumulator, current) => {
+        // Check if company_ID is present and has _id property
+        if (current.company_ID && current.company_ID._id) {
+          const companyId = current.company_ID._id.toString();
+          if (!accumulator.has(companyId)) {
+            accumulator.set(companyId, current);
+          }
         }
-      }
-      const ReverseData = filteredUserInformationTeamData.reverse();
-      console.log(filteredUserInformationTeamData);
-
+        return accumulator;
+      }, new Map());
+  const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
+  const ReverseData = uniqueUserInformationTeamData.reverse();
       res.status(200).json({
         // userInformationTeamData
         userInformationTeamData: ReverseData,
@@ -919,8 +930,40 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
 );
 
 
+
+exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
+  try {
+    const subscriptions = await Order.find({ type: "Subscription" }).select({
+      first_name: 1,
+      last_name: 1,
+      status: 1,
+      "subscription_details.recurring_amount": 1,
+      "subscription_details.plan": 1,
+      "subscription_details.renewal_date": 1,
+      orderNumber:1
+    });
+
+    // Do something with the retrieved subscriptions
+    res.status(200).json(subscriptions);
+  } catch (error) {
+    console.error('Error fetching subscription details:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+exports.getsubscriptiondetails = async (req,res,next) => {
+  const {id} = req.body
+  console.log(id,"idd")
+  try {
+    const subscriptions = await Order.findById(id);
+    res.json(subscriptions);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+
 exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-  const { memberData ,companyID , manager_firstname , manager_email } = req.body;
+  const { memberData, companyID, manager_firstname, manager_email } = req.body;
   // const { companyID } = req.user;
   // console.log(manage_superadmin, "*****************************")
 
@@ -1062,7 +1105,7 @@ exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
-  const { CSVMemberData ,id } = req.body;
+  const { CSVMemberData, id } = req.body;
   // const { companyID, id } = req.user;
   console.log(CSVMemberData)
 
@@ -1213,9 +1256,9 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
       const userId = userRecord.id;
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       const userinfocreate = await UserInformation.create({
-       user_id : userId,
-       company_ID : id,
-      
+        user_id: userId,
+        company_ID: id,
+
       })
 
       const user_parmalink = await parmalinkSlug.create({
@@ -1269,7 +1312,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
 });
 
 exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next) => {
-  const { formData , id  } = req.body;
+  const { formData, id } = req.body;
 
   if (formData == null) {
     return next(new ErrorHandler("No user data provided", 400));
@@ -1464,7 +1507,7 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next
 });
 
 exports.resendemailinvitationbyadmin = catchAsyncErrors(async (req, res, next) => {
-  const { userid, manager_email, manager_firstname,companyID } = req.body;
+  const { userid, manager_email, manager_firstname, companyID } = req.body;
 
   console.log(userid);
   for (const id of userid) {
@@ -1569,7 +1612,7 @@ exports.resendemailinvitationbyadmin = catchAsyncErrors(async (req, res, next) =
 });
 exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-console.log(id , "====================" , req.body)
+  console.log(id, "====================", req.body)
   try {
     // Fetch invited users based on companyID    
     const invitedusers = await InvitedTeamMemberModel.find({
@@ -1604,6 +1647,152 @@ console.log(id , "====================" , req.body)
   }
 });
 
+exports.createClient = catchAsyncErrors(async (req, res, next) => {
+  const {
+    first_name,
+    last_name,
+    email,
+    contact,
+    isCompany,
+    industry,
+    company_name,
+    team_size,
+  } = req.body;
+  try {
+
+    let user;
+
+    const trimedString = company_name.trim().replace(/\s+/g, " ").toLowerCase();
+
+    const company = await Company.find();
+
+    if (company_name !== "") {
+      // checking if company already exists
+      const companyExists = company.some(item => {
+        const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
+        return trimmedExistingName === trimedString;
+      });
+
+      if (companyExists) {
+        console.log("Company already exists xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        return next(new ErrorHandler("Company Already Exists.", 400));
+      }
+    }
+    user = await User.create({
+      email,
+      first_name,
+      last_name,
+      contact,
+      isIndividual: !isCompany,
+      isPaidUser: true,
+
+    });
+    const generatedCode = generateUniqueCode();
+    const generatedcompanyCode = generateUniqueCode();
+    if (!user) {
+      return next(new ErrorHandler("Something went wrong please try again.", 400));
+    }
+    const newCompany = await Company.create({
+      primary_account: user._id,
+      primary_manager: user._id,
+      primary_billing: user._id,
+      company_name,
+      industry,
+      contact,
+      team_size,
+      owner_first_name: first_name,
+      owner_last_name: last_name,
+    });
+
+    user.companyID = newCompany._id;
+    user.isVerified = true;
+    user.userurlslug = generatedCode;
+    user.companyurlslug = generatedcompanyCode;
+
+    await user.save();
+    const planData = {
+      total_amount: null,
+      plan: 'Free',
+      total_user: [
+        {
+          baseUser: 1,
+          additionalUser: 0
+        }
+      ],
+      recurring_amount: null,
+      taxRate: null,
+      customer_id: null,
+    };
+    const shipping_method = {
+      type: 'free',
+      price: 0
+    };
+    const userInfo = await UserInformation.create({
+      user_id: user._id,
+      company_ID: user.companyID,
+      subscription_details: planData,
+      // Add any other fields you want to store in userinfo
+    });
+    userInfo.subscription_details.auto_renewal = true;
+    userInfo.shipping_method = shipping_method;
+
+    await userInfo.save();
+    const user_parmalink = await parmalinkSlug.create({
+      user_id: user._id,
+      companyID: newCompany._id,
+      unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+      companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
+      userurlslug: generatedCode,
+      companyurlslug: generatedcompanyCode,
+    })
+    await user_parmalink.save();
+
+    res.status(200).json({
+      success: true,
+      user, userInfo, newCompany
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
+
+exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Find all companies
+    const companies = await Company.find();
+
+    // Loop through each company and find active and inactive user IDs
+    const result = await Promise.all(
+      companies.map(async (company) => {
+        const activeUserIds = (
+          await User.find({
+            companyID: company._id,
+            status: "active",
+          }).select("_id")
+        ).map(user => user._id);
+
+        const inactiveUserIds = (
+          await User.find({
+            companyID: company._id,
+            status: { $ne: "active" }, // Users with status other than "active"
+          }).select("_id")
+        ).map(user => user._id);
+
+        return {
+          company: company._id,
+          activeUserIds,
+          inactiveUserIds,
+        };
+      })
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+
+});
 exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
   // const { id } = req.user;
   try {
@@ -1733,3 +1922,187 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 })
+exports.getCompanyDetailsforAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.body;
+  const company = await Company.findById(companyID)
+    .populate("primary_account")
+    .populate("primary_manager")
+    .populate("primary_billing");
+  if (!company) {
+    return next(new ErrorHandler("No company details Found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    company,
+  });
+});
+
+exports.checkcompanyurlslugavailiblityAdminside = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyurlslug } = req.body;
+    const { companyID } = req.body;
+
+    //     console.log(companyurlslug);
+    // console.log(req.user.companyID);
+    console.log("check is hit");
+    console.log(companyurlslug);
+    console.log(companyID)
+
+    // Assuming you have access to the current company's ID
+    const currentCompanyId = companyID; // Modify this line based on how you store the current company's ID in your application
+
+    // Check for existing URL slugs that are not the current company's
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug,
+    });
+
+    if (existingcompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+    });
+
+    if (caseSensitivecompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    return res.status(200).json({ message: "companyurlslug is available." });
+  }
+);
+
+
+exports.UpdateCompanySlugFromAdmin = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyurlslug, companyID } = req.body;
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Update the CompanySlug using findOneAndUpdate
+      const updatedCompany = await Company.findOneAndUpdate(
+        { _id: companyID }, // Find the company by ID
+        { companyurlslug: companyurlslug }, // Update the CompanySlug
+        { new: true } // Return the updated document
+      );
+
+      // Check if the company was found and updated
+      if (!updatedCompany) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      // Send the updated company data in the response
+      res.status(200).json("updated");
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+exports.UpdateCompanySettings = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID, user_profile_edit_permission } = req.body;
+      console.log(companyID , user_profile_edit_permission,"body", req.body)
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Update the CompanySlug using findOneAndUpdate
+      const updatedCompany = await Company.findOneAndUpdate(
+        { _id: companyID }, // Find the company by ID
+        { user_profile_edit_permission: user_profile_edit_permission }, // Update the CompanySlug
+        { new: true } // Return the updated document
+      );
+
+      // Check if the company was found and updated
+      if (!updatedCompany) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      // Send the updated company data in the response
+      res.status(200).json("updated url edit permission");
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+
+exports.getsharereferalSettingsAdmin = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID } = req.body;
+      console.log(companyID, "body");
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Find the CompanyShareReferralModel by companyId
+      const companyShareReferral = await CompanyShareReferralModel.findOne({
+        companyID: companyID
+      });
+
+      // Check if the companyShareReferral was found
+      if (!companyShareReferral) {
+        return res.status(404).json({ error: 'Company Share Referral settings not found' });
+      }
+
+      // Send the data in the response
+      res.status(200).json(companyShareReferral);
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+exports.UpdateLeadCaptureSettings = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID, updateValues } = req.body;
+      console.log(updateValues,"bodydyy")
+
+      // Validate if companyID and updateValues are provided
+      if (!companyID || !updateValues) {
+        return res.status(400).json({ error: 'Company ID and update values are required' });
+      }
+
+      // Find the CompanyShareReferralModel by companyId
+      const companyShareReferral = await CompanyShareReferralModel.findOne({
+        companyID: companyID
+      });
+
+      // Check if the companyShareReferral was found
+      if (!companyShareReferral) {
+        return res.status(404).json({ error: 'Company Share Referral settings not found' });
+      }
+
+      companyShareReferral.set(updateValues)
+      await companyShareReferral.save();
+
+      // Send the updated data in the response
+      res.status(200).json(companyShareReferral);
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
