@@ -28,6 +28,22 @@ const order_Schema = new mongoose.Schema(
       type: String,
       default: "Processing"
     },
+    fulfillment: {
+      type: String,
+      default: "inProgress"
+    },
+    shippingNotes: {
+      type: String,
+      default: ""
+    },
+    customPrintingNotes: {
+      type: String,
+      default: ""
+    },
+    activityLog: {
+      type: String,
+      default: ""
+    },
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "companies_information",
@@ -40,6 +56,7 @@ const order_Schema = new mongoose.Schema(
         subtotal: { type: Number },
         quantity: { type: Number },
         price: { type: Number },
+        status: { type: String , default: 'N/A' }, 
       },
     ],
     addaddons: [
@@ -48,7 +65,7 @@ const order_Schema = new mongoose.Schema(
       },
     ],
     subscription_details: {
-      addones: [{ type: mongoose.Schema.Types.ObjectId }],
+      addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
       userCount: { type: Number },
       total_amount: { type: Number },
       billing_cycle: { type: String },
@@ -114,6 +131,7 @@ const order_Schema = new mongoose.Schema(
       type: { type: String },
       price: { type: Number }
     }],
+    tracking_number: {type: String},
   },
   { timestamps: true }
 );

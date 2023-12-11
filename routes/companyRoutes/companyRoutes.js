@@ -93,6 +93,11 @@ const {
   getuniqueslugbyid,
   sharemycard_email,
   verifyPassword,
+  postshipstation,
+  sendTestData,
+  getchangesoforder,
+  getorderdetails,
+  getAddonsForOrderSummary,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -258,9 +263,16 @@ router.get("/getallcompanies", isAuthenticatedUser, getcompanies);
 router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
-
-
+router.get('/ship/shipstation', postshipstation);
+router.post('/ship/shipstation', getchangesoforder);
+// router.post('/ship/shipstation/webhook', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
+router.post('/getorderdetails',getorderdetails)
+router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
+
+// test wordpress route
+router.get('/wp/getdata', sendTestData)
+
 
 
 // router.post('/testapii' ,Testapidummy)

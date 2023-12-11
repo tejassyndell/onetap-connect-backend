@@ -40,6 +40,8 @@ const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
 
 const { getMaxListeners } = require("events");
+const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
+const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js")
 dotenv.config();
 const usedCodes = new Set();
 
@@ -2420,6 +2422,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
+      // companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -2761,6 +2764,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
+      // companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -5182,3 +5186,194 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, msg: "password updated" });
 
 });
+
+
+exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
+
+  console.log("get req----------------------------------------------------------------------------")
+  console.log(req)
+  console.log("get req----------------------------------------------------------------------------")
+  // console.log("called-----------------------------------------");
+  const allorders = await Order.find({ type: 'smartAccessories' });
+  console.log(allorders)
+
+  const xmlOrders = allorders.map(order => {
+    const orderID = order._id;
+    const odrNum = order.orderNumber;
+    const OrderDate = order.createdAt;
+    const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
+    const OrderStatus = order.status;
+    const LastModified = order.updatedAt;
+    const formattedLastDate = `${(LastModified.getMonth() + 1).toString().padStart(2, '0')}/${LastModified.getDate().toString().padStart(2, '0')}/${LastModified.getFullYear()} ${LastModified.getHours().toString().padStart(2, '0')}:${LastModified.getMinutes().toString().padStart(2, '0')} ${LastModified.getHours() >= 12 ? 'PM' : 'AM'}`;
+    const OrderTotal = order.totalAmount;
+    const TaxAmount = order.tax;
+    const fname = order?.shippingAddress[0]?.first_name;
+    const lname = order?.shippingAddress[0]?.last_name;
+    // const email = order?.shippingAddress?.email;
+    const compName = order?.shippingAddress[0]?.company_name;
+    const Line1 = order?.shippingAddress[0]?.line1;
+    const Line2 = order?.shippingAddress[0]?.line2;
+    const City = order?.shippingAddress[0]?.city;
+    const state = order?.shippingAddress[0]?.state;
+    const cntry = order?.shippingAddress[0]?.country;
+    const Pcode = order?.shippingAddress[0]?.postal_code;
+
+    const xmlItems = order?.smartAccessories.map(item => {
+      return `
+    <Item>
+      <SKU><![CDATA[FD88821]]></SKU>
+      <Name><![CDATA[Sample Product]]></Name>
+      <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
+      <Weight>16</Weight>
+      <WeightUnits>Ounces</WeightUnits>
+      <Quantity>${item.quantity}</Quantity>
+      <UnitPrice>${item.price}</UnitPrice>
+      <Location><![CDATA[C3-D4]]></Location>
+      <Options>
+          <Option>
+            <Name><![CDATA[Size]]></Name>
+            <Value><![CDATA[Medium]]></Value>
+            <Weight>20</Weight>
+          </Option>
+          <Option>
+            <Name><![CDATA[Color]]></Name>
+            <Value><![CDATA[Blue]]></Value>
+            <Weight>15</Weight>
+          </Option>
+      </Options>
+    </Item>`;
+    }).join('');
+
+    return `
+      <Order>
+        <OrderID><![CDATA[${orderID}]]></OrderID>
+        <OrderNumber><![CDATA[${odrNum}]]></OrderNumber>
+        <OrderDate>${formattedOrderDate}</OrderDate>
+        <OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
+        <LastModified>${formattedLastDate}</LastModified>
+        <ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
+        <PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
+        <CurrencyCode>USD</CurrencyCode> 
+        <OrderTotal>${OrderTotal}</OrderTotal>
+        <TaxAmount>${TaxAmount}</TaxAmount>
+        <ShippingAmount>0.00</ShippingAmount>
+        <CustomerNotes></CustomerNotes>
+        <InternalNotes></InternalNotes>
+        <Gift>false</Gift>
+        <GiftMessage></GiftMessage>
+        <CustomField1></CustomField1>
+        <CustomField2></CustomField2>
+        <CustomField3></CustomField3>
+        <Customer>
+           <CustomerCode></CustomerCode>
+           <BillTo>
+             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Company><![CDATA[${compName}]]></Company>
+             <Phone><![CDATA[512-555-5555]]></Phone>
+             <Email><![CDATA[customer@mystore.com]]></Email>
+           </BillTo>
+           <ShipTo>
+             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Company><![CDATA[${compName}]]></Company>
+             <Address1><![CDATA[${Line1}]]></Address1>
+             <Address2><![CDATA[${Line2}]]></Address2>
+             <City><![CDATA[${City}]]></City>
+             <State><![CDATA[${state}]]></State>
+             <PostalCode><![CDATA[${Pcode}]]></PostalCode>
+             <Country><![CDATA[${cntry}]]></Country>
+             <Phone><![CDATA[512-555-5555]]></Phone>
+           </ShipTo>
+        </Customer>
+        <Items>${xmlItems}</Items>
+      </Order>`;
+  }).join('');
+
+  const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
+  <Orders pages="${allorders.length}">
+    ${xmlOrders}
+  </Orders>`;
+
+  res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
+});
+
+exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
+  console.log("webhook call----------------------------------------------------------------------------")
+  console.log(req)
+  console.log("webhook call----------------------------------------------------------------------------")
+  // console.log('Received ShipStation Webhook:', req.body.query);
+
+  const trcNum = req.query.tracking_number;
+  const orderNum = req.query.order_number;
+
+  if (!trcNum) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  const order = await Order.findOne({orderNumber: orderNum});
+  if (order) {
+    await Order.updateOne({ orderNumber: orderNum }, { tracking_number: trcNum });
+    return res.status(200).json({
+      message: 'Tracking number updated',
+      order,
+    });
+  }else{
+    error
+  }
+  res.status(200).json({ message: 'Webhook received successfully' });
+});
+
+exports.sendTestData = async (req, res, next) => {
+  try {
+    const latestUsers = await User.find({}, 'first_name last_name email address _id, avatar')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.status(200).json({ success: true, data: latestUsers });
+  } catch (error) {
+    res.status(500).json({ success: false, msg: "Internal Server Error" });
+  }
+};
+exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
+  try {
+    const { orderNumber, user } = req.body;
+    // console.log(orderNumber , user,"req.body")
+
+    if (!orderNumber || !user) {
+      return res.status(400).json({ error: 'Both orderNumber and userId are required in the request body' });
+    }
+
+    // Fetch order details from the database based on order number and user ID
+    const orderDetails = await Order.findOne({ orderNumber, user });
+
+    if (!orderDetails) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Return the order details
+    res.status(200).json({ orderDetails });
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+
+})
+
+exports.getAddonsForOrderSummary = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const {addonIds} = req.body;
+    console.log(addonIds, "add on ids");
+
+    // Assuming you have a MongoDB model named Addon
+    const addonDetails = await Adminaddonsschema.find({ _id: { $in: addonIds } });
+
+    console.log(addonDetails, "Details");
+
+    if (!addonDetails || addonDetails.length === 0) {
+      return res.status(404).json({ message: 'Add-on details not found' });
+    }
+
+    return res.status(200).json(addonDetails);
+  } catch (error) {
+    console.error('Error fetching add-on details:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+

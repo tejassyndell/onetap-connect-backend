@@ -22,6 +22,9 @@ const usedCodes = new Set();
 const generatePassword = require("../../../utils/passwordGenerator.js");
 const parmalinkSlug = require('../../../models/NewSchemas/parmalink_slug.js');
 const InvitedTeamMemberModel = require("../../../models/Customers/InvitedTeamMemberModel.js");
+const { Types } = require('mongoose');
+const user_billing_addressModel = require("../../../models/NewSchemas/user_billing_addressModel.js");
+const user_shipping_addressesModel = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -174,22 +177,33 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
           // select: "first_name last_name",
         });
       console.log(userInformationTeamData);
-      // Create a map to track seen company IDs
-      const seenCompanyIDs = new Map();
-      const filteredUserInformationTeamData = [];
+      // // Create a map to track seen company IDs
+      // const seenCompanyIDs = new Map();
+      // const filteredUserInformationTeamData = [];
 
-      for (const data of userInformationTeamData) {
-        const companyID = data.company_ID._id;
+      // for (const data of userInformationTeamData) {
+      //   const companyID = data.company_ID._id;
 
-        // If the company ID is not in the map, add it to the map and add the data to the filtered array
-        if (!seenCompanyIDs.has(companyID)) {
-          seenCompanyIDs.set(companyID, true);
-          filteredUserInformationTeamData.push(data);
+      //   // If the company ID is not in the map, add it to the map and add the data to the filtered array
+      //   if (!seenCompanyIDs.has(companyID)) {
+      //     seenCompanyIDs.set(companyID, true);
+      //     filteredUserInformationTeamData.push(data);
+      //   }
+      // }
+      // const ReverseData = filteredUserInformationTeamData.reverse();
+      // console.log(filteredUserInformationTeamData);
+      const filteredUserInformationTeamData = userInformationTeamData.reduce((accumulator, current) => {
+        // Check if company_ID is present and has _id property
+        if (current.company_ID && current.company_ID._id) {
+          const companyId = current.company_ID._id.toString();
+          if (!accumulator.has(companyId)) {
+            accumulator.set(companyId, current);
+          }
         }
-      }
-      const ReverseData = filteredUserInformationTeamData.reverse();
-      console.log(filteredUserInformationTeamData);
-
+        return accumulator;
+      }, new Map());
+  const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
+  const ReverseData = uniqueUserInformationTeamData.reverse();
       res.status(200).json({
         // userInformationTeamData
         userInformationTeamData: ReverseData,
@@ -915,6 +929,38 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
 }
 );
 
+
+
+exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
+  try {
+    const subscriptions = await Order.find({ type: "Subscription" }).select({
+      first_name: 1,
+      last_name: 1,
+      status: 1,
+      "subscription_details.recurring_amount": 1,
+      "subscription_details.plan": 1,
+      "subscription_details.renewal_date": 1,
+      orderNumber:1
+    });
+
+    // Do something with the retrieved subscriptions
+    res.status(200).json(subscriptions);
+  } catch (error) {
+    console.error('Error fetching subscription details:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+exports.getsubscriptiondetails = async (req,res,next) => {
+  const {id} = req.body
+  console.log(id,"idd")
+  try {
+    const subscriptions = await Order.findById(id);
+    res.json(subscriptions);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
 
 exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData, companyID, manager_firstname, manager_email } = req.body;
@@ -1747,3 +1793,316 @@ exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
   }
 
 });
+exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
+  // const { id } = req.user;
+  try {
+    // Find orders by user ID
+    const orders = await Order.find().populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    });
+
+
+    // Create an array to store user data for each order
+    const ordersWithUserData = [];
+
+    for (const order of orders) {
+      // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
+      const user = await User.findOne({ _id: order.user });
+  
+      const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
+      // Add the user data to the order document
+      const orderWithUserData = { ...order.toObject(), userdata };
+      ordersWithUserData.push(orderWithUserData);
+    }
+
+    res.status(200).json({ success: true, allOrders: ordersWithUserData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
+exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
+  const { orderIds, orderData } = req.body;
+  try {
+    // Loop through the array of order IDs
+    for (let i = 0; i < orderIds.length; i++) {
+      const orderId = orderIds[i];
+      const updatedData = orderData[i];
+
+      const order = await Order.findById(orderId);
+
+      console.log(order)
+
+      if (!order) {
+        return res.status(404).json({ success: false, message: `No order found with ID: ${orderId}` });
+      }
+
+      // Update the order based on the orderData
+      // You might need to adjust this depending on your orderData structure
+      Object.assign(order, updatedData);
+
+      await order.save(); // Save the changes to the order
+      console.log(order, "order updated data")
+      res.status(200).json({ success: true, message: 'Orders updated successfully' , order });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
+  const { orderIds } = req.body;
+
+  try {
+    const result = await Order.deleteMany({ _id: { $in: orderIds } });
+    if (result.deletedCount > 0) {
+      res.status(200).json({ success: true, message: 'Orders deleted successfully' });
+    } else {
+      res.status(404).json({ success: false, message: 'No orders found for the provided IDs' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    // Find orders by user ID
+    const order = await Order.findById({_id : id}).populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    }).populate({
+      path: 'subscription_details.addones',
+      modal: 'otc_addons',
+    })
+
+
+    const userdata = await User.findOne({ _id: order.user });
+    const userInformation = await UserInformation.findOne({ user_id : order.user });
+    const companydata = await Company.findOne({ _id: order.company });
+
+  
+    // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
+    // const companydata = { companyName : company.company_name }
+    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation }
+
+    res.status(200).json({ success: true, order: orderWithUserData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedOrderData = req.body; // Assuming the updated details are provided in the request body
+
+
+  try {
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return next(new ErrorHandler("order not found", 404));
+    }
+    order.set(updatedOrderData);
+    await order.save();
+    res.status(200).json({success: true,message: "order details updated successfully",order: order, });
+  } catch (error) {
+    next(error);
+  }
+})
+exports.getCompanyDetailsforAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { companyID } = req.body;
+  const company = await Company.findById(companyID)
+    .populate("primary_account")
+    .populate("primary_manager")
+    .populate("primary_billing");
+  if (!company) {
+    return next(new ErrorHandler("No company details Found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    company,
+  });
+});
+
+exports.checkcompanyurlslugavailiblityAdminside = catchAsyncErrors(
+  async (req, res, next) => {
+    const { companyurlslug } = req.body;
+    const { companyID } = req.body;
+
+    //     console.log(companyurlslug);
+    // console.log(req.user.companyID);
+    console.log("check is hit");
+    console.log(companyurlslug);
+    console.log(companyID)
+
+    // Assuming you have access to the current company's ID
+    const currentCompanyId = companyID; // Modify this line based on how you store the current company's ID in your application
+
+    // Check for existing URL slugs that are not the current company's
+    const existingcompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug,
+    });
+
+    if (existingcompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    // Check case-sensitive duplicates
+    const caseSensitivecompanyurlslug = await Company.findOne({
+      _id: { $ne: currentCompanyId }, // Exclude the current company by ID
+      companyurlslug: new RegExp(`^${companyurlslug}$`, "i"),
+    });
+
+    if (caseSensitivecompanyurlslug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
+    return res.status(200).json({ message: "companyurlslug is available." });
+  }
+);
+
+
+exports.UpdateCompanySlugFromAdmin = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyurlslug, companyID } = req.body;
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Update the CompanySlug using findOneAndUpdate
+      const updatedCompany = await Company.findOneAndUpdate(
+        { _id: companyID }, // Find the company by ID
+        { companyurlslug: companyurlslug }, // Update the CompanySlug
+        { new: true } // Return the updated document
+      );
+
+      // Check if the company was found and updated
+      if (!updatedCompany) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      // Send the updated company data in the response
+      res.status(200).json("updated");
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+exports.UpdateCompanySettings = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID, user_profile_edit_permission } = req.body;
+      console.log(companyID , user_profile_edit_permission,"body", req.body)
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Update the CompanySlug using findOneAndUpdate
+      const updatedCompany = await Company.findOneAndUpdate(
+        { _id: companyID }, // Find the company by ID
+        { user_profile_edit_permission: user_profile_edit_permission }, // Update the CompanySlug
+        { new: true } // Return the updated document
+      );
+
+      // Check if the company was found and updated
+      if (!updatedCompany) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      // Send the updated company data in the response
+      res.status(200).json("updated url edit permission");
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+
+exports.getsharereferalSettingsAdmin = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID } = req.body;
+      console.log(companyID, "body");
+
+      // Validate if companyID is provided
+      if (!companyID) {
+        return res.status(400).json({ error: 'Company ID is required' });
+      }
+
+      // Find the CompanyShareReferralModel by companyId
+      const companyShareReferral = await CompanyShareReferralModel.findOne({
+        companyID: companyID
+      });
+
+      // Check if the companyShareReferral was found
+      if (!companyShareReferral) {
+        return res.status(404).json({ error: 'Company Share Referral settings not found' });
+      }
+
+      // Send the data in the response
+      res.status(200).json(companyShareReferral);
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
+
+exports.UpdateLeadCaptureSettings = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { companyID, updateValues } = req.body;
+      console.log(updateValues,"bodydyy")
+
+      // Validate if companyID and updateValues are provided
+      if (!companyID || !updateValues) {
+        return res.status(400).json({ error: 'Company ID and update values are required' });
+      }
+
+      // Find the CompanyShareReferralModel by companyId
+      const companyShareReferral = await CompanyShareReferralModel.findOne({
+        companyID: companyID
+      });
+
+      // Check if the companyShareReferral was found
+      if (!companyShareReferral) {
+        return res.status(404).json({ error: 'Company Share Referral settings not found' });
+      }
+
+      companyShareReferral.set(updateValues)
+      await companyShareReferral.save();
+
+      // Send the updated data in the response
+      res.status(200).json(companyShareReferral);
+    } catch (error) {
+      // Handle errors
+      next(error);
+    }
+  }
+);
