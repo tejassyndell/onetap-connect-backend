@@ -96,6 +96,8 @@ const {
   postshipstation,
   sendTestData,
   getchangesoforder,
+  getorderdetails,
+  getAddonsForOrderSummary,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -265,6 +267,8 @@ router.get('/ship/shipstation', postshipstation);
 router.post('/ship/shipstation', getchangesoforder);
 // router.post('/ship/shipstation/webhook', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
+router.post('/getorderdetails',getorderdetails)
+router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
 
 // test wordpress route
 router.get('/wp/getdata', sendTestData)

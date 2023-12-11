@@ -40,6 +40,8 @@ const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
 
 const { getMaxListeners } = require("events");
+const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
+const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js")
 dotenv.config();
 const usedCodes = new Set();
 
@@ -5330,3 +5332,48 @@ exports.sendTestData = async (req, res, next) => {
     res.status(500).json({ success: false, msg: "Internal Server Error" });
   }
 };
+exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
+  try {
+    const { orderNumber, user } = req.body;
+    // console.log(orderNumber , user,"req.body")
+
+    if (!orderNumber || !user) {
+      return res.status(400).json({ error: 'Both orderNumber and userId are required in the request body' });
+    }
+
+    // Fetch order details from the database based on order number and user ID
+    const orderDetails = await Order.findOne({ orderNumber, user });
+
+    if (!orderDetails) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Return the order details
+    res.status(200).json({ orderDetails });
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+
+})
+
+exports.getAddonsForOrderSummary = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const {addonIds} = req.body;
+    console.log(addonIds, "add on ids");
+
+    // Assuming you have a MongoDB model named Addon
+    const addonDetails = await Adminaddonsschema.find({ _id: { $in: addonIds } });
+
+    console.log(addonDetails, "Details");
+
+    if (!addonDetails || addonDetails.length === 0) {
+      return res.status(404).json({ message: 'Add-on details not found' });
+    }
+
+    return res.status(200).json(addonDetails);
+  } catch (error) {
+    console.error('Error fetching add-on details:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
