@@ -917,7 +917,7 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
-  const { memberData ,companyID , manager_firstname , manager_email } = req.body;
+  const { memberData, companyID, manager_firstname, manager_email } = req.body;
   // const { companyID } = req.user;
   // console.log(manage_superadmin, "*****************************")
 
@@ -1059,7 +1059,7 @@ exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
-  const { CSVMemberData ,id } = req.body;
+  const { CSVMemberData, id } = req.body;
   // const { companyID, id } = req.user;
   console.log(CSVMemberData)
 
@@ -1210,9 +1210,9 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
       const userId = userRecord.id;
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       const userinfocreate = await UserInformation.create({
-       user_id : userId,
-       company_ID : id,
-      
+        user_id: userId,
+        company_ID: id,
+
       })
 
       const user_parmalink = await parmalinkSlug.create({
@@ -1266,7 +1266,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
 });
 
 exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next) => {
-  const { formData , id  } = req.body;
+  const { formData, id } = req.body;
 
   if (formData == null) {
     return next(new ErrorHandler("No user data provided", 400));
@@ -1461,7 +1461,7 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next
 });
 
 exports.resendemailinvitationbyadmin = catchAsyncErrors(async (req, res, next) => {
-  const { userid, manager_email, manager_firstname,companyID } = req.body;
+  const { userid, manager_email, manager_firstname, companyID } = req.body;
 
   console.log(userid);
   for (const id of userid) {
@@ -1566,7 +1566,7 @@ exports.resendemailinvitationbyadmin = catchAsyncErrors(async (req, res, next) =
 });
 exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-console.log(id , "====================" , req.body)
+  console.log(id, "====================", req.body)
   try {
     // Fetch invited users based on companyID    
     const invitedusers = await InvitedTeamMemberModel.find({
@@ -1599,4 +1599,151 @@ console.log(id , "====================" , req.body)
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
+});
+
+exports.createClient = catchAsyncErrors(async (req, res, next) => {
+  const {
+    first_name,
+    last_name,
+    email,
+    contact,
+    isCompany,
+    industry,
+    company_name,
+    team_size,
+  } = req.body;
+  try {
+
+    let user;
+
+    const trimedString = company_name.trim().replace(/\s+/g, " ").toLowerCase();
+
+    const company = await Company.find();
+
+    if (company_name !== "") {
+      // checking if company already exists
+      const companyExists = company.some(item => {
+        const trimmedExistingName = item.company_name.trim().replace(/\s+/g, " ").toLowerCase();
+        return trimmedExistingName === trimedString;
+      });
+
+      if (companyExists) {
+        console.log("Company already exists xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        return next(new ErrorHandler("Company Already Exists.", 400));
+      }
+    }
+    user = await User.create({
+      email,
+      first_name,
+      last_name,
+      contact,
+      isIndividual: !isCompany,
+      isPaidUser: true,
+
+    });
+    const generatedCode = generateUniqueCode();
+    const generatedcompanyCode = generateUniqueCode();
+    if (!user) {
+      return next(new ErrorHandler("Something went wrong please try again.", 400));
+    }
+    const newCompany = await Company.create({
+      primary_account: user._id,
+      primary_manager: user._id,
+      primary_billing: user._id,
+      company_name,
+      industry,
+      contact,
+      team_size,
+      owner_first_name: first_name,
+      owner_last_name: last_name,
+    });
+
+    user.companyID = newCompany._id;
+    user.isVerified = true;
+    user.userurlslug = generatedCode;
+    user.companyurlslug = generatedcompanyCode;
+
+    await user.save();
+    const planData = {
+      total_amount: null,
+      plan: 'Free',
+      total_user: [
+        {
+          baseUser: 1,
+          additionalUser: 0
+        }
+      ],
+      recurring_amount: null,
+      taxRate: null,
+      customer_id: null,
+    };
+    const shipping_method = {
+      type: 'free',
+      price: 0
+    };
+    const userInfo = await UserInformation.create({
+      user_id: user._id,
+      company_ID: user.companyID,
+      subscription_details: planData,
+      // Add any other fields you want to store in userinfo
+    });
+    userInfo.subscription_details.auto_renewal = true;
+    userInfo.shipping_method = shipping_method;
+
+    await userInfo.save();
+    const user_parmalink = await parmalinkSlug.create({
+      user_id: user._id,
+      companyID: newCompany._id,
+      unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
+      companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
+      userurlslug: generatedCode,
+      companyurlslug: generatedcompanyCode,
+    })
+    await user_parmalink.save();
+
+    res.status(200).json({
+      success: true,
+      user, userInfo, newCompany
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
+
+exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Find all companies
+    const companies = await Company.find();
+
+    // Loop through each company and find active and inactive user IDs
+    const result = await Promise.all(
+      companies.map(async (company) => {
+        const activeUserIds = (
+          await User.find({
+            companyID: company._id,
+            status: "active",
+          }).select("_id")
+        ).map(user => user._id);
+
+        const inactiveUserIds = (
+          await User.find({
+            companyID: company._id,
+            status: { $ne: "active" }, // Users with status other than "active"
+          }).select("_id")
+        ).map(user => user._id);
+
+        return {
+          company: company._id,
+          activeUserIds,
+          inactiveUserIds,
+        };
+      })
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+
 });
