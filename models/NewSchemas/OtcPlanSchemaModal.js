@@ -27,6 +27,7 @@ const planSchema = new mongoose.Schema({
   yearly_sku: String,
   publishedDate: Date,
   discoutedPercentage: { type : Number, default: 20} ,
+  features:{type : String , default:''} ,
   // smart_accessories : 
   smart_accessories: [{
     type: mongoose.Schema.Types.ObjectId,

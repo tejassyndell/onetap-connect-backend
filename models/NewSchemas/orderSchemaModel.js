@@ -80,6 +80,7 @@ const order_Schema = new mongoose.Schema(
       renewal_date: { type: Date },
       auto_renewal: { type: Boolean, default: true },
       taxRate: { type: String },
+      InitialSetupFee : { type: Number, default: 0 },
     },
     subscriptionPlan: {
       subscription: {

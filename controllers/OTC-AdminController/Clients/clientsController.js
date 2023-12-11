@@ -455,7 +455,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
     let CustomPermalink = CustomPermalinkSlug;
     // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
-    const { InternalPlanName, PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog, smart_accessories, add_ons } = planFormData;
+    const { InternalPlanName, PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog, smart_accessories, add_ons, features } = planFormData;
     const { planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku } = planData
 
     if (id) {
@@ -476,7 +476,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
 
       const updatedCategory = await Plan.findByIdAndUpdate(
         id,
-        { InternalPlanName, PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
+        { InternalPlanName, PublicPlanName, categoryType,features, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
         { new: true } // Return the updated document
       );
       res.status(200).json({ success: true, category: updatedCategory });
@@ -488,7 +488,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
       }
 
       const newplans = new Plan({
-        InternalPlanName, PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
+        InternalPlanName, PublicPlanName, features,categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
       });
       const plans = await newplans.save();
       res.status(201).json({ success: true, plans });
