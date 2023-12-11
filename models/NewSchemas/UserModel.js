@@ -46,8 +46,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
       validate: [validator.isEmail, "Please enter valid Email"],
       lowercase: true,
-      set: function(email) {
-        return email.toLowerCase(); 
+      set: function (email) {
+        return email.toLowerCase();
       }
     },
     businessemail: {
@@ -170,6 +170,20 @@ const userSchema = new mongoose.Schema(
     personlize_Primary_activities: { type: String, default: null },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+
+
+    dealOwner: {
+      type: String,
+    },
+    referrer: {
+      type: String,
+    },
+    referrerName: {
+      type: String,
+    },
+    customerIp: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

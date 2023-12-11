@@ -41,6 +41,7 @@ const productSchema = new mongoose.Schema(
     weight: {
       type: Number,
     },
+    unit: { type: String, default: 'oz' },
     price: {
       type: Number,
       // required: true,
@@ -154,6 +155,7 @@ const productSchema = new mongoose.Schema(
         weight: {
           type: Number,
         },
+        unit: { type: String, default: 'oz' },
         CustomPermalink: {
           type: String,
         },

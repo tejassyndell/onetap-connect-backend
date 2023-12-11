@@ -25,6 +25,13 @@ const users_information = new mongoose.Schema(
             type: String,
             // required: [true, "Please Enter The Company email"],
         },
+        cardEditorData: [
+          {
+            type: String,
+            default : null
+            // required: [true, "Please Enter The Company email"],
+          }
+      ],
         primary_office_num: {
             type: Number,
             default: ""
