@@ -93,6 +93,8 @@ const {
   getuniqueslugbyid,
   sharemycard_email,
   verifyPassword,
+  getorderdetails,
+  getAddonsForOrderSummary,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -261,6 +263,8 @@ router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
 
 
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
+router.post('/getorderdetails',getorderdetails)
+router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
 
 
 // router.post('/testapii' ,Testapidummy)
