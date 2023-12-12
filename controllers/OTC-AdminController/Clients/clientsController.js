@@ -1960,3 +1960,41 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(
     }
   }
 );
+exports.getcompanyorders = catchAsyncErrors(async (req, res, next) => {
+  const { companyId } = req.body;
+  console.log(companyId,"compnay" )
+  try {
+    // Find orders by user ID
+    const orders = await Order.find({ company: companyId }).populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    }).populate({
+      path : 'user',
+      modal : 'user'
+    })
+    console.log(orders,"aaaaaaaaaaaa")
+    res.status(200).json({ success: true, orders: orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(async(req,res,next)=>{
+  const { orderNumber } = req.body;
+
+  try {
+    // Find the order by order number
+    const order = await Order.findOne({ orderNumber });
+
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});

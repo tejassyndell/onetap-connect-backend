@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getCompanyDetailsforAdmin, checkcompanyurlslugavailiblityAdminside, UpdateCompanySlugFromAdmin, UpdateCompanySettings, getsharereferalSettingsAdmin, UpdateLeadCaptureSettings, getAllOrders, updateOrders, deleteOrders, getSingleOrder, updateOrder
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getCompanyDetailsforAdmin, checkcompanyurlslugavailiblityAdminside, UpdateCompanySlugFromAdmin, UpdateCompanySettings, getsharereferalSettingsAdmin, UpdateLeadCaptureSettings, getAllOrders, updateOrders, deleteOrders, getSingleOrder, updateOrder, getcompanyorders, GetorderByCompanyIDandOrderNumber
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -87,4 +87,7 @@ router.post("/admin/UpdateCompanySlug",UpdateCompanySlugFromAdmin)
 router.post("/admin/UpdateCompanySettings",UpdateCompanySettings)
 router.post("/admin/getsharereferalSettingsAdmin",getsharereferalSettingsAdmin)
 router.post("/admin/UpdateLeadCaptureSettings",UpdateLeadCaptureSettings)
+router.post('/admin/getOrders',getcompanyorders)
+router.post('/admin/getorderbyidandnumber',GetorderByCompanyIDandOrderNumber)
+
 module.exports = router;

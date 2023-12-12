@@ -5359,12 +5359,12 @@ exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
 exports.getAddonsForOrderSummary = catchAsyncErrors(async (req, res, next) => {
   try {
     const {addonIds} = req.body;
-    console.log(addonIds, "add on ids");
+    // console.log(addonIds, "add on ids");
 
     // Assuming you have a MongoDB model named Addon
     const addonDetails = await Adminaddonsschema.find({ _id: { $in: addonIds } });
 
-    console.log(addonDetails, "Details");
+    // console.log(addonDetails, "Details");
 
     if (!addonDetails || addonDetails.length === 0) {
       return res.status(404).json({ message: 'Add-on details not found' });
