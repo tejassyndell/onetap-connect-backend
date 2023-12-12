@@ -271,7 +271,7 @@ router.post('/ship/shipstation', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
 router.post('/getorderdetails',getorderdetails)
 router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
-router.post('/ship/rate', getrateoforder)
+// router.post('/ship/rate', getrateoforder)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
 router.get('/test/cardEditordata', cardEditorData)
