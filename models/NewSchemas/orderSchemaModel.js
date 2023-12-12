@@ -55,8 +55,9 @@ const order_Schema = new mongoose.Schema(
         variationId: { type: String },
         subtotal: { type: Number },
         quantity: { type: Number },
-        price: { type: Number },
-        status: { type: String , default: 'N/A' }, 
+        price: { type: Number }, // final price
+        status: { type: String, default: 'N/A' },
+        
       },
     ],
     addaddons: [
@@ -65,7 +66,7 @@ const order_Schema = new mongoose.Schema(
       },
     ],
     subscription_details: {
-      addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
+      addones: [{ type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" }],
       userCount: { type: Number },
       total_amount: { type: Number },
       billing_cycle: { type: String },
@@ -131,7 +132,7 @@ const order_Schema = new mongoose.Schema(
       type: { type: String },
       price: { type: Number }
     }],
-    tracking_number: {type: String},
+    tracking_number: { type: String },
   },
   { timestamps: true }
 );
