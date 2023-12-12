@@ -1026,6 +1026,7 @@ exports.updateCustomerCreditBalance = catchAsyncErrors(async (req, res, next) =>
 exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
   try {
     const userId = req.body.userId;
+    const companyID = req.user.companyID;
     const {
       totalAmount,
       tax,
@@ -1107,6 +1108,7 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
 
     const order = new Order({
       user: userId,
+      company:companyID,
       shippingAddress,
       billingAddress,
       totalAmount,

@@ -15,6 +15,7 @@ const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
 const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
+const billingAddress = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
@@ -304,14 +305,13 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
       const companydata = await Company.findOne({ _id: id }).populate({
         path: "primary_billing",
         model: "user", // Adjust the model name as needed
-        select: "first_name last_name avatar role designation",
       }).populate({
-       
           path: "primary_account",
           model: "user", // Adjust the model name as needed
-          select: "first_name last_name avatar role designation",
-      
-      });
+      }).populate({
+        path: "primary_manager",
+        model: "user", // Adjust the model name as needed
+    });
       const allteams = await Team.find({ companyID: id });
       if (!userInformationTeamData) {
         return next(new ErrorHandler("No company details Found", 404));
@@ -1970,6 +1970,129 @@ console.log(req.body, "yjos body")
     return next(new ErrorHandler("Error updating shipping address", 500));
   }
 });
+
+exports.updateuserroleofcompanyusers = catchAsyncErrors(async (req, res, next) => {
+  const { superAdmins, administrators, managers, teammember } = req.body;
+
+  try {
+    // Define a function to update roles based on the provided user IDs and role
+    const updateUserRoles = async (userIds, userRole) => {
+      await User.updateMany({ _id: { $in: userIds } }, { role: userRole });
+    };
+
+    // Update user roles for each role category
+    await updateUserRoles(superAdmins.map(user => user.id), 'superadmin');
+    await updateUserRoles(administrators.map(user => user.id), 'administrator');
+    await updateUserRoles(managers.map(user => user.id), 'manager');
+    await updateUserRoles(teammember.map(user => user.id), 'teammember');
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error updating user roles:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating user roles",
+    });
+  }
+});
+
+exports.updateuserplanonrolechangeofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { userID, subscriptionDetails } = req.body;
+  try {
+    // const updatedUser = await User.findByIdAndUpdate(
+    const filter = {
+      user_id: { $in: userID }
+    };
+
+    const update = {
+      $set: { subscription_details: subscriptionDetails }
+    };
+    // Update user subscription_details based on userIDs array
+    const updatedUser = await UserInformation.updateMany(filter, update);
+    res.status(200).json({
+      success: true,
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating subscription details:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating subscription details",
+    });
+  }
+});
+
+//fetch billing address
+exports.fetchbillingaddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+
+  const billingData = await billingAddress.find({ userId: id });
+
+  if (!billingData || billingData.length === 0) {
+    return next(new ErrorHandler("No Billing details found", 404));
+  }
+
+  const firstBillingAddress = billingData[0];
+
+  res.status(201).json({
+    success: true,
+    billingData: firstBillingAddress,
+  });
+});
+
+exports.getallcompanynames = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+console.log(id)
+  const companies = await Company.find({ _id: { $ne: id } }, 'company_name');
+
+  if (!companies) {
+    return next(new ErrorHandler("No companies Found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    companies, // Return the selected fields
+  });
+});
+
+
+exports.updateBillingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { firstName, lastName, companyName, billing_address, superAdminUserid, companyID } = req.body;
+  const userData = {
+    first_name: firstName,
+    last_name: lastName,
+  };
+  console.log(superAdminUserid , userData)
+
+  const BillingAddressData = {
+    billing_address: billing_address,
+  };
+
+  const updateUser = await User.findOneAndUpdate({ _id: superAdminUserid }, userData);
+  const updateBilling = await billingAddress.findOneAndUpdate(
+    { userId: superAdminUserid },
+    BillingAddressData,
+    { new: true, upsert: true }
+  );
+
+  const updateCompany = await Company.findByIdAndUpdate(companyID, {
+    company_name: companyName,
+  });
+
+  await updateBilling.save();
+  await updateCompany.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Data Updated Successfully",
+    updateCompany
+  });
+});
+
+
+
+
 
 // For fetch all OTC_Adminusers
 

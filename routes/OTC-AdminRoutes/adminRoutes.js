@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getTeamofCompany, updateTeamNamebyAdmin, removeTeamFromUsersByadmin, deleteteamofselectedcompany, renameteamofselectedcompany, createNewteamofselectedcompany, otcadminusers, addAdminUser, updateAdminUser, getAllShippingAddressofcompany, removeShippingAddressofcompany, createShippingAddressofcompany, editShippingAddressofcompany
+  testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getTeamofCompany, updateTeamNamebyAdmin, removeTeamFromUsersByadmin, deleteteamofselectedcompany, renameteamofselectedcompany, createNewteamofselectedcompany, otcadminusers, addAdminUser, updateAdminUser, getAllShippingAddressofcompany, removeShippingAddressofcompany, createShippingAddressofcompany, editShippingAddressofcompany, updateuserroleofcompanyusers, updateuserplanonrolechangeofcompany, fetchbillingaddressofcompany, getallcompanynames, updateBillingAddressofcompany
 } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -83,6 +83,11 @@ router.post("/admin/getAllShippingAddressofcompany", getAllShippingAddressofcomp
 router.post("/admin/createShippingAddressofcompany", createShippingAddressofcompany);
 router.post("/admin/removeShippingAddressofcompany/:addressId", removeShippingAddressofcompany);
 router.post("/admin/editShippingAddressofcompany/:editAddressId", editShippingAddressofcompany);
+router.post("/admin/updateuserroleofcompanyusers", updateuserroleofcompanyusers);
+router.post("/admin/updateuserplanonrolechangeofcompany", updateuserplanonrolechangeofcompany);
+router.post("/admin/fetchbillingaddressofcompany", fetchbillingaddressofcompany);
+router.post("/admin/updateBillingAddressofcompany", updateBillingAddressofcompany);
+router.post("/admin/getallcompanynames", getallcompanynames);  
 
 router.get("/admin/otc_adminusers", otcadminusers);
 router.post("/admin/otc_addAdminUser", addAdminUser);
