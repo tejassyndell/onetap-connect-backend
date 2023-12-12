@@ -5349,11 +5349,11 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
 
 });
 
-
-
-
-
 exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
+
+  console.log("get req----------------------------------------------------------------------------")
+  console.log(req)
+  console.log("get req----------------------------------------------------------------------------")
   // console.log("called-----------------------------------------");
   const allorders = await Order.find({ type: 'smartAccessories' });
   console.log(allorders)
@@ -5458,7 +5458,27 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
-  console.log('Received ShipStation Webhook:', req.body);
+  console.log("webhook call----------------------------------------------------------------------------")
+  console.log(req)
+  console.log("webhook call----------------------------------------------------------------------------")
+  // console.log('Received ShipStation Webhook:', req.body.query);
 
+  const trcNum = req.query.tracking_number;
+  const orderNum = req.query.order_number;
+
+  if (!trcNum) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  const order = await Order.findOne({orderNumber: orderNum});
+  if (order) {
+    await Order.updateOne({ orderNumber: orderNum }, { tracking_number: trcNum, status:'shipped' });
+    return res.status(200).json({
+      message: 'Tracking number updated',
+      order,
+    });
+  }else{
+    error
+  }
+  
   res.status(200).json({ message: 'Webhook received successfully' });
 });

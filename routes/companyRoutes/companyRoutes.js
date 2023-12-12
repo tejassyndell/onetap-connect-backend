@@ -98,6 +98,7 @@ const {
   verifyPassword,
   postshipstation,
   getchangesoforder,
+  getrateoforder,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -264,7 +265,8 @@ router.get('/getOrders', isAuthenticatedUser ,getOrders)
 router.post('/user/redirect' ,redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email);
 router.get('/ship/shipstation', postshipstation);
-router.post('/ship/shipstation/webhook', getchangesoforder);
+router.post('/ship/shipstation', getchangesoforder);
+// router.post('/ship/shipstation/webhook', getchangesoforder);
 // router.post('/save_firebasetoken',isAuthenticatedUser, save_Firebase_Token)
 // router.post('/getUsers_info', isAuthenticatedUser, getUsers_info)
 // router.post ('/send_firebase_token', isAuthenticatedUser, get_firebase_token)
