@@ -474,7 +474,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
     let CustomPermalink = CustomPermalinkSlug;
     // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
-    const { InternalPlanName, PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog, smart_accessories, add_ons } = planFormData;
+    const { InternalPlanName, PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog, smart_accessories, add_ons, features } = planFormData;
     const { planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku } = planData
 
     if (id) {
@@ -495,7 +495,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
 
       const updatedCategory = await Plan.findByIdAndUpdate(
         id,
-        { InternalPlanName, PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
+        { InternalPlanName, PublicPlanName, categoryType,features, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
         { new: true } // Return the updated document
       );
       res.status(200).json({ success: true, category: updatedCategory });
@@ -507,7 +507,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
       }
 
       const newplans = new Plan({
-        InternalPlanName, PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
+        InternalPlanName, PublicPlanName, features,categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
       });
       const plans = await newplans.save();
       res.status(201).json({ success: true, plans });
@@ -1827,35 +1827,18 @@ exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
 
 });
 exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
-  // const { id } = req.user;
   try {
-    // Find orders by user ID
     const orders = await Order.find().populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
-    });
+    }).populate({path:'user', modal: 'user'})
 
-
-    // Create an array to store user data for each order
-    const ordersWithUserData = [];
-
-    for (const order of orders) {
-      // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
-      const user = await User.findOne({ _id: order.user });
-  
-      const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
-      // Add the user data to the order document
-      const orderWithUserData = { ...order.toObject(), userdata };
-      ordersWithUserData.push(orderWithUserData);
-    }
-
-    res.status(200).json({ success: true, allOrders: ordersWithUserData });
+    res.status(200).json({ success: true, allOrders: orders });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 
 exports.updateOrders = catchAsyncErrors(async (req, res, next) => {

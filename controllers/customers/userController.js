@@ -2505,6 +2505,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
   userInformation.shipping_method = shipping_method;
+  userInformation.isInitailUser = false;
   user.isPaidUser = true;
   // user.first_name = userData.first_name;
   // user.last_name = userData.last_name;

@@ -117,6 +117,8 @@ const users_information = new mongoose.Schema(
             taxRate: { type: String , default:'0'},
           },
 
+          isInitailUser: { type: Boolean, default: true  },
+
           connect_button_behaviour: {
             type: Boolean,
             default: false,

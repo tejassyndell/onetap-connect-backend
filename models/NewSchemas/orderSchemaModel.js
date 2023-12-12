@@ -30,8 +30,11 @@ const order_Schema = new mongoose.Schema(
     },
     fulfillment: {
       type: String,
-      default: "inProgress"
+      default: "In Progress"
     },
+    addOnStatus: String ,
+    addOnsNote: String ,
+    addOnsActivityLog: String ,
     shippingNotes: {
       type: String,
       default: ""
@@ -61,10 +64,18 @@ const order_Schema = new mongoose.Schema(
     ],
     addaddons: [
       {
-        addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" }
+        addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
+    
       },
     ],
     subscription_details: {
+      // addones: [
+      //  { 
+      //    type: mongoose.Schema.Types.ObjectId , ref: "otc_addons",
+      //   status: { type: String , default: 'N/A' },
+      //   assignTo: { type: String , default: '' },
+      // }
+      // ],
       addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
       userCount: { type: Number },
       total_amount: { type: Number },
@@ -80,6 +91,8 @@ const order_Schema = new mongoose.Schema(
       renewal_date: { type: Date },
       auto_renewal: { type: Boolean, default: true },
       taxRate: { type: String },
+      InitialSetupFee : { type: Number, default: 0 },
+      perUserDiscountPrice: { type: Number, default:''},
     },
     subscriptionPlan: {
       subscription: {
