@@ -7,6 +7,7 @@ const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
 const Company = require("../../../models/NewSchemas/Company_informationModel.js");
+const shippingAddress = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
 const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
@@ -14,6 +15,7 @@ const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
 const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
+const billingAddress = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
@@ -207,6 +209,7 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
       res.status(200).json({
         // userInformationTeamData
         userInformationTeamData: ReverseData,
+        userInformation:userInformationTeamData
       });
     } catch (error) {
       console.error(error);
@@ -305,8 +308,13 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
       const companydata = await Company.findOne({ _id: id }).populate({
         path: "primary_billing",
         model: "user", // Adjust the model name as needed
-        select: "first_name last_name avatar role designation",
-      });
+      }).populate({
+          path: "primary_account",
+          model: "user", // Adjust the model name as needed
+      }).populate({
+        path: "primary_manager",
+        model: "user", // Adjust the model name as needed
+    });
       const allteams = await Team.find({ companyID: id });
       if (!userInformationTeamData) {
         return next(new ErrorHandler("No company details Found", 404));
@@ -756,7 +764,7 @@ exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
-  const { users, status } = req.body;
+  const { users, status,selectedUserForRedirect } = req.body;
 
   // Loop through the array of user IDs
   for (let i = 0; i < users.length; i++) {
@@ -766,6 +774,28 @@ exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
     }
 
+    if (selectedUserForRedirect) {
+      const permalinkUpdateResult = await parmalinkSlug.updateMany(
+        { user_id: { $in: users } },
+        {
+          $set: {
+            isactive: true,
+            redirectUserId: selectedUserForRedirect[0]._id,
+          },
+        }
+      );
+    }
+    if (status === "active") {
+      const permalinkUpdateResult = await parmalinkSlug.updateMany(
+        { user_id: { $in: users } },
+        {
+          $set: {
+            isactive: false,
+            redirectUserId: null,
+          },
+        }
+      );
+    }
     // Update the user's status based on the corresponding status value
     user.status = status;
     await user.save(); // Save the changes to the user
@@ -1250,6 +1280,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
         companyID: id,
         password: password,
         role: "teammember",
+        status: "inactive",
         userurlslug: generatedCode,
       });
 
@@ -1270,6 +1301,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
         companyurlslug: generatedcompanyCode,
       })
       await user_parmalink.save();
+      await userinfocreate.save();
 
       // const userplan = planData.plan;
       // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
@@ -1450,6 +1482,7 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next
     password: password,
     userurlslug: generatedCode,
     role: "teammember",
+    status: "inactive"
   });
   // console.log("called")
   const userInformationData = {
@@ -1642,7 +1675,7 @@ exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
       success: true,
       invitedusers,
     });
-  } catch (error) {
+  } catch (error) {         
     return next(new ErrorHandler(error.message, 500));
   }
 });
@@ -2106,3 +2139,607 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(
     }
   }
 );
+exports.getTeamofCompany = catchAsyncErrors(async (req, res, next) => {
+  const{ id }= req.body;
+  console.log(id, "sadadas")
+
+  const team = await Team.find({ companyID: id });
+  // console.log(team ,"teamname")
+  res.status(200).json({ message: "Users updated successfully", team });
+});
+
+exports.updateTeamNamebyAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers, team } = req.body;
+
+  // Loop through the array of selected user IDs
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    // Update the user's team with the new team name
+    user.team = team;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({ message: "Users updated successfully" });
+});
+
+// Remove Team from Users
+exports.removeTeamFromUsersByadmin = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers } = req.body;
+
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    user.team = null; // Remove the team association
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Team removed from users successfully" });
+});
+
+
+exports.deleteteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  const { teamId } = req.body; // Assuming you have the team's unique ID available
+
+  // Find and delete the team by its ID
+  const deletedTeam = await Team.findByIdAndDelete(teamId);
+
+  if (!deletedTeam) {
+    return res.status(404).json({ message: "Team not found" });
+  }
+
+  // Find users belonging to the deleted team
+  const usersToDelete = await User.find({ team: deletedTeam._id });
+  const companyID = usersToDelete?.[0]?.companyID;
+
+  // Remove the team association from the users
+  for (const user of usersToDelete) {
+    user.team = null; // You can set it to an empty string or null if needed
+    await user.save();
+  }
+  // Find remaining teams of the company
+  const remainingTeams = await Team.find({ companyID });
+
+  res.status(200).json({ message: "Team deleted successfully" , remainingTeams});
+});
+
+exports.renameteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  const { teamId, newTeamName } = req.body; // Assuming you have the team's unique ID and the new team name available
+
+  try {
+    // Find the team by its ID
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Check if the new team name already exists
+    const isExistingTeam = await Team.exists({
+      _id: { $ne: teamId }, // Exclude the current team from the check
+      name: newTeamName,
+    });
+
+    if (isExistingTeam) {
+      return res.status(400).json({ message: "New team name already exists" });
+    }
+
+    // Update the team name
+    team.team_name = newTeamName;
+    await team.save();
+
+    // Update user's team name
+    // const usersToUpdate = await User.find({ team: teamId }); // Find users belonging to the old team
+    // for (const user of usersToUpdate) {
+    //   user.team = newTeamName;
+    //   await user.save();
+    // }
+
+    res.status(200).json({ message: "Team renamed successfully", team });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+exports.createNewteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  console.log("team");
+  // console.log(req.user,"wdsafeg")
+  // const companyID = req.user.companyID;
+  // const userID = req.user._id;
+  const { team_name , companyID } = req.body;
+  console.log(companyID);
+  console.log(team_name);
+  const teamData = {
+    team_name: team_name,
+    companyID: companyID,
+  };
+
+  const team = await Team.create(teamData);
+  const latestTeamId = team._id;
+  // console.log(userID);
+
+
+  console.log("Updated User Informationhg", team);
+
+  if (!team) {
+    return res.status(404).json({ message: "Team not created" });
+  }
+
+  // const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
+  // const company = await team.findOne() // Replace with proper query
+
+  // if (!company) {
+  //   return res.status(404).json({ message: "Company not found" });
+  // }
+
+  // if (company.teams?.includes(team_name)) {
+  //   return res.status(400).json({ message: "This team already exists" });
+  // }
+
+  // company.team?.push(team_name);
+  // await company.save();
+
+  res.status(201).json({ message: "Team created successfully", team });
+});
+
+exports.getAllShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  console.log(id , req.body , "alalalal")
+  try {
+    const shippingAddresses = await shippingAddress.find({ userId: id });
+
+    res.status(200).json({
+      success: true,
+      shippingAddresses,
+    });
+  } catch (err) {
+    return next(new ErrorHandler("Unable to fetch shipping addresses", 500));
+  }
+});
+
+exports.removeShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  const { addressId } = req.params;
+  console.log(addressId , id, " address id");
+
+  try {
+    const userShippingAddress = await shippingAddress.findOne({ userId: id });
+    console.log(userShippingAddress, "userShippingAddress");
+
+    if (!userShippingAddress) {
+      return next(new ErrorHandler("User shipping address not found", 404));
+    }
+
+    const { shipping_address } = userShippingAddress;
+    console.log(shipping_address, "shipping address");
+    // Find the index of the shipping address to remove
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == addressId
+    );
+    console.log(addressIndex, "address indexx");
+
+    if (addressIndex === -1) {
+      return next(new ErrorHandler("Shipping address not found", 404));
+    }
+
+    // Remove the shipping address from the array
+    shipping_address.splice(addressIndex, 1);
+
+    // Save the updated document
+    await userShippingAddress.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Shipping address removed successfully",
+    });
+  } catch (err) {
+    return next(new ErrorHandler("Error removing shipping address", 500));
+  }
+});
+
+exports.createShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const {
+    address_name,
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+    id
+  } = req.body;
+
+
+  console.log(req.body, "olaolaoala" , id)
+
+  const user = await User.findById(id);
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  const shippingAddressData = {
+    address_name,
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  };
+
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      shipping_address: [shippingAddressData],
+    });
+  } else {
+    shippingAddressFind.shipping_address.push(shippingAddressData);
+  }
+
+  try {
+    await shippingAddressFind.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Shipping address added successfully",
+      shippingAddressData,
+    });
+  } catch (error) {
+    return next(new ErrorHandler("Error saving shipping address", 500));
+  }
+});
+
+exports.editShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  // console.log("edit called")
+  // alert("alert")
+  const { editAddressId } = req.params;
+  console.log(editAddressId, "id"); // Get the address ID from the request URL
+  const {
+    shippingAddressData,
+    id
+  } = req.body;
+console.log(req.body, "yjos body")
+  
+  const completeShippingAddressData  = {
+    _id: editAddressId,
+    ...shippingAddressData,
+  };
+
+  try {
+    const userShippingAddress = await shippingAddress.findOne({ userId: id });
+    // console.log(userShippingAddress, "userShippingAddress")
+
+    if (!userShippingAddress) {
+      return next(new ErrorHandler("User shipping address not found", 404));
+    }
+
+    const { shipping_address } = userShippingAddress;
+    // console.log(shipping_address, "shipping address")
+
+    // Find the index of the shipping address to edit
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == editAddressId
+    );
+    console.log(addressIndex, "address index");
+
+    if (addressIndex === -1) {
+      return next(new ErrorHandler("Shipping address not found", 404));
+    }
+
+    // Update the shipping address data
+    shipping_address[addressIndex] = completeShippingAddressData ;
+
+    console.log(shipping_address, "Shipping");
+
+    // Save the updated document
+    await userShippingAddress.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Shipping address updated successfully",
+      updatedShippingAddress: shipping_address[addressIndex],
+    });
+  } catch (err) {
+    return next(new ErrorHandler("Error updating shipping address", 500));
+  }
+});
+
+exports.updateuserroleofcompanyusers = catchAsyncErrors(async (req, res, next) => {
+  const { superAdmins, administrators, managers, teammember } = req.body;
+
+  try {
+    // Define a function to update roles based on the provided user IDs and role
+    const updateUserRoles = async (userIds, userRole) => {
+      await User.updateMany({ _id: { $in: userIds } }, { role: userRole });
+    };
+
+    // Update user roles for each role category
+    await updateUserRoles(superAdmins.map(user => user.id), 'superadmin');
+    await updateUserRoles(administrators.map(user => user.id), 'administrator');
+    await updateUserRoles(managers.map(user => user.id), 'manager');
+    await updateUserRoles(teammember.map(user => user.id), 'teammember');
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error updating user roles:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating user roles",
+    });
+  }
+});
+
+exports.updateuserplanonrolechangeofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { userID, subscriptionDetails } = req.body;
+  try {
+    // const updatedUser = await User.findByIdAndUpdate(
+    const filter = {
+      user_id: { $in: userID }
+    };
+
+    const update = {
+      $set: { subscription_details: subscriptionDetails }
+    };
+    // Update user subscription_details based on userIDs array
+    const updatedUser = await UserInformation.updateMany(filter, update);
+    res.status(200).json({
+      success: true,
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating subscription details:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating subscription details",
+    });
+  }
+});
+
+//fetch billing address
+exports.fetchbillingaddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+
+  const billingData = await billingAddress.find({ userId: id });
+
+  if (!billingData || billingData.length === 0) {
+    return next(new ErrorHandler("No Billing details found", 404));
+  }
+
+  const firstBillingAddress = billingData[0];
+
+  res.status(201).json({
+    success: true,
+    billingData: firstBillingAddress,
+  });
+});
+
+exports.getallcompanynames = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+console.log(id)
+  const companies = await Company.find({ _id: { $ne: id } }, 'company_name');
+
+  if (!companies) {
+    return next(new ErrorHandler("No companies Found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    companies, // Return the selected fields
+  });
+});
+
+
+exports.updateBillingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { firstName, lastName, companyName, billing_address, superAdminUserid, companyID } = req.body;
+  const userData = {
+    first_name: firstName,
+    last_name: lastName,
+  };
+  console.log(superAdminUserid , userData)
+
+  const BillingAddressData = {
+    billing_address: billing_address,
+  };
+
+  const updateUser = await User.findOneAndUpdate({ _id: superAdminUserid }, userData);
+  const updateBilling = await billingAddress.findOneAndUpdate(
+    { userId: superAdminUserid },
+    BillingAddressData,
+    { new: true, upsert: true }
+  );
+
+  const updateCompany = await Company.findByIdAndUpdate(companyID, {
+    company_name: companyName,
+  });
+
+  await updateBilling.save();
+  await updateCompany.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Data Updated Successfully",
+    updateCompany
+  });
+});
+
+
+
+
+
+// For fetch all OTC_Adminusers
+
+exports.otcadminusers = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Retrieve all admin users from the database
+    const allUsers = await AdminUsers.find({}, { password: 0 });
+
+    // Respond with the retrieved users
+    res.status(200).json(allUsers);
+  } catch (error) {
+    res.status(500).send("Error fetching admin users");
+  }
+});
+    
+
+// For ADD new OTC_Adminusers
+
+exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole , adminuser } = req.body;
+
+    // Generate a password
+    const password = generatePassword();
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads");
+    const logoPath = path.join(uploadsDirectory, "Logo.png");
+    
+
+    // Save form data and job titles to the main collection for a new user
+    const newFormData = new AdminUsers({
+      firstName,
+      lastName,
+      password,
+      email,
+      phoneNumber,
+      officenumber,
+      jobTitles,
+      userRole,
+    });
+    
+   
+    await newFormData.save();
+
+     // Send email with the generated password
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+
+    const mailmsg= {
+      from: "onetapconnect:otcdevelopers@gmail.com",
+      to: email,
+      subject: 'Welcome to Your App - Your New Password',
+      html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="cid:logo">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstName}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; border-radius: 4px; overflow: hidden; background-color: #e65925; margin: 20px 0;">
+            <a href="${process.env.FRONTEND_URL}/admin" style="display: inline-block; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Click here to Login</a> </div><br/><br/>
+            Your password is: ${password}<br/><br/>
+            Please log in using your email address and password provided.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${adminuser.adminfirstName} ${adminuser.adminlastName}<br/><br/>
+           <p>OneTapConnect</p>
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: logoPath,
+        cid: "logo",
+      },
+    ],
+    };
+
+    transporter.sendMail(mailmsg, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        // Handle error, show a message, etc.
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
+    res.status(200).json(newFormData);
+  } catch (error) {
+    console.error('Error adding new user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// For UPDATE OTC_Adminusers
+
+exports.updateAdminUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole } = req.body;
+    const userId = req.params.userId;
+
+    // Update user data
+    const updatedUser = await AdminUsers.findByIdAndUpdate(
+      userId,
+      {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        officenumber,
+        jobTitles,
+        userRole,
+        
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+

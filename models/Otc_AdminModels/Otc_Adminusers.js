@@ -29,7 +29,15 @@ const adminSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-});
+  avatar: { type: String, default: "" },
+  officenumber: {
+    type: String,
+    default: null,
+  },
+  jobTitles: [{ type: String }],
+} ,
+{ timestamps: true }
+);
 
 adminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
@@ -54,3 +62,4 @@ adminSchema.methods.getJWTToken = function () {
 const Admin = mongoose.model("Otc_Adminusers", adminSchema);
 
 module.exports = Admin;
+                                                                                                                                                                          
