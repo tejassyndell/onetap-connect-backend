@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: [url, 'https://www.webdev.sincprojects.com'],
+    origin: [url, 'https://www.webdev.sincprojects.com', 'http://localhost:3000'],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["set-cookie"], // Expose the Set-Cookie header
