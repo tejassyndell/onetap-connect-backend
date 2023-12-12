@@ -99,6 +99,7 @@ const {
   getorderdetails,
   getAddonsForOrderSummary,
   getrateoforder,
+  cardEditorData,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -273,6 +274,7 @@ router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
 router.post('/ship/rate', getrateoforder)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
+router.get('/test/cardEditordata', cardEditorData)
 
 
 
