@@ -204,12 +204,12 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
         }
         return accumulator;
       }, new Map());
-  const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
-  const ReverseData = uniqueUserInformationTeamData.reverse();
+      const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
+      const ReverseData = uniqueUserInformationTeamData.reverse();
       res.status(200).json({
         // userInformationTeamData
         userInformationTeamData: ReverseData,
-        userInformation:userInformationTeamData
+        userInformation: userInformationTeamData
       });
     } catch (error) {
       console.error(error);
@@ -309,12 +309,12 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
         path: "primary_billing",
         model: "user", // Adjust the model name as needed
       }).populate({
-          path: "primary_account",
-          model: "user", // Adjust the model name as needed
+        path: "primary_account",
+        model: "user", // Adjust the model name as needed
       }).populate({
         path: "primary_manager",
         model: "user", // Adjust the model name as needed
-    });
+      });
       const allteams = await Team.find({ companyID: id });
       if (!userInformationTeamData) {
         return next(new ErrorHandler("No company details Found", 404));
@@ -495,7 +495,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
 
       const updatedCategory = await Plan.findByIdAndUpdate(
         id,
-        { InternalPlanName, PublicPlanName, categoryType,features, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
+        { InternalPlanName, PublicPlanName, categoryType, features, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
         { new: true } // Return the updated document
       );
       res.status(200).json({ success: true, category: updatedCategory });
@@ -507,7 +507,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
       }
 
       const newplans = new Plan({
-        InternalPlanName, PublicPlanName, features,categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
+        InternalPlanName, PublicPlanName, features, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
       });
       const plans = await newplans.save();
       res.status(201).json({ success: true, plans });
@@ -764,7 +764,7 @@ exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
-  const { users, status,selectedUserForRedirect } = req.body;
+  const { users, status, selectedUserForRedirect } = req.body;
 
   // Loop through the array of user IDs
   for (let i = 0; i < users.length; i++) {
@@ -970,7 +970,7 @@ exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
       "subscription_details.recurring_amount": 1,
       "subscription_details.plan": 1,
       "subscription_details.renewal_date": 1,
-      orderNumber:1
+      orderNumber: 1
     });
 
     // Do something with the retrieved subscriptions
@@ -981,9 +981,9 @@ exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
   }
 };
 
-exports.getsubscriptiondetails = async (req,res,next) => {
-  const {id} = req.body
-  console.log(id,"idd")
+exports.getsubscriptiondetails = async (req, res, next) => {
+  const { id } = req.body
+  console.log(id, "idd")
   try {
     const subscriptions = await Order.findById(id);
     res.json(subscriptions);
@@ -1675,7 +1675,7 @@ exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
       success: true,
       invitedusers,
     });
-  } catch (error) {         
+  } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
 });
@@ -1831,7 +1831,7 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
     const orders = await Order.find().populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
-    }).populate({path:'user', modal: 'user'})
+    }).populate({ path: 'user', modal: 'user' })
 
     res.status(200).json({ success: true, allOrders: orders });
   } catch (error) {
@@ -1863,7 +1863,7 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
 
       await order.save(); // Save the changes to the order
       console.log(order, "order updated data")
-      res.status(200).json({ success: true, message: 'Orders updated successfully' , order });
+      res.status(200).json({ success: true, message: 'Orders updated successfully', order });
     }
 
   } catch (error) {
@@ -1894,7 +1894,7 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   try {
     // Find orders by user ID
-    const order = await Order.findById({_id : id}).populate({
+    const order = await Order.findById({ _id: id }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     }).populate({
@@ -1904,13 +1904,13 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
 
 
     const userdata = await User.findOne({ _id: order.user });
-    const userInformation = await UserInformation.findOne({ user_id : order.user });
+    const userInformation = await UserInformation.findOne({ user_id: order.user });
     const companydata = await Company.findOne({ _id: order.company });
 
-  
+
     // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
     // const companydata = { companyName : company.company_name }
-    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation }
+    const orderWithUserData = { ...order.toObject(), userdata, companydata, userInformation }
 
     res.status(200).json({ success: true, order: orderWithUserData });
   } catch (error) {
@@ -1933,7 +1933,7 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
     }
     order.set(updatedOrderData);
     await order.save();
-    res.status(200).json({success: true,message: "order details updated successfully",order: order, });
+    res.status(200).json({ success: true, message: "order details updated successfully", order: order, });
   } catch (error) {
     next(error);
   }
@@ -2031,7 +2031,7 @@ exports.UpdateCompanySettings = catchAsyncErrors(
   async (req, res, next) => {
     try {
       const { companyID, user_profile_edit_permission } = req.body;
-      console.log(companyID , user_profile_edit_permission,"body", req.body)
+      console.log(companyID, user_profile_edit_permission, "body", req.body)
 
       // Validate if companyID is provided
       if (!companyID) {
@@ -2094,7 +2094,7 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(
   async (req, res, next) => {
     try {
       const { companyID, updateValues } = req.body;
-      console.log(updateValues,"bodydyy")
+      console.log(updateValues, "bodydyy")
 
       // Validate if companyID and updateValues are provided
       if (!companyID || !updateValues) {
@@ -2123,7 +2123,7 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(
   }
 );
 exports.getTeamofCompany = catchAsyncErrors(async (req, res, next) => {
-  const{ id }= req.body;
+  const { id } = req.body;
   console.log(id, "sadadas")
 
   const team = await Team.find({ companyID: id });
@@ -2195,7 +2195,7 @@ exports.deleteteamofselectedcompany = catchAsyncErrors(async (req, res, next) =>
   // Find remaining teams of the company
   const remainingTeams = await Team.find({ companyID });
 
-  res.status(200).json({ message: "Team deleted successfully" , remainingTeams});
+  res.status(200).json({ message: "Team deleted successfully", remainingTeams });
 });
 
 exports.renameteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
@@ -2241,7 +2241,7 @@ exports.createNewteamofselectedcompany = catchAsyncErrors(async (req, res, next)
   // console.log(req.user,"wdsafeg")
   // const companyID = req.user.companyID;
   // const userID = req.user._id;
-  const { team_name , companyID } = req.body;
+  const { team_name, companyID } = req.body;
   console.log(companyID);
   console.log(team_name);
   const teamData = {
@@ -2279,7 +2279,7 @@ exports.createNewteamofselectedcompany = catchAsyncErrors(async (req, res, next)
 
 exports.getAllShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-  console.log(id , req.body , "alalalal")
+  console.log(id, req.body, "alalalal")
   try {
     const shippingAddresses = await shippingAddress.find({ userId: id });
 
@@ -2295,7 +2295,7 @@ exports.getAllShippingAddressofcompany = catchAsyncErrors(async (req, res, next)
 exports.removeShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
   const { addressId } = req.params;
-  console.log(addressId , id, " address id");
+  console.log(addressId, id, " address id");
 
   try {
     const userShippingAddress = await shippingAddress.findOne({ userId: id });
@@ -2348,7 +2348,7 @@ exports.createShippingAddressofcompany = catchAsyncErrors(async (req, res, next)
   } = req.body;
 
 
-  console.log(req.body, "olaolaoala" , id)
+  console.log(req.body, "olaolaoala", id)
 
   const user = await User.findById(id);
 
@@ -2402,9 +2402,9 @@ exports.editShippingAddressofcompany = catchAsyncErrors(async (req, res, next) =
     shippingAddressData,
     id
   } = req.body;
-console.log(req.body, "yjos body")
-  
-  const completeShippingAddressData  = {
+  console.log(req.body, "yjos body")
+
+  const completeShippingAddressData = {
     _id: editAddressId,
     ...shippingAddressData,
   };
@@ -2431,7 +2431,7 @@ console.log(req.body, "yjos body")
     }
 
     // Update the shipping address data
-    shipping_address[addressIndex] = completeShippingAddressData ;
+    shipping_address[addressIndex] = completeShippingAddressData;
 
     console.log(shipping_address, "Shipping");
 
@@ -2521,7 +2521,7 @@ exports.fetchbillingaddressofcompany = catchAsyncErrors(async (req, res, next) =
 
 exports.getallcompanynames = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-console.log(id)
+  console.log(id)
   const companies = await Company.find({ _id: { $ne: id } }, 'company_name');
 
   if (!companies) {
@@ -2540,7 +2540,7 @@ exports.updateBillingAddressofcompany = catchAsyncErrors(async (req, res, next) 
     first_name: firstName,
     last_name: lastName,
   };
-  console.log(superAdminUserid , userData)
+  console.log(superAdminUserid, userData)
 
   const BillingAddressData = {
     billing_address: billing_address,
@@ -2584,20 +2584,20 @@ exports.otcadminusers = catchAsyncErrors(async (req, res, next) => {
     res.status(500).send("Error fetching admin users");
   }
 });
-    
+
 
 // For ADD new OTC_Adminusers
 
 exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole , adminuser } = req.body;
+    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole, adminuser } = req.body;
 
     // Generate a password
     const password = generatePassword();
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads");
     const logoPath = path.join(uploadsDirectory, "Logo.png");
-    
+
 
     // Save form data and job titles to the main collection for a new user
     const newFormData = new AdminUsers({
@@ -2610,11 +2610,11 @@ exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
       jobTitles,
       userRole,
     });
-    
-   
+
+
     await newFormData.save();
 
-     // Send email with the generated password
+    // Send email with the generated password
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       port: 587,
@@ -2624,7 +2624,7 @@ exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
       },
     });
 
-    const mailmsg= {
+    const mailmsg = {
       from: "onetapconnect:otcdevelopers@gmail.com",
       to: email,
       subject: 'Welcome to Your App - Your New Password',
@@ -2667,13 +2667,13 @@ exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
     
     
   `,
-    attachments: [
-      {
-        filename: "Logo.png",
-        path: logoPath,
-        cid: "logo",
-      },
-    ],
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: logoPath,
+          cid: "logo",
+        },
+      ],
     };
 
     transporter.sendMail(mailmsg, (error, info) => {
@@ -2710,7 +2710,7 @@ exports.updateAdminUser = catchAsyncErrors(async (req, res, next) => {
         officenumber,
         jobTitles,
         userRole,
-        
+
       },
       { new: true } // Return the updated document
     );
@@ -2728,17 +2728,17 @@ exports.updateAdminUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.getcompanyorders = catchAsyncErrors(async (req, res, next) => {
   const { companyId } = req.body;
-  console.log(companyId,"compnay" )
+  console.log(companyId, "compnay")
   try {
     // Find orders by user ID
     const orders = await Order.find({ company: companyId }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     }).populate({
-      path : 'user',
-      modal : 'user'
+      path: 'user',
+      modal: 'user'
     })
-    console.log(orders,"aaaaaaaaaaaa")
+    console.log(orders, "aaaaaaaaaaaa")
     res.status(200).json({ success: true, orders: orders });
   } catch (error) {
     console.error(error);
@@ -2747,7 +2747,7 @@ exports.getcompanyorders = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(async(req,res,next)=>{
+exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(async (req, res, next) => {
   const { orderNumber } = req.body;
 
   try {
@@ -2762,5 +2762,74 @@ exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(async(req,res,next)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+exports.saveclientTags = catchAsyncErrors(async (req, res, next) => {
+  const { TagData, compID, removedTag } = req.body;
+  console.log(TagData, compID, "zzzzzzzzzzzzzzz");
+
+  try {
+    // Find the document with the given compID
+    const existingDoc = await Company.findOne({ _id: compID });
+
+    if (!existingDoc) {
+      return res.status(400).json({ message: "Company not found" });
+    }
+    if (removedTag) {
+      // Remove the tag from the company
+      await Company.updateOne(
+        { _id: compID },
+        { $pull: { client_Tags: { value: removedTag } } },
+      );
+    }
+
+    const clientTags = existingDoc.client_Tags;
+    const clientTagValues = clientTags.map(tag => tag.value);
+    console.log(clientTagValues);
+
+    // Use filter to get values in TagData not present in clientTagValues
+    const uniqueTagData = TagData.filter(tag => !clientTagValues.includes(tag));
+    console.log(uniqueTagData, "Unique tags to add");
+
+    // Convert uniqueTagData to an array of objects with the "value" field
+    const tagValues = uniqueTagData.map(value => ({ value }));
+
+    // Add new unique tags to the company
+    await Company.updateOne(
+      { _id: compID },
+      { $push: { client_Tags: { $each: tagValues } } },
+    );
+
+    // Send a response, if needed
+    res.status(200).json({ success: true, message: 'Array updated/created successfully' });
+  } catch (error) {
+    // Handle errors
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+
+exports.getclienttags = catchAsyncErrors(async (req, res, next) => {
+  const { compID } = req.body;
+  try {
+    // Find the document with the given compID
+    const existingDoc = await Company.findOne({ _id: compID });
+
+    if (!existingDoc) {
+      return res.status(400).json({ message: "Company not found" });
+    }
+
+    const clientTags = existingDoc.client_Tags;
+    const clientTagValues = clientTags.map(tag => tag.value);
+    console.log(clientTagValues);
+
+    // Send a response, if needed
+    res.status(200).json({ success: true, clientTagValues, message: 'Array updated/created successfully' });
+  } catch (error) {
+    // Handle errors
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
