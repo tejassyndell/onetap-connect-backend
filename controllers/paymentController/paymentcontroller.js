@@ -1160,7 +1160,7 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
       { user_id: userId },
       {
         $push: {
-          'subscription_details.addones': { $each: addaddons.map((addon) => addon.addonId) }
+          'subscription_details.addones': { $each: addaddons.map((addon) => addon) }
         },
         $inc: { 'subscription_details.total_amount': totalAmount }
       },
