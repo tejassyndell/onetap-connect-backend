@@ -50,6 +50,7 @@ const order_Schema = new mongoose.Schema(
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "companies_information",
+      default: null,
     },
     type: { type: String },
     smartAccessories: [
