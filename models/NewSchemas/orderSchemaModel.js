@@ -67,7 +67,8 @@ const order_Schema = new mongoose.Schema(
         addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
         status: { type: String , default: 'N/A' },
         assignTo: { type: String , default: '' },
-        price: {type: Number, default: 0} 
+        price: {type: Number, default: 0} ,
+        addonDiscountPrice: {type: Number, default: 0 }
       },
     ],
     subscription_details: {
