@@ -119,6 +119,14 @@ const Company_information = new mongoose.Schema(
         name: { type: String, default: null },
         code: { type: String, default: null },
       } ,
+      text_color:{
+        name: { type: String, default: null},
+        code: { type: String, default: null},
+      },
+      accent_color:{
+        name: { type: String, default: null},
+        code: { type: String, default: null},
+      },
     company_name_permission: {
         type: Boolean,
         default: false,
