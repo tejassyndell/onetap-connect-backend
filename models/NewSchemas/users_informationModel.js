@@ -97,6 +97,7 @@ const users_information = new mongoose.Schema(
             // },
             subscription_id : {type : String , default : null},
             customer_id : {type : String , default : null},
+            // addones: [{type: mongoose.Schema.Types.ObjectId}],
             addones: [
               { 
                addonId : { type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"},

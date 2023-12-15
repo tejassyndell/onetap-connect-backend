@@ -41,7 +41,8 @@ const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAsso
 
 const { getMaxListeners } = require("events");
 const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
-const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js")
+const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
+const { Types } = require("mongoose");
 dotenv.config();
 const usedCodes = new Set();
 
@@ -2471,7 +2472,13 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     userInformation = new UserInformation({
       user_id: user._id,
       subscription_details: {
-        addones: planData.addones,
+        // addones: planData.addones,
+        addones: planData.addones.map((addon) => ({
+          addonId: addon.addonId,  // Convert addonId to ObjectId
+          status: addon.status,
+          assignTo: addon.assignTo,
+          price: addon.price,   
+        })),
         subscription_id: planData.subscription_id,
         total_amount: planData.total_amount,
         plan: planData.plan,
@@ -2489,7 +2496,13 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   } else {
     userInformation.subscription_details = {
       ...userInformation.subscription_details,
-      addones: planData.addones,
+      // addones: planData.addones,
+      addones: planData.addones.map((addon) => ({
+        addonId: addon.addonId,  // Convert addonId to ObjectId
+        status: addon.status,
+        assignTo: addon.assignTo,
+        price: addon.price,
+      })),
       subscription_id: planData.subscription_id,
       total_amount: planData.total_amount,
       plan: planData.plan,
@@ -2500,6 +2513,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       renewal_date: planData.renewal_date,
       taxRate: planData.taxRate,
       customer_id: planData.customer_id,
+      perUser_price : planData.perUser_price
     };
   }
   shippingAddressFind.shipping_address.address_name = "Default";
@@ -2522,7 +2536,17 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     email: user.email,
     paymentDate: new Date(),
     type: "Subscription",
-    subscription_details: planData,
+    subscription_details: {
+      // addones: planData.addones,
+      addones: planData.addones.map((addon) => ({
+        addonId: addon.addonId,  // Convert addonId to ObjectId
+        status: addon.status,
+        assignTo: addon.assignTo,
+        price: addon.price,
+      })),
+   ...planData
+    },
+    // subscription_details: planData,
     shippingAddress: shippingData,
     billingAddress: billingdata,
     shipping_method: shipping_method
@@ -2602,7 +2626,6 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await shippingAddressFind.save();
   await userInformation.save();
   await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount);
-
   res.status(200).json({
     success: true,
     user,
