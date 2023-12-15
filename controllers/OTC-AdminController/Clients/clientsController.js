@@ -2772,32 +2772,13 @@ exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(async(req,res,next)
 
  
 exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
+  console.log("????????????????????????????????????????????????????????")
+  console.log(req.body)
+  const { invoiceOrderData } = req.body
+
+  console.log(invoiceOrderData, "invoice order data")
+  // const { planData } = req.body
   try {
-    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole , adminuser } = req.body;
-
-    // Generate a password
-    const password = generatePassword();
-    const rootDirectory = process.cwd();
-    const uploadsDirectory = path.join(rootDirectory, "uploads");
-    const logoPath = path.join(uploadsDirectory, "Logo.png");
-    
-
-    // Save form data and job titles to the main collection for a new user
-    const newFormData = new AdminUsers({
-      firstName,
-      lastName,
-      password,
-      email,
-      phoneNumber,
-      officenumber,
-      jobTitles,
-      userRole,
-    });
-    
-   
-    await newFormData.save();
-
-     // Send email with the generated password
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       port: 587,
@@ -2806,71 +2787,121 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
         pass: process.env.NODEMAILER_PASS,
       },
     });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
-    const mailmsg= {
-      from: "onetapconnect:otcdevelopers@gmail.com",
-      to: email,
-      subject: 'Welcome to Your App - Your New Password',
+    const mailOptions = {
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      to: invoiceOrderData.email,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
       html: `
-    <!DOCTYPE html>
-    <html>
-    
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
-    </head>
-    
-    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
-    
-        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-            <img src="cid:logo">
-            
-            </div>
-            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-           
-            <p>Dear ${firstName}<br/><br/>
-            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
-            To get started, simply click on the link below to Login your account:<br/><br/>
-            <div style="flex: 1; display: flex; justify-content: center; align-items: center; border-radius: 4px; overflow: hidden; background-color: #e65925; margin: 20px 0;">
-            <a href="${process.env.FRONTEND_URL}/admin" style="display: inline-block; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Click here to Login</a> </div><br/><br/>
-            Your password is: ${password}<br/><br/>
-            Please log in using your email address and password provided.<br/><br/>
-            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
-            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
-            Best regards,<br/>
-            ${adminuser.adminfirstName} ${adminuser.adminlastName}<br/><br/>
-           <p>OneTapConnect</p>
-        </div>
-    
-    </body>
-    
-    </html>
-    
-    
-  `,
-    attachments: [
-      {
-        filename: "Logo.png",
-        path: logoPath,
-        cid: "logo",
-      },
-    ],
+      <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Dear ${invoiceOrderData.name},<br/>
+          <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+          <p>Subscription Details:</p>
+          <ul>
+            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${invoiceOrderData.planType}</li>
+            <li><b>Duration:</b>&nbsp;&nbsp;${ invoiceOrderData.billing_cycle}</li>
+            <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(invoiceOrderData.renewal_date).toLocaleDateString()}</li>
+            <li><b>Amount:</b>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount}</li>
+          </ul>
+
+          <!-- Invoice Table -->
+          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #e65925; color: #fff; text-align: left;">
+                    <th style="padding: 10px;">Subscription</th>
+                    <!-- <th style="padding: 10px;">Description</th> -->
+                    <!-- <th style="padding: 10px;">Unit Price</th> -->
+                    <th style="padding: 10px; text-align: center;">Quantity</th>
+                    <th></th>
+                    <th style="padding: 10px;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Add your invoice items dynamically here -->
+                <tr>
+                    <td>${invoiceOrderData.planType}-${invoiceOrderData.billing_cycle}</td>
+                    <!-- <td>Description of Your Item</td> -->
+                    <!-- <td></td> -->
+                    <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;">Initial setup fee</td>
+                    <td>&nbsp;&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>addonname</td>
+                    <td></td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;price</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td>Payment Method:</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;method</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;"><b>Total:</b></td>
+                    <td>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount}</td>
+                </tr>
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table><br/>
+
+          <p>Please keep this email for your records.</p>
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+        </div> 
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
     };
 
-    transporter.sendMail(mailmsg, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        // Handle error, show a message, etc.
-      } else {
-        console.log('Email sent: ' + info.response);
-      }
-    });
-
-    res.status(200).json(newFormData);
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+    res.status(200).json({invoiceOrderData ,message: 'Order confirmation email sent successfully '})
   } catch (error) {
-    console.error('Error adding new user:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error sending order confirmation email:', error);
   }
 });
