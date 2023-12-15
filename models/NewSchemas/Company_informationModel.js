@@ -179,6 +179,11 @@ const Company_information = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      client_Tags: [
+        {
+          value: { type: String, default: null },
+        }
+      ],
       status: { type: String, default: "active" },
   },
   { timestamps: true }
