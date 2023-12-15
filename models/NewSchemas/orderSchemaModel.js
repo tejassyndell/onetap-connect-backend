@@ -59,8 +59,9 @@ const order_Schema = new mongoose.Schema(
         variationId: { type: String },
         subtotal: { type: Number },
         quantity: { type: Number },
-        price: { type: Number },
-        status: { type: String , default: 'N/A' }, 
+        price: { type: Number }, // final price
+        status: { type: String, default: 'N/A' },
+        
       },
     ],
     addaddons: [
@@ -149,7 +150,7 @@ const order_Schema = new mongoose.Schema(
       type: { type: String },
       price: { type: Number }
     }],
-    tracking_number: {type: String},
+    tracking_number: { type: String },
   },
   { timestamps: true }
 );
