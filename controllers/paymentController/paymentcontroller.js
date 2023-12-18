@@ -1158,8 +1158,8 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
     // Update UserInformation document
     // Update UserInformation document
     console.log(addaddons)
-    const updatedUserInformation = await UserInformation.findOneAndUpdate(
-      { user_id: userId },
+    const updatedUserInformation = await UserInformation.updateMany(
+      { company_ID: companyID , 'subscription_details.plan': { $ne: null } },
       {
         $push: {
           'subscription_details.addones': { $each: addaddons.map((addon) => addon) }
@@ -1293,6 +1293,168 @@ exports.addonPurchase = catchAsyncErrors(async (req, res, next) => {
 });
 
 
+exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const userId = req.body.userId;
+    const companyID = req.user.companyID;
+    const {
+      totalAmount,
+      tax,
+      billingAddress,
+      shippingAddress,
+      addusers,
+      selectedCard,
+      existingcard,
+      saveAddress,
+      selectedEditAddress,
+      shipping_method,
+      first_name,
+      email,
+      contact,
+      last_name,
+      createOrderData,
+      plandata,
+      customerID,
+      subscriptionId,
+      paymentToken,
+      ammount
+    } = req.body;
+    const ordertype = (addusers ? "UserPurchase" : "")
+    const paymentDate = new Date();
+    console.log("1")
+    
+    const { type, planName } = plandata;
+    const productID = type === 'monthly'
+    ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
+    : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
+    let attachedPaymentMethod;
+    console.log("2")
+    if (!selectedCard && existingcard === false) {
+      attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+        customer: customerID,
+      });
+    }
+    console.log("3")
+    
+    console.log(ammount , totalAmount)
+    const price = await stripe.prices.create({
+      currency: 'usd',
+      unit_amount: (ammount + totalAmount)* 100,
+      product: productID,
+      recurring: {
+        interval: type === "monthly" ? "month" : "year",
+        interval_count: 1
+      },
+    });
+    console.log("4")
+    console.log(price)
+
+    console.log("called0")
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log("called1")
+    let myPayment;
+    if (selectedCard) {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }]
+      });
+    } else if (existingcard) {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }]
+      });
+    }
+    else {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }]
+      });
+
+
+      console.log("myPayment");
+      console.log(myPayment);
+      console.log("myPayment");
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
+
+
+
+
+      // // Remove the existing item from the subscription
+      // console.log(myPayment);
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
+
+      // Save payment ID and user details in your database after successful payment
+    }
+
+    const order = new Order({
+      user: userId,
+      company:companyID,
+      shippingAddress,
+      billingAddress,
+      totalAmount,
+      tax,
+      first_name,
+      email,
+      contact,
+      last_name,
+      type:ordertype,
+      addusers: { ...addusers },
+      paymentDate,
+      shipping_method,
+    });
+
+
+
+    // Save the order to the database
+    const orderData = await order.save();
+
+    console.log("orderData")
+    console.log(orderData)
+    console.log("orderData")
+
+
+
+
+    // Update UserInformation document
+    // Update UserInformation document
+    console.log(addusers)
+    const updatedUserInformation = await UserInformation.updateMany(
+      { company_ID: companyID , 'subscription_details.plan': { $ne: null } },
+      {
+        $inc: { 
+          'subscription_details.total_user.0.additionalUser': addusers.addusercount,
+          'subscription_details.total_amount': totalAmount 
+        }
+      },
+      { new: true } // Return the updated document
+    );
+
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+      userInformation: updatedUserInformation,
+    });
+  }
+
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+})
 
 
 // ---------------------------------OTC ADMIN PANEL API ---------------------------------------------------------------------

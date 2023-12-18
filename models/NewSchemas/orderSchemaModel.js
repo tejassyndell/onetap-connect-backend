@@ -73,6 +73,14 @@ const order_Schema = new mongoose.Schema(
         addonDiscountPrice: {type: Number, default: 0 }
       },
     ],
+    addusers: 
+      {
+        addusercount: { type: Number },
+        status: { type: String , default: 'N/A' },
+        price: {type: Number} ,
+        plan:{type:String},
+        billing_cycle:{type:String},
+      },
     subscription_details: {
       addones: [
        { 
