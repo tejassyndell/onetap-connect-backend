@@ -1,6 +1,7 @@
 const multer = require("multer");
 const User = require("../models/NewSchemas/UserModel");
 const Company = require("../models/NewSchemas/Company_informationModel.js");
+const OtcAdmins = require("../models/Otc_AdminModels/Otc_Adminusers.js");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
@@ -50,7 +51,10 @@ const saveImageToFolder = async (imageType, imageData) => {
     } else if (imageType === "favicon") {
         console.log("called favicon");
         fileNamePrefix = "favicon-";
-    } else {
+    }else if (imageType === "adminprofile") {
+        fileNamePrefix = "otcadmin-profile-image-";
+    }
+     else {
         throw new Error("Invalid image type");
     }
 
@@ -66,7 +70,10 @@ const saveImageToFolder = async (imageType, imageData) => {
         folderPath = "../uploads/logo";
     } else if (imageType === "favicon") {
         folderPath = "../uploads/favicon";
-    } else {
+    } else if (imageType === "adminprofile") {
+        folderPath = "../uploads/otcadminsprofileimages";
+    }  
+    else {
         throw new Error("Invalid image type");
     }
 
@@ -179,6 +186,29 @@ const saveimageDatabase = async (type, userID, companyID, imagePath) => {
             { avatar: imagePath },
             { new: true }
         );
+    }else if (type === "adminprofile") {
+        const removeuser = await OtcAdmins.findById({ _id: userID });
+        const oldAvatarPath = removeuser.avatar;
+
+        if (oldAvatarPath) {
+            const filePath = path.join(
+                __dirname,
+                "..",
+                "uploads",
+                "otcadminsprofileimages",
+                oldAvatarPath
+            );
+            fs.unlink(filePath, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error("Error deleting old profile picture:", unlinkErr);
+                }
+            });
+        }
+        const updatedUser = await OtcAdmins.findByIdAndUpdate(
+            userID,
+            { avatar: imagePath },
+            { new: true }
+        );
     }
 };
 
@@ -223,7 +253,10 @@ exports.otcImageUpload = (req, res, next) => {
                 base64FileName = await saveImageToFolder("logo", base64ImageData);
             } else if (imageType === "favicon") {
                 base64FileName = await saveImageToFolder("favicon", base64ImageData);
-            } else {
+            } else if (imageType === "adminprofile") {
+                base64FileName = await saveImageToFolder("adminprofile", base64ImageData);
+            } 
+            else {
                 throw new Error("Invalid image type");
             }
             saveimageDatabase(imageType, id, companyID, base64FileName);
