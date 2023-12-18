@@ -873,6 +873,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       existingcard,
       saveAddress,
       selectedEditAddress,
+      email,
     } = req.body;
 
     if (userId === "Guest") {
@@ -1065,6 +1066,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         order,
         clientSecret: paymentIntent.client_secret
       });
+      await sendpurchaseOrderconfirmationEmail(email, shippingAddress, smartAccessories, order);
     } else {
       // Payment confirmation failed
       res.status(400).json({
@@ -1077,6 +1079,151 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: error });
   }
 });
+async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress, smartAccessories, order) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    let productsHTML = '';
+    let totalAmount = 0;
+    smartAccessories.forEach((product) => {
+      productsHTML += `
+        <tr>
+          <td>&nbsp;&nbsp;&nbsp;${product.productName}</td>
+          <td style="text-align: center;">&nbsp;&nbsp;${product.quantity}</td>
+          <td></td>
+          <td>&nbsp;&nbsp;$ ${product.price}</td>
+        </tr>
+      `;
+      totalAmount += parseFloat(product.price);
+    });
+
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      to: customeremail,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'OneTapConnect! Order Confirmation',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, width=device-width" />
+</head>
+
+<body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+    </div>
+    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+      <h3>Thanks for your order!</h3>
+      <p>Dear ${shippingAddress.first_name},<br />
+      <p>We are delighted that you have found something you like!</p>
+      <p>Below, you will find a summary of your order details:</p>
+
+      <table style="width: 100%;">
+  <tr>
+    <td style="width: 50%; vertical-align: top;">
+      <p>
+        Delivery address:<br />
+        ${shippingAddress.line1}<br />
+        ${shippingAddress.line2}<br />
+        ${shippingAddress.city}<br />
+        ${shippingAddress.state}<br />
+        ${shippingAddress.country}<br />
+        ${shippingAddress.postal_code}<br />
+      </p>
+    </td>
+    <td style="width: 50%; vertical-align: top;">
+      <p>
+        Order Number: <b>${order.orderNumber}</b><br />
+        Date: ${new Date(order.createdAt).toLocaleDateString()}
+      </p>
+    </td>
+  </tr>
+</table>
+
+      <!-- Invoice Table -->
+      <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #e65925; color: #fff; text-align: left;">
+            <th style="padding: 10px;">Products</th>
+            <!-- <th style="padding: 10px;">Description</th> -->
+            <!-- <th style="padding: 10px;">Unit Price</th> -->
+            <th style="padding: 10px;text-align: center;">Quantity</th>
+            <th></th>
+            <th style="padding: 10px;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add your invoice items dynamically here -->
+          ${productsHTML}
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Sub-Total:</b></td>
+            <td>&nbsp;&nbsp;$ ${totalAmount.toFixed(2)}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Shipping:</b></td>
+            <td>&nbsp;&nbsp;$ 0.0</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Total:</b></td>
+            <td>&nbsp;&nbsp;$ ${order.totalAmount}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Payment method: Credit / Debit Card</p>
+      <p>Please keep this email for your records.</p>
+      <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+      </div>
+      <h3>Technical issue?</h3>
+      <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+    </div>
+
+</body>
+
+</html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
 
 exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
   const { customerID } = req.body
