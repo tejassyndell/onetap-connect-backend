@@ -15,7 +15,10 @@ const {
   updateCustomerCreditBalance,
   purchaseaddon,
   fetchTaxrates,
-  addonPurchase
+  addonPurchase,
+  fetchCardsforOtcAdminPanel,
+  updateCardsforOtcAdminPanel,
+  switchToManualRenewalforOtcAdminPanel
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -33,4 +36,11 @@ router.post('/payment/cancelSubscription' , cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card',isAuthenticatedUser, updateCards)
 router.post("/addon-purchase",isAuthenticatedUser , purchaseaddon);
+
+
+
+// ---------OTC ADMIN PANEL------------
+router.post('/admin/payment/get-saved-cards', fetchCardsforOtcAdminPanel)
+router.post('/admin/payment/update-card', updateCardsforOtcAdminPanel)
+router.post('/admin/payment/switchToManualRenewal', switchToManualRenewalforOtcAdminPanel)
 module.exports = router;

@@ -30,8 +30,11 @@ const order_Schema = new mongoose.Schema(
     },
     fulfillment: {
       type: String,
-      default: "inProgress"
+      default: "In Progress"
     },
+    addOnStatus: String ,
+    addOnsNote: String ,
+    addOnsActivityLog: String ,
     shippingNotes: {
       type: String,
       default: ""
@@ -47,6 +50,7 @@ const order_Schema = new mongoose.Schema(
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "companies_information",
+      default: null,
     },
     type: { type: String },
     smartAccessories: [
@@ -55,17 +59,30 @@ const order_Schema = new mongoose.Schema(
         variationId: { type: String },
         subtotal: { type: Number },
         quantity: { type: Number },
-        price: { type: Number },
-        status: { type: String , default: 'N/A' }, 
+        price: { type: Number }, // final price
+        status: { type: String, default: 'N/A' },
+        
       },
     ],
     addaddons: [
       {
-        addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" }
+        addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
+        status: { type: String , default: 'N/A' },
+        assignTo: { type: String , default: '' },
+        price: {type: Number, default: 0} ,
+        addonDiscountPrice: {type: Number, default: 0 }
       },
     ],
     subscription_details: {
-      addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
+      addones: [
+       { 
+        addonId : { type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"},
+        status: { type: String , default: 'N/A' },
+        assignTo: { type: String , default: '' },
+        price: {type: Number, default: 0}
+      }
+      ],
+      // addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
       userCount: { type: Number },
       total_amount: { type: Number },
       billing_cycle: { type: String },
@@ -80,6 +97,9 @@ const order_Schema = new mongoose.Schema(
       renewal_date: { type: Date },
       auto_renewal: { type: Boolean, default: true },
       taxRate: { type: String },
+      InitialSetupFee : { type: Number, default: 0 },
+      perUserDiscountPrice: { type: Number, default:''},
+      perUser_price : { type: Number, default: 0 },
     },
     subscriptionPlan: {
       subscription: {
@@ -131,7 +151,7 @@ const order_Schema = new mongoose.Schema(
       type: { type: String },
       price: { type: Number }
     }],
-    tracking_number: {type: String},
+    tracking_number: { type: String },
   },
   { timestamps: true }
 );

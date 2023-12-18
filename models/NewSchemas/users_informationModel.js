@@ -97,7 +97,15 @@ const users_information = new mongoose.Schema(
             // },
             subscription_id : {type : String , default : null},
             customer_id : {type : String , default : null},
-            addones: [{type: mongoose.Schema.Types.ObjectId}],
+            // addones: [{type: mongoose.Schema.Types.ObjectId}],
+            addones: [
+              { 
+               addonId : { type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"},
+               status: { type: String , default: 'N/A' },
+               assignTo: { type: String , default: '' },
+               price: {type: Number, default: 0}
+             }
+             ],
             userCount: { type : Number},
             total_amount: { type: Number },
             creditBalance : { type: Number, default: null },
@@ -116,6 +124,8 @@ const users_information = new mongoose.Schema(
             auto_renewal: { type: Boolean, default: true },
             taxRate: { type: String , default:'0'},
           },
+
+          isInitailUser: { type: Boolean, default: true  },
 
           connect_button_behaviour: {
             type: Boolean,

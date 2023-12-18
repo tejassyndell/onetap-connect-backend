@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const {
   testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getCompanyDetailsforAdmin, checkcompanyurlslugavailiblityAdminside, UpdateCompanySlugFromAdmin, UpdateCompanySettings, getsharereferalSettingsAdmin, UpdateLeadCaptureSettings, getAllOrders, updateOrders, deleteOrders, getSingleOrder, updateOrder
-  ,createClient, getActiveUsersOfCompany
-} = require("../../controllers/OTC-AdminController/Clients/clientsController");
+  ,createClient, getActiveUsersOfCompany, getTeamofCompany, updateTeamNamebyAdmin, removeTeamFromUsersByadmin, deleteteamofselectedcompany, renameteamofselectedcompany, createNewteamofselectedcompany, getAllShippingAddressofcompany, createShippingAddressofcompany, removeShippingAddressofcompany, editShippingAddressofcompany, updateuserroleofcompanyusers, updateuserplanonrolechangeofcompany, fetchbillingaddressofcompany, updateBillingAddressofcompany, getallcompanynames, otcadminusers, addAdminUser, updateAdminUser,getcompanyorders, GetorderByCompanyIDandOrderNumber, saveclientTags, getclienttags
+,sendOrderInvoice} = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -91,4 +91,29 @@ router.post("/admin/UpdateCompanySlug",UpdateCompanySlugFromAdmin)
 router.post("/admin/UpdateCompanySettings",UpdateCompanySettings)
 router.post("/admin/getsharereferalSettingsAdmin",getsharereferalSettingsAdmin)
 router.post("/admin/UpdateLeadCaptureSettings",UpdateLeadCaptureSettings)
+router.post("/admin/getTeamofCompany", getTeamofCompany);
+router.post("/admin/updateTeamNamebyAdmin", updateTeamNamebyAdmin);
+router.post("/admin/removeTeamFromUsersByadmin", removeTeamFromUsersByadmin);
+router.post("/admin/deleteteamofselectedcompany", deleteteamofselectedcompany);
+router.post("/admin/renameteamofselectedcompany", renameteamofselectedcompany);
+router.post("/admin/createNewteamofselectedcompany", createNewteamofselectedcompany);
+router.post("/admin/getAllShippingAddressofcompany", getAllShippingAddressofcompany);
+router.post("/admin/createShippingAddressofcompany", createShippingAddressofcompany);
+router.post("/admin/removeShippingAddressofcompany/:addressId", removeShippingAddressofcompany);
+router.post("/admin/editShippingAddressofcompany/:editAddressId", editShippingAddressofcompany);
+router.post("/admin/updateuserroleofcompanyusers", updateuserroleofcompanyusers);
+router.post("/admin/updateuserplanonrolechangeofcompany", updateuserplanonrolechangeofcompany);
+router.post("/admin/fetchbillingaddressofcompany", fetchbillingaddressofcompany);
+router.post("/admin/updateBillingAddressofcompany", updateBillingAddressofcompany);
+router.post("/admin/getallcompanynames", getallcompanynames);  
+
+router.get("/admin/otc_adminusers", otcadminusers);
+router.post("/admin/otc_addAdminUser", addAdminUser);
+router.post("/admin/otc_updateAdminUser/:userId", updateAdminUser);
+router.post('/admin/getOrders',getcompanyorders)
+router.post('/admin/getorderbyidandnumber',GetorderByCompanyIDandOrderNumber)
+router.post('/admin/send-order-invoice',sendOrderInvoice)
+router.post('/admin/savetag', saveclientTags)
+router.post('/admin/getclienttags', getclienttags)
+
 module.exports = router;

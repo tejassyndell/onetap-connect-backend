@@ -1,17 +1,18 @@
-const PlanPackage =  require('../../models/Admin/PlanPackageModel');
+const PlanPackage = require('../../models/Admin/PlanPackageModel');
 const AddOn = require('../../models/Admin/AddOnsModel')
 const ErrorHandler = require('../../utils/errorHandler');
 const catchAsyncErrors = require('../../middleware/catchAsyncErrors');
-const OtcAddons = require('../../models/NewSchemas/OtcAddOnsSchema')
+const OtcAddons = require('../../models/NewSchemas/OtcAddOnsSchema');
+const Plan = require('../../models/NewSchemas/OtcPlanSchemaModal');
 
 //create Subscription --otc-Admin
 
-exports.createSubsriptionPlan = catchAsyncErrors(async(req,res,next)=>{
+exports.createSubsriptionPlan = catchAsyncErrors(async (req, res, next) => {
 
-    const plan = await PlanPackage.create(req.body); 
+    const plan = await PlanPackage.create(req.body);
 
-    if(!plan){
-        return next(new ErrorHandler("Error in craeting plan",500))
+    if (!plan) {
+        return next(new ErrorHandler("Error in craeting plan", 500))
     }
 
     res.status(201).json(plan);
@@ -21,68 +22,69 @@ exports.createSubsriptionPlan = catchAsyncErrors(async(req,res,next)=>{
 
 
 // get all plans
-exports.getAllPlans = catchAsyncErrors(async(req,res,next)=>{
+exports.getAllPlans = catchAsyncErrors(async (req, res, next) => {
+    const plans = await Plan.find({ status: 'Published', Visibility: 'Public' })
+        .populate('smart_accessories')
+        .populate('add_ons');
 
-    const plans = await PlanPackage.find(); 
-
-    if(!plans){
-        return next(new ErrorHandler("Error in craeting plan",404))
+    if (!plans || plans.length === 0) {
+        return next(new ErrorHandler("No plans found with the specified criteria", 404));
     }
 
-    res.status(201).json({plans});
-
-
-})
+    res.status(200).json({ plans });
+});
 
 
 //get single plan details
-exports.getAllSinglePlan = catchAsyncErrors(async(req,res,next)=>{
+exports.getAllSinglePlan = catchAsyncErrors(async (req, res, next) => {
 
-    const {id} = req.params;
+    const { id } = req.params;
+
+  
     
-    const plan = await PlanPackage.findById(id);
+    const plan = await Plan.findById(id).populate('smart_accessories').populate('add_ons');
 
 
-    if(!plan){
-        return next(new ErrorHandler("Error in craeting plan",404))
+    if (!plan) {
+        return next(new ErrorHandler("Error in craeting plan", 404))
     }
 
-    res.status(201).json({plan});
+    res.status(201).json({ plan });
 
 })
 
 // create addones 
-exports.createAddOne = catchAsyncErrors(async(req,res,next)=>{
+exports.createAddOne = catchAsyncErrors(async (req, res, next) => {
 
-    const addon = await AddOn.create(req.body); 
+    const addon = await AddOn.create(req.body);
 
-    if(!addon){
-        return next(new ErrorHandler("Error in craeting plan",500))
+    if (!addon) {
+        return next(new ErrorHandler("Error in craeting plan", 500))
     }
 
-    res.status(201).json({addon});
+    res.status(201).json({ addon });
 
 
 })
 
 
 //get all addons
-exports.getAllAddOns = catchAsyncErrors(async(req,res,next)=>{
+exports.getAllAddOns = catchAsyncErrors(async (req, res, next) => {
 
-    const addOns = await OtcAddons.find(); 
+    const addOns = await OtcAddons.find();
 
-    if(!addOns){
-        return next(new ErrorHandler("Error in craeting plan",404))
+    if (!addOns) {
+        return next(new ErrorHandler("Error in craeting plan", 404))
     }
 
-    res.status(201).json({addOns});
+    res.status(201).json({ addOns });
 
 
 })
 // //get all addons
 // exports.getAllAddOns = catchAsyncErrors(async(req,res,next)=>{
 
-//     const addOns = await AddOn.find(); 
+//     const addOns = await AddOn.find();
 
 //     if(!addOns){
 //         return next(new ErrorHandler("Error in craeting plan",404))

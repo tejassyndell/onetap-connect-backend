@@ -7,6 +7,7 @@ const sendOtcToken = require("../../../utils/adminauthToken.js");
 const AdminUsers = require("../../../models/Otc_AdminModels/Otc_Adminusers.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
 const Company = require("../../../models/NewSchemas/Company_informationModel.js");
+const shippingAddress = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
 const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js")
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
@@ -14,6 +15,7 @@ const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
 const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
+const billingAddress = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
@@ -202,11 +204,12 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
         }
         return accumulator;
       }, new Map());
-  const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
-  const ReverseData = uniqueUserInformationTeamData.reverse();
+      const uniqueUserInformationTeamData = [...filteredUserInformationTeamData.values()];
+      const ReverseData = uniqueUserInformationTeamData.reverse();
       res.status(200).json({
         // userInformationTeamData
         userInformationTeamData: ReverseData,
+        userInformation: userInformationTeamData
       });
     } catch (error) {
       console.error(error);
@@ -305,7 +308,12 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
       const companydata = await Company.findOne({ _id: id }).populate({
         path: "primary_billing",
         model: "user", // Adjust the model name as needed
-        select: "first_name last_name avatar role designation",
+      }).populate({
+        path: "primary_account",
+        model: "user", // Adjust the model name as needed
+      }).populate({
+        path: "primary_manager",
+        model: "user", // Adjust the model name as needed
       });
       const allteams = await Team.find({ companyID: id });
       if (!userInformationTeamData) {
@@ -466,7 +474,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
     let CustomPermalink = CustomPermalinkSlug;
     // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
-    const { InternalPlanName, PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog, smart_accessories, add_ons } = planFormData;
+    const { InternalPlanName, PublicPlanName, categoryType, description, image, imageName, altText, status, Visibility, activitylog, smart_accessories, add_ons, features } = planFormData;
     const { planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku } = planData
 
     if (id) {
@@ -487,7 +495,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
 
       const updatedCategory = await Plan.findByIdAndUpdate(
         id,
-        { InternalPlanName, PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
+        { InternalPlanName, PublicPlanName, categoryType, features, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons },
         { new: true } // Return the updated document
       );
       res.status(200).json({ success: true, category: updatedCategory });
@@ -499,7 +507,7 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
       }
 
       const newplans = new Plan({
-        InternalPlanName, PublicPlanName, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
+        InternalPlanName, PublicPlanName, features, categoryType, CustomPermalink, description, image, imageName, altText, status, Visibility, activitylog, publishedDate: new Date(), planType, users, monthlyPrice_perUser, monthly_fee, monthly_sku, yearlyPrice_perUser, yearly_fee, yearly_sku, smart_accessories, add_ons
       });
       const plans = await newplans.save();
       res.status(201).json({ success: true, plans });
@@ -756,7 +764,7 @@ exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
-  const { users, status } = req.body;
+  const { users, status, selectedUserForRedirect } = req.body;
 
   // Loop through the array of user IDs
   for (let i = 0; i < users.length; i++) {
@@ -766,6 +774,28 @@ exports.updateStatusofuser = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
     }
 
+    if (selectedUserForRedirect) {
+      const permalinkUpdateResult = await parmalinkSlug.updateMany(
+        { user_id: { $in: users } },
+        {
+          $set: {
+            isactive: true,
+            redirectUserId: selectedUserForRedirect[0]._id,
+          },
+        }
+      );
+    }
+    if (status === "active") {
+      const permalinkUpdateResult = await parmalinkSlug.updateMany(
+        { user_id: { $in: users } },
+        {
+          $set: {
+            isactive: false,
+            redirectUserId: null,
+          },
+        }
+      );
+    }
     // Update the user's status based on the corresponding status value
     user.status = status;
     await user.save(); // Save the changes to the user
@@ -940,7 +970,7 @@ exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
       "subscription_details.recurring_amount": 1,
       "subscription_details.plan": 1,
       "subscription_details.renewal_date": 1,
-      orderNumber:1
+      orderNumber: 1
     });
 
     // Do something with the retrieved subscriptions
@@ -951,9 +981,9 @@ exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
   }
 };
 
-exports.getsubscriptiondetails = async (req,res,next) => {
-  const {id} = req.body
-  console.log(id,"idd")
+exports.getsubscriptiondetails = async (req, res, next) => {
+  const { id } = req.body
+  console.log(id, "idd")
   try {
     const subscriptions = await Order.findById(id);
     res.json(subscriptions);
@@ -1250,6 +1280,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
         companyID: id,
         password: password,
         role: "teammember",
+        status: "inactive",
         userurlslug: generatedCode,
       });
 
@@ -1270,6 +1301,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => 
         companyurlslug: generatedcompanyCode,
       })
       await user_parmalink.save();
+      await userinfocreate.save();
 
       // const userplan = planData.plan;
       // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
@@ -1450,6 +1482,7 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(async (req, res, next
     password: password,
     userurlslug: generatedCode,
     role: "teammember",
+    status: "inactive"
   });
   // console.log("called")
   const userInformationData = {
@@ -1794,35 +1827,18 @@ exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
 
 });
 exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
-  // const { id } = req.user;
   try {
-    // Find orders by user ID
     const orders = await Order.find().populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
-    });
+    }).populate({ path: 'user', modal: 'user' })
 
-
-    // Create an array to store user data for each order
-    const ordersWithUserData = [];
-
-    for (const order of orders) {
-      // Query the user data separately based on the user ID (assuming your User model is imported as 'User')
-      const user = await User.findOne({ _id: order.user });
-  
-      const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
-      // Add the user data to the order document
-      const orderWithUserData = { ...order.toObject(), userdata };
-      ordersWithUserData.push(orderWithUserData);
-    }
-
-    res.status(200).json({ success: true, allOrders: ordersWithUserData });
+    res.status(200).json({ success: true, allOrders: orders });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 
 exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
@@ -1847,7 +1863,7 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
 
       await order.save(); // Save the changes to the order
       console.log(order, "order updated data")
-      res.status(200).json({ success: true, message: 'Orders updated successfully' , order });
+      res.status(200).json({ success: true, message: 'Orders updated successfully', order });
     }
 
   } catch (error) {
@@ -1878,23 +1894,26 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   try {
     // Find orders by user ID
-    const order = await Order.findById({_id : id}).populate({
+    const order = await Order.findById({ _id: id }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     }).populate({
-      path: 'subscription_details.addones',
+      path: 'subscription_details.addones.addonId',
+      modal: 'otc_addons',
+    }).populate({
+      path: 'addaddons.addonId',
       modal: 'otc_addons',
     })
 
 
     const userdata = await User.findOne({ _id: order.user });
-    const userInformation = await UserInformation.findOne({ user_id : order.user });
+    const userInformation = await UserInformation.findOne({ user_id: order.user });
     const companydata = await Company.findOne({ _id: order.company });
 
-  
+
     // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
     // const companydata = { companyName : company.company_name }
-    const orderWithUserData = { ...order.toObject(), userdata , companydata , userInformation }
+    const orderWithUserData = { ...order.toObject(), userdata, companydata, userInformation }
 
     res.status(200).json({ success: true, order: orderWithUserData });
   } catch (error) {
@@ -1907,21 +1926,23 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
 exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const updatedOrderData = req.body; // Assuming the updated details are provided in the request body
-
-
-  try {
-    const order = await Order.findById(id);
+  try {  const order = await Order.findByIdAndUpdate(id, updatedOrderData, {new: true, runValidators: true
+    });
 
     if (!order) {
-      return next(new ErrorHandler("order not found", 404));
+      return next(new ErrorHandler("Order not found", 404));
     }
-    order.set(updatedOrderData);
-    await order.save();
-    res.status(200).json({success: true,message: "order details updated successfully",order: order, });
+
+    res.status(200).json({
+      success: true,
+      message: "Order details updated successfully",
+      order: order,
+    });
   } catch (error) {
     next(error);
   }
-})
+});
+
 exports.getCompanyDetailsforAdmin = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.body;
   const company = await Company.findById(companyID)
@@ -2015,7 +2036,7 @@ exports.UpdateCompanySettings = catchAsyncErrors(
   async (req, res, next) => {
     try {
       const { companyID, user_profile_edit_permission } = req.body;
-      console.log(companyID , user_profile_edit_permission,"body", req.body)
+      console.log(companyID, user_profile_edit_permission, "body", req.body)
 
       // Validate if companyID is provided
       if (!companyID) {
@@ -2078,7 +2099,7 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(
   async (req, res, next) => {
     try {
       const { companyID, updateValues } = req.body;
-      console.log(updateValues,"bodydyy")
+      console.log(updateValues, "bodydyy")
 
       // Validate if companyID and updateValues are provided
       if (!companyID || !updateValues) {
@@ -2106,3 +2127,849 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(
     }
   }
 );
+exports.getTeamofCompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  console.log(id, "sadadas")
+
+  const team = await Team.find({ companyID: id });
+  // console.log(team ,"teamname")
+  res.status(200).json({ message: "Users updated successfully", team });
+});
+
+exports.updateTeamNamebyAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers, team } = req.body;
+
+  // Loop through the array of selected user IDs
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    // Update the user's team with the new team name
+    user.team = team;
+    await user.save(); // Save the changes to the user
+  }
+
+  res.status(200).json({ message: "Users updated successfully" });
+});
+
+// Remove Team from Users
+exports.removeTeamFromUsersByadmin = catchAsyncErrors(async (req, res, next) => {
+  const { selectedUsers } = req.body;
+
+  for (const userId of selectedUsers) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: `User not found with ID: ${userId}` });
+    }
+
+    user.team = null; // Remove the team association
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Team removed from users successfully" });
+});
+
+
+exports.deleteteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  const { teamId } = req.body; // Assuming you have the team's unique ID available
+
+  // Find and delete the team by its ID
+  const deletedTeam = await Team.findByIdAndDelete(teamId);
+
+  if (!deletedTeam) {
+    return res.status(404).json({ message: "Team not found" });
+  }
+
+  // Find users belonging to the deleted team
+  const usersToDelete = await User.find({ team: deletedTeam._id });
+  const companyID = usersToDelete?.[0]?.companyID;
+
+  // Remove the team association from the users
+  for (const user of usersToDelete) {
+    user.team = null; // You can set it to an empty string or null if needed
+    await user.save();
+  }
+  // Find remaining teams of the company
+  const remainingTeams = await Team.find({ companyID });
+
+  res.status(200).json({ message: "Team deleted successfully", remainingTeams });
+});
+
+exports.renameteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  const { teamId, newTeamName } = req.body; // Assuming you have the team's unique ID and the new team name available
+
+  try {
+    // Find the team by its ID
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Check if the new team name already exists
+    const isExistingTeam = await Team.exists({
+      _id: { $ne: teamId }, // Exclude the current team from the check
+      name: newTeamName,
+    });
+
+    if (isExistingTeam) {
+      return res.status(400).json({ message: "New team name already exists" });
+    }
+
+    // Update the team name
+    team.team_name = newTeamName;
+    await team.save();
+
+    // Update user's team name
+    // const usersToUpdate = await User.find({ team: teamId }); // Find users belonging to the old team
+    // for (const user of usersToUpdate) {
+    //   user.team = newTeamName;
+    //   await user.save();
+    // }
+
+    res.status(200).json({ message: "Team renamed successfully", team });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+exports.createNewteamofselectedcompany = catchAsyncErrors(async (req, res, next) => {
+  console.log("team");
+  // console.log(req.user,"wdsafeg")
+  // const companyID = req.user.companyID;
+  // const userID = req.user._id;
+  const { team_name, companyID } = req.body;
+  console.log(companyID);
+  console.log(team_name);
+  const teamData = {
+    team_name: team_name,
+    companyID: companyID,
+  };
+
+  const team = await Team.create(teamData);
+  const latestTeamId = team._id;
+  // console.log(userID);
+
+
+  console.log("Updated User Informationhg", team);
+
+  if (!team) {
+    return res.status(404).json({ message: "Team not created" });
+  }
+
+  // const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
+  // const company = await team.findOne() // Replace with proper query
+
+  // if (!company) {
+  //   return res.status(404).json({ message: "Company not found" });
+  // }
+
+  // if (company.teams?.includes(team_name)) {
+  //   return res.status(400).json({ message: "This team already exists" });
+  // }
+
+  // company.team?.push(team_name);
+  // await company.save();
+
+  res.status(201).json({ message: "Team created successfully", team });
+});
+
+exports.getAllShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  console.log(id, req.body, "alalalal")
+  try {
+    const shippingAddresses = await shippingAddress.find({ userId: id });
+
+    res.status(200).json({
+      success: true,
+      shippingAddresses,
+    });
+  } catch (err) {
+    return next(new ErrorHandler("Unable to fetch shipping addresses", 500));
+  }
+});
+
+exports.removeShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  const { addressId } = req.params;
+  console.log(addressId, id, " address id");
+
+  try {
+    const userShippingAddress = await shippingAddress.findOne({ userId: id });
+    console.log(userShippingAddress, "userShippingAddress");
+
+    if (!userShippingAddress) {
+      return next(new ErrorHandler("User shipping address not found", 404));
+    }
+
+    const { shipping_address } = userShippingAddress;
+    console.log(shipping_address, "shipping address");
+    // Find the index of the shipping address to remove
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == addressId
+    );
+    console.log(addressIndex, "address indexx");
+
+    if (addressIndex === -1) {
+      return next(new ErrorHandler("Shipping address not found", 404));
+    }
+
+    // Remove the shipping address from the array
+    shipping_address.splice(addressIndex, 1);
+
+    // Save the updated document
+    await userShippingAddress.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Shipping address removed successfully",
+    });
+  } catch (err) {
+    return next(new ErrorHandler("Error removing shipping address", 500));
+  }
+});
+
+exports.createShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const {
+    address_name,
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+    id
+  } = req.body;
+
+
+  console.log(req.body, "olaolaoala", id)
+
+  const user = await User.findById(id);
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  const shippingAddressData = {
+    address_name,
+    first_name,
+    last_name,
+    company_name,
+    line1,
+    line2,
+    city,
+    state,
+    country,
+    postal_code,
+  };
+
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      shipping_address: [shippingAddressData],
+    });
+  } else {
+    shippingAddressFind.shipping_address.push(shippingAddressData);
+  }
+
+  try {
+    await shippingAddressFind.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Shipping address added successfully",
+      shippingAddressData,
+    });
+  } catch (error) {
+    return next(new ErrorHandler("Error saving shipping address", 500));
+  }
+});
+
+exports.editShippingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  // console.log("edit called")
+  // alert("alert")
+  const { editAddressId } = req.params;
+  console.log(editAddressId, "id"); // Get the address ID from the request URL
+  const {
+    shippingAddressData,
+    id
+  } = req.body;
+  console.log(req.body, "yjos body")
+
+  const completeShippingAddressData = {
+    _id: editAddressId,
+    ...shippingAddressData,
+  };
+
+  try {
+    const userShippingAddress = await shippingAddress.findOne({ userId: id });
+    // console.log(userShippingAddress, "userShippingAddress")
+
+    if (!userShippingAddress) {
+      return next(new ErrorHandler("User shipping address not found", 404));
+    }
+
+    const { shipping_address } = userShippingAddress;
+    // console.log(shipping_address, "shipping address")
+
+    // Find the index of the shipping address to edit
+    const addressIndex = shipping_address.findIndex(
+      (address) => address._id == editAddressId
+    );
+    console.log(addressIndex, "address index");
+
+    if (addressIndex === -1) {
+      return next(new ErrorHandler("Shipping address not found", 404));
+    }
+
+    // Update the shipping address data
+    shipping_address[addressIndex] = completeShippingAddressData;
+
+    console.log(shipping_address, "Shipping");
+
+    // Save the updated document
+    await userShippingAddress.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Shipping address updated successfully",
+      updatedShippingAddress: shipping_address[addressIndex],
+    });
+  } catch (err) {
+    return next(new ErrorHandler("Error updating shipping address", 500));
+  }
+});
+
+exports.updateuserroleofcompanyusers = catchAsyncErrors(async (req, res, next) => {
+  const { superAdmins, administrators, managers, teammember } = req.body;
+
+  try {
+    // Define a function to update roles based on the provided user IDs and role
+    const updateUserRoles = async (userIds, userRole) => {
+      await User.updateMany({ _id: { $in: userIds } }, { role: userRole });
+    };
+
+    // Update user roles for each role category
+    await updateUserRoles(superAdmins.map(user => user.id), 'superadmin');
+    await updateUserRoles(administrators.map(user => user.id), 'administrator');
+    await updateUserRoles(managers.map(user => user.id), 'manager');
+    await updateUserRoles(teammember.map(user => user.id), 'teammember');
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error updating user roles:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating user roles",
+    });
+  }
+});
+
+exports.updateuserplanonrolechangeofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { userID, subscriptionDetails } = req.body;
+  try {
+    // const updatedUser = await User.findByIdAndUpdate(
+    const filter = {
+      user_id: { $in: userID }
+    };
+
+    const update = {
+      $set: { subscription_details: subscriptionDetails }
+    };
+    // Update user subscription_details based on userIDs array
+    const updatedUser = await UserInformation.updateMany(filter, update);
+    res.status(200).json({
+      success: true,
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating subscription details:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating subscription details",
+    });
+  }
+});
+
+//fetch billing address
+exports.fetchbillingaddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+
+  const billingData = await billingAddress.find({ userId: id });
+
+  if (!billingData || billingData.length === 0) {
+    return next(new ErrorHandler("No Billing details found", 404));
+  }
+
+  const firstBillingAddress = billingData[0];
+
+  res.status(201).json({
+    success: true,
+    billingData: firstBillingAddress,
+  });
+});
+
+exports.getallcompanynames = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body;
+  console.log(id)
+  const companies = await Company.find({ _id: { $ne: id } }, 'company_name');
+
+  if (!companies) {
+    return next(new ErrorHandler("No companies Found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    companies, // Return the selected fields
+  });
+});
+
+
+exports.updateBillingAddressofcompany = catchAsyncErrors(async (req, res, next) => {
+  const { firstName, lastName, companyName, billing_address, superAdminUserid, companyID } = req.body;
+  const userData = {
+    first_name: firstName,
+    last_name: lastName,
+  };
+  console.log(superAdminUserid, userData)
+
+  const BillingAddressData = {
+    billing_address: billing_address,
+  };
+
+  const updateUser = await User.findOneAndUpdate({ _id: superAdminUserid }, userData);
+  const updateBilling = await billingAddress.findOneAndUpdate(
+    { userId: superAdminUserid },
+    BillingAddressData,
+    { new: true, upsert: true }
+  );
+
+  const updateCompany = await Company.findByIdAndUpdate(companyID, {
+    company_name: companyName,
+  });
+
+  await updateBilling.save();
+  await updateCompany.save();
+
+  res.status(201).json({
+    success: true,
+    message: "Data Updated Successfully",
+    updateCompany
+  });
+});
+
+
+
+
+
+// For fetch all OTC_Adminusers
+
+exports.otcadminusers = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Retrieve all admin users from the database
+    const allUsers = await AdminUsers.find({}, { password: 0 });
+
+    // Respond with the retrieved users
+    res.status(200).json(allUsers);
+  } catch (error) {
+    res.status(500).send("Error fetching admin users");
+  }
+});
+
+
+// For ADD new OTC_Adminusers
+
+exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole, adminuser } = req.body;
+
+    // Generate a password
+    const password = generatePassword();
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads");
+    const logoPath = path.join(uploadsDirectory, "Logo.png");
+
+
+    // Save form data and job titles to the main collection for a new user
+    const newFormData = new AdminUsers({
+      firstName,
+      lastName,
+      password,
+      email,
+      phoneNumber,
+      officenumber,
+      jobTitles,
+      userRole,
+    });
+
+
+    await newFormData.save();
+
+    // Send email with the generated password
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+
+    const mailmsg = {
+      from: "onetapconnect:otcdevelopers@gmail.com",
+      to: email,
+      subject: 'Welcome to Your App - Your New Password',
+      html: `
+    <!DOCTYPE html>
+    <html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+    </head>
+    
+    <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+    
+        <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+            <img src="cid:logo">
+            
+            </div>
+            <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+            <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+           
+            <p>Dear ${firstName}<br/><br/>
+            We are excited to invite you to join OneTap Connect! As a valued member of our community.<br/><br/>
+            To get started, simply click on the link below to Login your account:<br/><br/>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; border-radius: 4px; overflow: hidden; background-color: #e65925; margin: 20px 0;">
+            <a href="${process.env.FRONTEND_URL}/admin" style="display: inline-block; padding: 10px 20px; font-weight: 100; color: #fff; text-align: center; text-decoration: none;">Click here to Login</a> </div><br/><br/>
+            Your password is: ${password}<br/><br/>
+            Please log in using your email address and password provided.<br/><br/>
+            In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here.</a><br/><br/>
+            We look forward to having you as a part of our community and hope you enjoy your experience on OneTap Connect!<br/><br/>
+            Best regards,<br/>
+            ${adminuser.adminfirstName} ${adminuser.adminlastName}<br/><br/>
+           <p>OneTapConnect</p>
+        </div>
+    
+    </body>
+    
+    </html>
+    
+    
+  `,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: logoPath,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(mailmsg, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        // Handle error, show a message, etc.
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
+    res.status(200).json(newFormData);
+  } catch (error) {
+    console.error('Error adding new user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// For UPDATE OTC_Adminusers
+
+exports.updateAdminUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, officenumber, jobTitles, userRole } = req.body;
+    const userId = req.params.userId;
+
+    // Update user data
+    const updatedUser = await AdminUsers.findByIdAndUpdate(
+      userId,
+      {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        officenumber,
+        jobTitles,
+        userRole,
+
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+exports.getcompanyorders = catchAsyncErrors(async (req, res, next) => {
+  const { companyId } = req.body;
+  console.log(companyId, "compnay")
+  try {
+    // Find orders by user ID
+    const orders = await Order.find({ company: companyId }).populate({
+      path: 'smartAccessories.productId',
+      select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    }).populate({
+      path: 'user',
+      modal: 'user'
+    })
+    console.log(orders, "aaaaaaaaaaaa")
+    res.status(200).json({ success: true, orders: orders });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(async (req, res, next) => {
+  const { orderNumber } = req.body;
+
+  try {
+    // Find the order by order number
+    const order = await Order.findOne({ orderNumber });
+
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+ 
+exports.saveclientTags = catchAsyncErrors(async (req, res, next) => {
+  const { TagData, compID, removedTag } = req.body;
+  console.log(TagData, compID, "zzzzzzzzzzzzzzz");
+
+  try {
+    // Find the document with the given compID
+    const existingDoc = await Company.findOne({ _id: compID });
+
+    if (!existingDoc) {
+      return res.status(400).json({ message: "Company not found" });
+    }
+    if (removedTag) {
+      // Remove the tag from the company
+      await Company.updateOne(
+        { _id: compID },
+        { $pull: { client_Tags: { value: removedTag } } },
+      );
+    }
+
+    const clientTags = existingDoc.client_Tags;
+    const clientTagValues = clientTags.map(tag => tag.value);
+    console.log(clientTagValues);
+
+    // Use filter to get values in TagData not present in clientTagValues
+    const uniqueTagData = TagData.filter(tag => !clientTagValues.includes(tag));
+    console.log(uniqueTagData, "Unique tags to add");
+
+    // Convert uniqueTagData to an array of objects with the "value" field
+    const tagValues = uniqueTagData.map(value => ({ value }));
+
+    // Add new unique tags to the company
+    await Company.updateOne(
+      { _id: compID },
+      { $push: { client_Tags: { $each: tagValues } } },
+    );
+
+    // Send a response, if needed
+    res.status(200).json({ success: true, message: 'Array updated/created successfully' });
+  } catch (error) {
+    // Handle errors
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+
+exports.getclienttags = catchAsyncErrors(async (req, res, next) => {
+  const { compID } = req.body;
+  try {
+    // Find the document with the given compID
+    const existingDoc = await Company.findOne({ _id: compID });
+
+    if (!existingDoc) {
+      return res.status(400).json({ message: "Company not found" });
+    }
+
+    const clientTags = existingDoc.client_Tags;
+    const clientTagValues = clientTags.map(tag => tag.value);
+    console.log(clientTagValues);
+
+    // Send a response, if needed
+    res.status(200).json({ success: true, clientTagValues, message: 'Array updated/created successfully' });
+  } catch (error) {
+    // Handle errors
+    console.error('Error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
+  console.log("????????????????????????????????????????????????????????")
+  console.log(req.body)
+  const { invoiceOrderData } = req.body
+
+  console.log(invoiceOrderData, "invoice order data")
+  // const { planData } = req.body
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      to: invoiceOrderData.email,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h3>Welcome to OneTapConnect!</h3>
+          <p>Dear ${invoiceOrderData.name},<br/>
+          <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+          <p>Subscription Details:</p>
+          <ul>
+            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${invoiceOrderData.planType}</li>
+            <li><b>Duration:</b>&nbsp;&nbsp;${ invoiceOrderData.billing_cycle}</li>
+            <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(invoiceOrderData.renewal_date).toLocaleDateString()}</li>
+            <li><b>Amount:</b>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount}</li>
+          </ul>
+
+          <!-- Invoice Table -->
+          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #e65925; color: #fff; text-align: left;">
+                    <th style="padding: 10px;">Subscription</th>
+                    <!-- <th style="padding: 10px;">Description</th> -->
+                    <!-- <th style="padding: 10px;">Unit Price</th> -->
+                    <th style="padding: 10px; text-align: center;">Quantity</th>
+                    <th></th>
+                    <th style="padding: 10px;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Add your invoice items dynamically here -->
+                <tr>
+                    <td>${invoiceOrderData.planType}-${invoiceOrderData.billing_cycle}</td>
+                    <!-- <td>Description of Your Item</td> -->
+                    <!-- <td></td> -->
+                    <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;">Initial setup fee</td>
+                    <td>&nbsp;&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>addonname</td>
+                    <td></td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;price</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td>Payment Method:</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;method</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;"><b>Total:</b></td>
+                    <td>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount}</td>
+                </tr>
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table><br/>
+
+          <p>Please keep this email for your records.</p>
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+        </div> 
+          <h3>Technical issue?</h3>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+    res.status(200).json({invoiceOrderData ,message: 'Order confirmation email sent successfully '})
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+});
