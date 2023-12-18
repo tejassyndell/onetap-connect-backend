@@ -2489,6 +2489,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         renewal_date: planData.renewal_date,
         taxRate: planData.taxRate,
         customer_id: planData.customer_id,
+        planID:planData.planID
       },
     });
     // userInformation.subscription_details = planData;
@@ -2513,7 +2514,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       renewal_date: planData.renewal_date,
       taxRate: planData.taxRate,
       customer_id: planData.customer_id,
-      perUser_price : planData.perUser_price
+      perUser_price : planData.perUser_price,
+      planID:planData.planID
     };
   }
   shippingAddressFind.shipping_address.address_name = "Default";
