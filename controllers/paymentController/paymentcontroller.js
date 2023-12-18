@@ -7,7 +7,8 @@ const UserModel = require("../../models/NewSchemas/UserModel");
 const ErrorHandler = require("../../utils/errorHandler.js");
 const billingAddressModal = require("../../models/NewSchemas/user_billing_addressModel");
 const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
-
+const path = require("path");
+const nodemailer = require("nodemailer");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -196,89 +197,89 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   const productID = type === 'monthly'
     ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
     : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
-    let attachedPaymentMethod;
-if(!selectedCard){
+  let attachedPaymentMethod;
+  if (!selectedCard) {
     attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
       customer: customerID,
     });
-}
+  }
   console.log(attachedPaymentMethod)
   const price = await stripe.prices.create({
-        currency: 'usd', 
-        unit_amount: req.body.amount * 100, 
-        product: productID, 
-        tax_behavior: 'exclusive',
-        recurring : {
-        interval : type === "monthly" ? "month" : "year" ,
-        interval_count : 1
-  },
-});
-if(initialSetupCharge){
-
-  const invoiceItem = await stripe.invoiceItems.create({
-    customer: customerID,
-    amount: initialSetupCharge * 100,  // need to pass charge amount
     currency: 'usd',
-    description: 'Initial setup fee',
+    unit_amount: req.body.amount * 100,
+    product: productID,
+    tax_behavior: 'exclusive',
+    recurring: {
+      interval: type === "monthly" ? "month" : "year",
+      interval_count: 1
+    },
   });
-}
+  if (initialSetupCharge) {
+
+    const invoiceItem = await stripe.invoiceItems.create({
+      customer: customerID,
+      amount: initialSetupCharge * 100,  // need to pass charge amount
+      currency: 'usd',
+      description: 'Initial setup fee',
+    });
+  }
 
 
-    try {
-      let myPayment;
-      if(selectedCard){
-         myPayment = await stripe.subscriptions.create({
-          description: 'Test description', 
-          metadata: {
-            company: req.body.company_name,
-            primary_card: primary_card
-          },
-          customer: customerID,
+  try {
+    let myPayment;
+    if (selectedCard) {
+      myPayment = await stripe.subscriptions.create({
+        description: 'Test description',
+        metadata: {
+          company: req.body.company_name,
+          primary_card: primary_card
+        },
+        customer: customerID,
+        default_payment_method: paymentToken,
+        cancel_at_period_end: false,
+        automatic_tax: {
+          enabled: true
+        },
+        items: [{ price: price.id }],
+        collection_method: "charge_automatically",
+      });
+    } else {
+      myPayment = await stripe.subscriptions.create({
+        description: 'Test description',
+        metadata: {
+          company: req.body.company_name,
+          primary_card: primary_card
+        },
+        customer: customerID,
+        default_payment_method: attachedPaymentMethod.id,
+        cancel_at_period_end: false,
+        items: [{ price: price.id }],
+        automatic_tax: {
+          enabled: true
+        },
+        collection_method: "charge_automatically",
+      });
+    }
+
+    if (newUser === true) {
+      await stripe.customers.update(customerID, {
+        invoice_settings: {
+          // default_payment_method: paymentMethodID,
           default_payment_method: paymentToken,
-          cancel_at_period_end: false,
-          automatic_tax: {
-            enabled: true
-          },
-          items: [{ price: price.id }],
-          collection_method: "charge_automatically",
-        });
-      }else{
-         myPayment = await stripe.subscriptions.create({
-          description: 'Test description', 
-          metadata: {
-            company: req.body.company_name,
-            primary_card: primary_card
-          },
-          customer: customerID,
-          default_payment_method: attachedPaymentMethod.id,
-          cancel_at_period_end: false,
-          items: [{ price: price.id }],
-          automatic_tax: {
-            enabled: true
-          },
-          collection_method: "charge_automatically",
-        });
-      }
+        },
+      });
+    }
+    ////
+    console.log("Address")
+    console.log(Address)
+    console.log("Address")
+    let paymentIntent;
+    if (totalAddons_value > 0) {
 
-      if(newUser === true){
-        await stripe.customers.update(customerID, {
-          invoice_settings: {
-            // default_payment_method: paymentMethodID,
-            default_payment_method: paymentToken,
-          },
-        });
-      }
-      ////
-      console.log("Address")
-      console.log(Address)
-      console.log("Address")
-      let paymentIntent;
-      if(totalAddons_value > 0){
-
-        const calculation = await stripe.tax.calculations.create({
-          currency: 'usd',
-          customer_details: {
-            address: {
+      const calculation = await stripe.tax.calculations.create({
+        currency: 'usd',
+        customer_details: {
+          address: {
             line1: Address.Bstreet1,
             line2: Address.Bstreet2,
             postal_code: Address.BpostalCode,
@@ -294,105 +295,105 @@ if(initialSetupCharge){
           },
         ],
       });
-      
-      
-      if(selectedCard){
+
+
+      if (selectedCard) {
         paymentIntent = await stripe.paymentIntents.create({
-        amount: calculation.amount_total,
-        currency: 'usd',
-        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-        customer: customerID,
-        description: "Addon purchase",
-        // payment_method: createOrderData.paymentToken,
-        payment_method: paymentToken,
-      });
-      }else{
-       paymentIntent = await stripe.paymentIntents.create({
-        amount:calculation.amount_total,
-        currency: 'usd',
-        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-        customer: customerID,
-        description: "Addon purchase",
-        payment_method: attachedPaymentMethod.id,
-      });
-    }
-    console.log("paymentIntent")
-    console.log(paymentIntent)
-    console.log("paymentIntent")
-    
-    if(!paymentIntent){
-      throw new Error('addon purchase creation failed'); 
-    }
-    const transaction = await stripe.tax.transactions.createFromCalculation({
-      calculation: calculation.id,
-      reference: paymentIntent.id,
-    });
-    
-    const paymentIntentUpdate = await stripe.paymentIntents.update(
-      paymentIntent.id,
-      {
-        metadata: {
-          tax_transaction: transaction.id,
-        },
+          amount: calculation.amount_total,
+          currency: 'usd',
+          automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+          customer: customerID,
+          description: "Addon purchase",
+          // payment_method: createOrderData.paymentToken,
+          payment_method: paymentToken,
+        });
+      } else {
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: calculation.amount_total,
+          currency: 'usd',
+          automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+          customer: customerID,
+          description: "Addon purchase",
+          payment_method: attachedPaymentMethod.id,
+        });
       }
-      );     
-      
+      console.log("paymentIntent")
+      console.log(paymentIntent)
+      console.log("paymentIntent")
+
+      if (!paymentIntent) {
+        throw new Error('addon purchase creation failed');
+      }
+      const transaction = await stripe.tax.transactions.createFromCalculation({
+        calculation: calculation.id,
+        reference: paymentIntent.id,
+      });
+
+      const paymentIntentUpdate = await stripe.paymentIntents.update(
+        paymentIntent.id,
+        {
+          metadata: {
+            tax_transaction: transaction.id,
+          },
+        }
+      );
+
       ////
-      
-      
-      if(!myPayment || !paymentIntent){
-        throw new Error('Subscription creation failed'); 
+
+
+      if (!myPayment || !paymentIntent) {
+        throw new Error('Subscription creation failed');
       }
     }
 
-    if(!myPayment){
-      throw new Error('Subscription creation failed'); 
+    if (!myPayment) {
+      throw new Error('Subscription creation failed');
     }
 
-      const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-      if(latestInvoice.payment_inten){
+    const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+    if (latestInvoice.payment_inten) {
       const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
         latestInvoice.payment_intent
       );
 
 
-        // Save payment ID and user details in your database after successful payment
-        return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : myPayment.id, status :subscriptionPaymentIntetn.status, endDate : myPayment.current_period_end, addonClient_secret : paymentIntent && paymentIntent.client_secret, addonstatus : paymentIntent && paymentIntent.status});
-      
+      // Save payment ID and user details in your database after successful payment
+      return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID: myPayment.id, status: subscriptionPaymentIntetn.status, endDate: myPayment.current_period_end, addonClient_secret: paymentIntent && paymentIntent.client_secret, addonstatus: paymentIntent && paymentIntent.status });
+
     }
 
-    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end, addonClient_secret : paymentIntent && paymentIntent.client_secret, addonstatus : paymentIntent && paymentIntent.status });
+    return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID: myPayment.id, status: 'active', endDate: myPayment.current_period_end, addonClient_secret: paymentIntent && paymentIntent.client_secret, addonstatus: paymentIntent && paymentIntent.status });
 
-    } catch (error) {
-      console.error(error);
-       // handle subscription failure
-       try {
-        const deleteCustomer = customerID && await stripe.customers.del(customerID);
-        const deletedInvoiceItem =
-          invoiceItem && invoiceItem.id && (await stripe.invoiceItems.del(invoiceItem.id));
-        const detachPT =
-          attachedPaymentMethod &&
-          attachedPaymentMethod.id &&
-          (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
-        const deletePrice = price && await stripe.prices.update(
-          price.id,
-          {
-            active : false
-          }
-        );
-  
-        console.error(
-          'Cleanup perform  ed after failure:',
-          deleteCustomer,
-          deletedInvoiceItem,
-          detachPT,
-          deletePrice
-        );
-      } catch (cleanupError) {
-        console.error('Error during cleanup:', cleanupError);
-      }
-      res.status(500).json({ success: false, error: error.message });
+  } catch (error) {
+    console.error(error);
+    // handle subscription failure
+    try {
+      const deleteCustomer = customerID && await stripe.customers.del(customerID);
+      const deletedInvoiceItem =
+        invoiceItem && invoiceItem.id && (await stripe.invoiceItems.del(invoiceItem.id));
+      const detachPT =
+        attachedPaymentMethod &&
+        attachedPaymentMethod.id &&
+        (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
+      const deletePrice = price && await stripe.prices.update(
+        price.id,
+        {
+          active: false
+        }
+      );
+
+      console.error(
+        'Cleanup perform  ed after failure:',
+        deleteCustomer,
+        deletedInvoiceItem,
+        detachPT,
+        deletePrice
+      );
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
     }
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
@@ -664,7 +665,197 @@ exports.isActive = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ success: false, error: error });
   }
 });
+// Creates an order
+exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Get the user ID from the authenticated user or request data
+    const userId = req.body.userId;
+    const {
+      email,
+      last_name,
+      first_name,
+      // tax,
+      billingAddress,
+      shippingAddress,
+      orderData,
+      totalAmount,
+      referrer,
+      referrerName,
+      dealOwner,
+      customerIp,
+      orderedBy,
+    } = req.body;
 
+
+    // Save Addresses
+    let user;
+    if (userId !== "Guest") {
+      user = await UserModel.findById(userId);
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+      // Update user fields
+      user.referrerName = referrerName;
+      user.dealOwner = dealOwner;
+      user.referrer = referrer;
+      user.customerIp = customerIp;
+
+      // Save user updates
+      await user.save();
+
+      let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
+      if (!billingAddressFind) {
+        billingAddressFind = new billingAddressModal({
+          userId: user._id,
+          billing_address: billingAddress,
+        });
+      } else {
+        billingAddressFind.billing_address = billingAddress;
+      }
+
+      let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
+
+      if (!shippingAddressFind) {
+        shippingAddressFind = new shippingAddressModal({
+          userId: user._id,
+          shipping_address: shippingAddress,
+        });
+      }
+
+      await billingAddressFind.save();
+      await shippingAddressFind.save();
+    }
+
+    // Create a new order linked to the specific user
+    const order = new Order({
+      user: userId === 'Guest' ? null : userId,
+      company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+      email,
+      last_name,
+      first_name,
+      subscription_details: orderData.subscription_details,
+      smartAccessories: orderData.smartAccessories,
+      addaddons: orderData.addaddons,
+      shipping_method: orderData.shipping_method,
+      totalAmount,
+      // tax,
+      type: 'combined',
+      shippingAddress,
+      billingAddress,
+      orderNotes: orderData.orderNotes,
+      isGuest: userId === 'Guest' ? true : false,
+    });
+
+    // Save the order to the database
+    const newOrder = await order.save();
+    console.log(newOrder, "newOrder")
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const message = {
+      from: "OneTapConnect:otcdevelopers@gmail.com",
+      to: email,
+      subject: `Please confirm your email`,
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h4><center>Invoice #123</center></h4>
+          </br>
+          <p>Hi ${first_name} ${last_name},<br/>
+          An invoice has been create for you by  ${orderedBy}.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/sign-up" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
+            </div>
+            
+        </div> <br/>
+        <p>Your privacy in important to us. By placing the order, you agree to<a href="https://app.1tapconnect.com/terms-of-use"> our terms of service,</a><a href="https://app.1tapconnect.com/privacy-policy"> privacy policy</a> and <a href="https://app.1tapconnect.com/refund-policy">refund policy.</a> </p>
+        <br/>
+        <h5><center>Technical issue?</center></h5>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+});
 
 // Creates an order
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
@@ -778,7 +969,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     // console.log("paymentIntentUpdate")
     let user;
     if (userId !== "Guest") {
-       user = await UserModel.findById(userId);
+      user = await UserModel.findById(userId);
       if (!user) {
         return next(new ErrorHandler("User not found", 404));
       }
@@ -833,7 +1024,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       // Create a new order linked to the specific user
       const order = new Order({
         user: userId === 'Guest' ? null : userId,
-        company : userId === 'Guest' ? null  : user.companyID, // Link the order to the specific user
+        company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
         smartAccessories,
         totalAmount,
         tax,
@@ -1110,7 +1301,7 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
 
     const order = new Order({
       user: userId,
-      company:companyID,
+      company: companyID,
       shippingAddress,
       billingAddress,
       totalAmount,
@@ -1320,7 +1511,7 @@ exports.fetchCardsforOtcAdminPanel = catchAsyncErrors(async (req, res, next) => 
 })
 
 exports.updateCardsforOtcAdminPanel = catchAsyncErrors(async (req, res, next) => {
-  const { paymentData , superAdminUserid} = req.body;
+  const { paymentData, superAdminUserid } = req.body;
   // const isPrimary = req.body.isPrimary 
   const { type } = paymentData;
   if (type === 'create') {
