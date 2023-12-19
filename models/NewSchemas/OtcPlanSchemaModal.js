@@ -31,7 +31,7 @@ const planSchema = new mongoose.Schema({
   // smart_accessories : 
   smart_accessories: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'product',
+    // ref: 'product',
     require: false,
     set: (v) => (v === "" ? null : v),
   }],
