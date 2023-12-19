@@ -4722,6 +4722,19 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         },
         { new: true }
       );
+      const companyUsers = await User.updateMany(
+        {
+          companyID: companyid,
+          role: { $in: ["administrator", "teammember", "manager"] },
+        },
+        {
+          $set: { delete_account_status: 'inactive' },
+        },
+      );
+      if (companyUsers.nModified === 0) {
+        console.log('No matching users found for companyUsers update.');
+      }
+
       if (!updatedUser) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
@@ -4792,8 +4805,8 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         expires: new Date(Date.now()),
         httpOnly: true,
       });
-      return res.status(200).json({ success: true, message: 'OTP verified' });
       scheduleTokenExpiration(recoveryToken, userid, companyid);
+      return res.status(200).json({ success: true, message: 'OTP verified' });
     } else {
       return res.status(400).json({ success: false, message: 'Incorrect OTP' });
     }
@@ -4806,11 +4819,20 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+const userTimeouts = {};
 function scheduleTokenExpiration(token, userid, companyid) {
   const { exp } = jwt.decode(token);
   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
-  console.log(expirationTime, ".....expiring time")
-  setTimeout(async () => {
+  console.log(expirationTime, ".....expiring time");
+
+  const expirationTimeInSeconds = Math.floor(expirationTime / 1000);
+  const hours = Math.floor(expirationTimeInSeconds / 3600);
+  const minutes = Math.floor((expirationTimeInSeconds % 3600) / 60);
+  const seconds = expirationTimeInSeconds % 60;
+  // console.log(`Expiration Time: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+
+  const timeoutId = setTimeout(async () => {
+    console.log('called delete');
     try {
       const user = await User.findOne({ _id: userid });
       if (user && user.recoveryToken === token) {
@@ -4836,24 +4858,113 @@ function scheduleTokenExpiration(token, userid, companyid) {
           'Company Share Referral data not found'
         );
         deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+        delete userTimeouts[userid];
         await Promise.all(deletePromises);
+        await handleDataDeletionSuccess(companyid);
         // console.log(`Expired token for user ${userid} deleted.`);
       }
     } catch (error) {
       console.error('Error deleting expired token:', error);
     }
   }, expirationTime);
+  // Store the timeout ID associated with the user
+  userTimeouts[userid] = timeoutId;
 }
+// function scheduleTokenExpiration(token, userid, companyid) {
+//   const { exp } = jwt.decode(token);
+//   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
+//   console.log(expirationTime, ".....expiring time")
+
+//   const expirationTimeInSeconds = Math.floor(expirationTime / 1000);
+//   const hours = Math.floor(expirationTimeInSeconds / 3600);
+//   const minutes = Math.floor((expirationTimeInSeconds % 3600) / 60);
+//   const seconds = expirationTimeInSeconds % 60;
+//   // console.log(`Expiration Time: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+
+//   setTimeout(async () => {
+//     console.log('called delete')
+//     try {
+//       const user = await User.findOne({ _id: userid });
+//       if (user && user.recoveryToken === token) {
+//         const deletePromises = [];
+//         const pushDeletePromise = async (deletePromise, errorMessage) => {
+//           try {
+//             const result = await deletePromise;
+//             if (!result) {
+//               console.log(errorMessage);
+//             }
+//           } catch (error) {
+//             console.error('Error deleting data:', error);
+//           }
+//         };
+//         pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
+//         pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
+//         pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
+//         pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
+//         pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
+//         pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+//         pushDeletePromise(
+//           CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
+//           'Company Share Referral data not found'
+//         );
+//         deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+//         await Promise.all(deletePromises);
+//         await handleDataDeletionSuccess(companyid);
+//         // console.log(`Expired token for user ${userid} deleted.`);
+//       }
+//     } catch (error) {
+//       console.error('Error deleting expired token:', error);
+//     }
+//   }, expirationTime);
+// }
+async function handleDataDeletionSuccess(companyid) {
+  console.log(`Data for company ${companyid} successfully deleted.`);
+  // const companyuser = await User.find({ companyID: companyid });
+  try {
+    const companyUsers = await User.find({
+      companyID: companyid,
+      role: { $in: ["administrator", "teammember", "manager"] }
+    });
+
+    const deletePromises = [];
+    const pushDeletePromise = async (deletePromise, errorMessage) => {
+      try {
+        const result = await deletePromise;
+        if (!result) {
+          console.log(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error deleting data:', error);
+      }
+    };
+    for (const user of companyUsers) {
+      const deletePromise = User.findOneAndDelete({ _id: user._id });
+      pushDeletePromise(deletePromise, `User with _id ${user._id} not found`);
+      const userInfoDeletePromise = UserInformation.findOneAndDelete({ user_id: user._id });
+      pushDeletePromise(userInfoDeletePromise, `User Information for _id ${user._id} not found`);
+      const cardsDeletePromise = Cards.findOneAndDelete({ userID: user._id });
+      pushDeletePromise(cardsDeletePromise, `Card info for _id ${user._id} not found`);
+      const billingAddressDeletePromise = billingAddress.findOneAndDelete({ userId: user._id });
+      pushDeletePromise(billingAddressDeletePromise, `Billing address for _id ${user._id} not found`);
+      const shippingAddressDeletePromise = shippingAddress.findOneAndDelete({ userId: user._id });
+      pushDeletePromise(shippingAddressDeletePromise, `Shipping address for _id ${user._id} not found`);
+    }
+    await Promise.all(deletePromises);
+  } catch (error) {
+    console.error('Error deleting users:', error);
+  }
+}
+
 exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
   const { email, password, token } = req.body;
-  // console.log("tooken.....",token)
+  console.log("tooken.....",token)
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password are required' });
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userid = decoded._id;
-    // console.log("iddd...",userid)
+    console.log("iddd...",userid)
     const user = await User.findOne({ _id: userid }).select("+password");
     if (!user) {
       return res.status(400).json({ success: false, message: 'User not found' });
@@ -4867,7 +4978,7 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Incorrect Password' });
     }
     const userRecoveryToken = user.recoveryToken;
-    // console.log("database token........",userRecoveryToken)
+    console.log("database token........",userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
@@ -4882,18 +4993,18 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
         );
         return res.status(200).json({ success: true, message: 'Token verified and fields updated successfully' });
       } catch (error) {
-        // console.error(error);
+        console.error(error);
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
       }
     });
   } catch (error) {
-    // console.error(error);
+    console.error(error);
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) => {
   const { acc_recover_token } = req.body;
-  // console.log(acc_recover_token, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+  console.log(acc_recover_token, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
   try {
     const decoded = jwt.verify(acc_recover_token, process.env.JWT_SECRET);
     const userid = decoded._id;
@@ -4902,7 +5013,7 @@ exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) 
       return res.status(400).json({ success: false, message: 'User not found' });
     }
     const userRecoveryToken = user.recoveryToken;
-    // console.log("database token........", userRecoveryToken)
+    console.log("database token........", userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET);
     await User.findOneAndUpdate(
       { _id: userid },
