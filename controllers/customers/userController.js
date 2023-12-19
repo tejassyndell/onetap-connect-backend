@@ -2531,6 +2531,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.first_login = true;
 
   const order = new Order({
+    paymentStatus:"paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -2862,6 +2863,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   company.address = billingdata;
   company.company_name = company_name;
   const order = new Order({
+    paymentStatus:"paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -4546,6 +4548,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
     // Create a new order linked to the specific user
     const order = new Order({
+      paymentStatus:"paid",
       user: userId, // Link the order to the specific user
       smartAccessories,
       totalAmount,

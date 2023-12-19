@@ -194,7 +194,7 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   console.log("..........")
   const taxID = req.body.taxId;
 
-// console.log(req.body)
+  // console.log(req.body)
   const { type, planName } = req.body.plandata;
   const productID = type === 'monthly'
     ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
@@ -519,7 +519,7 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     const { paymentToken, customerID, subscriptionId, plandata, selectedCard, existingcard } = req.body;
     const { type, planName } = plandata;
     console.log(".......................................................................")
-    console.log(req.body.plandata.type )
+    console.log(req.body.plandata.type)
     console.log(".......................................................................")
     const productID = type === 'monthly'
       ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
@@ -670,7 +670,8 @@ exports.isActive = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ success: false, error: error });
   }
 });
-// Creates an order
+
+// Creates an order from admin 
 exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
   try {
     // Get the user ID from the authenticated user or request data
@@ -749,12 +750,110 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
       billingAddress,
       orderNotes: orderData.orderNotes,
       isGuest: userId === 'Guest' ? true : false,
+      paymentStatus: 'pending',
     });
 
     // Save the order to the database
     const newOrder = await order.save();
     console.log(newOrder, "newOrder")
+    const orderNumber = newOrder.orderNumber;
+   
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+});
+// Creates an order and send invoice
+exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Get the user ID from the authenticated user or request data
+    const userId = req.body.userId;
+    const {
+      email,
+      last_name,
+      first_name,
+      // tax,
+      billingAddress,
+      shippingAddress,
+      orderData,
+      totalAmount,
+      referrer,
+      referrerName,
+      dealOwner,
+      customerIp,
+      orderedBy,
+    } = req.body;
 
+
+    // Save Addresses
+    let user;
+    if (userId !== "Guest") {
+      user = await UserModel.findById(userId);
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+      // Update user fields
+      user.referrerName = referrerName;
+      user.dealOwner = dealOwner;
+      user.referrer = referrer;
+      user.customerIp = customerIp;
+
+      // Save user updates
+      await user.save();
+
+      let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
+      if (!billingAddressFind) {
+        billingAddressFind = new billingAddressModal({
+          userId: user._id,
+          billing_address: billingAddress,
+        });
+      } else {
+        billingAddressFind.billing_address = billingAddress;
+      }
+
+      let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
+
+      if (!shippingAddressFind) {
+        shippingAddressFind = new shippingAddressModal({
+          userId: user._id,
+          shipping_address: shippingAddress,
+        });
+      }
+
+      await billingAddressFind.save();
+      await shippingAddressFind.save();
+    }
+
+    // Create a new order linked to the specific user
+    const order = new Order({
+      user: userId === 'Guest' ? null : userId,
+      company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+      email,
+      last_name,
+      first_name,
+      subscription_details: orderData.subscription_details,
+      smartAccessories: orderData.smartAccessories,
+      addaddons: orderData.addaddons,
+      shipping_method: orderData.shipping_method,
+      totalAmount,
+      // tax,
+      type: 'combined',
+      shippingAddress,
+      billingAddress,
+      orderNotes: orderData.orderNotes,
+      isGuest: userId === 'Guest' ? true : false,
+      paymentStatus: 'pending',
+    });
+
+    // Save the order to the database
+    const newOrder = await order.save();
+    console.log(newOrder, "newOrder")
+    const orderNumber = newOrder.orderNumber;
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       port: 587,
@@ -787,14 +886,14 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
           </div>
           <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
           <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-          <h4><center>Invoice #123</center></h4>
+          <h4><center>Invoice ${orderNumber}</center></h4>
           </br>
           <p>Hi ${first_name} ${last_name},<br/>
           An invoice has been create for you by  ${orderedBy}.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
-                <a href="${process.env.FRONTEND_URL}/sign-up" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
+                <a href="${process.env.FRONTEND_URL}/ordersummary/${orderNumber}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
             </div>
             
         </div> <br/>
@@ -824,32 +923,6 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
         console.log(info.response);
       }
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     res.status(201).json({
       success: true,
@@ -1029,6 +1102,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
       // Create a new order linked to the specific user
       const order = new Order({
+        paymentStatus:"paid",
         user: userId === 'Guest' ? null : userId,
         company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
         smartAccessories,
@@ -1452,6 +1526,7 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
 
 
     const order = new Order({
+      paymentStatus:"paid",
       user: userId,
       company: companyID,
       shippingAddress,
