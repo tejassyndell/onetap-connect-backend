@@ -20,7 +20,8 @@ const {
   updateCardsforOtcAdminPanel,
   switchToManualRenewalforOtcAdminPanel,
   createOrderWithoutPayment,
-  purchaseusers
+  purchaseusers,
+  createOrderWithoutPaymentAndSendInvoice,
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -46,5 +47,6 @@ router.post("/user-purchase",isAuthenticatedUser , purchaseusers);
 router.post('/admin/payment/get-saved-cards', fetchCardsforOtcAdminPanel)
 router.post('/admin/payment/update-card', updateCardsforOtcAdminPanel)
 router.post('/admin/create-order-without-Payment', createOrderWithoutPayment)
+router.post('/admin/create-order-and-send-invoice', createOrderWithoutPaymentAndSendInvoice)
 router.post('/admin/payment/switchToManualRenewal', switchToManualRenewalforOtcAdminPanel)
 module.exports = router;
