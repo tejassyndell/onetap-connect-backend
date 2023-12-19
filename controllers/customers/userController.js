@@ -40,7 +40,7 @@ const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
 
 const { getMaxListeners } = require("events");
-const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
+// const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
 const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
 dotenv.config();

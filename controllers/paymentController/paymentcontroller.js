@@ -17,6 +17,8 @@ const Product_Professional_Yearly = process.env.Professional_Yearly
 const Product_Professional_monthly = process.env.Professional_monthly
 const monthlyProfessionalPriceID = process.env.MONTHLY_PROFESSIONAL_PLAN_PRICE_ID
 const monthlyTeamPriceID = process.env.MONTHLY_TEAM_PLAN_PRICE_ID
+const Subscription_Addons = process.env.Subscription_Addons
+const Onetime_Addons = process.env.Onetime_Addons
 
 // const { v4: uuidv4 } = require('uuid');
 
