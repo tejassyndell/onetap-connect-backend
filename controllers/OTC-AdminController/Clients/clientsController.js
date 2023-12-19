@@ -27,6 +27,7 @@ const InvitedTeamMemberModel = require("../../../models/Customers/InvitedTeamMem
 const { Types } = require('mongoose');
 const user_billing_addressModel = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const user_shipping_addressesModel = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
+const Company_information = require("../../../models/NewSchemas/Company_informationModel.js")
 function generateUniqueCode() {
   let code;
   const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -2973,3 +2974,36 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
     console.error('Error sending order confirmation email:', error);
   }
 });
+
+
+exports.addreferer = catchAsyncErrors(async (req,res,next) =>{
+  const {companyId,referrer} = req.body
+  try {
+    // Find the document by ID
+    const company = await Company_information.findById(companyId);
+
+    // If the document is found, update the referrer field
+    if (company) {
+      company.referer = referrer;
+      await company.save();
+
+      return res.json({ success: true, message: 'Referrer added successfully' });
+    } else {
+      return res.status(404).json({ success: false, message: 'Company not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+})
+exports.getreferer = catchAsyncErrors(async(req,res,next)=>{
+  const {companyId} = req.body
+
+  const referer = await Company_information.findOne({ _id: companyId }, 'referer');
+
+  if (!referer) {
+    return res.status(404).json({ success: false, message: 'Referer not found for the given company ID' });
+  }
+
+  res.status(200).json({ success: true, referer });
+})
