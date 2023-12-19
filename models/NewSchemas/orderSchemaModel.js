@@ -167,6 +167,7 @@ const order_Schema = new mongoose.Schema(
       price: { type: Number }
     }],
     tracking_number: { type: String },
+    sumTotalWeights:{ type: String },
   },
   { timestamps: true }
 );

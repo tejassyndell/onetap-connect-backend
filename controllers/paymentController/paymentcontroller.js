@@ -879,6 +879,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       saveAddress,
       selectedEditAddress,
       email,
+      sumTotalWeights,
     } = req.body;
 
     if (userId === "Guest") {
@@ -1039,6 +1040,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         paymentDate,
         shippingAddress,
         billingAddress,
+        sumTotalWeights: sumTotalWeights,
         isGuest: userId === 'Guest' ? true : false,
       });
       // Save the order to the database
