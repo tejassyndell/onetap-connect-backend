@@ -193,6 +193,8 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   console.log(primary_card, "/////////////////////////////////////")
   console.log("..........")
   const taxID = req.body.taxId;
+
+// console.log(req.body)
   const { type, planName } = req.body.plandata;
   const productID = type === 'monthly'
     ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
@@ -516,6 +518,9 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     const proration_date = Math.floor(Date.now() / 1000);
     const { paymentToken, customerID, subscriptionId, plandata, selectedCard, existingcard } = req.body;
     const { type, planName } = plandata;
+    console.log(".......................................................................")
+    console.log(req.body.plandata.type )
+    console.log(".......................................................................")
     const productID = type === 'monthly'
       ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
       : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
