@@ -2538,6 +2538,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     email: user.email,
     paymentDate: new Date(),
     type: "Subscription",
+    smartAccessories: planData.smartAccessories.map((e)=> ({
+      productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
+    })) ,
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones.map((addon) => ({
