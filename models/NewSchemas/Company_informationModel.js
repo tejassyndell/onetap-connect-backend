@@ -185,8 +185,26 @@ const Company_information = new mongoose.Schema(
         }
       ],
       status: { type: String, default: "active" },
+      referer : {
+        type : String,
+        default:null
+      },
+      unq_compnany_id: {
+        type: Number,
+        default: 1,
+      },
   },
   { timestamps: true }
 );
+
+
+Company_information.pre("save", async function (next) {
+  // Increment userID only if it's a new document
+  if (this.isNew && this.unq_compnany_id) {
+    const highestOrder = await this.constructor.findOne({}, {}, { sort: { unq_compnany_id: -1 } });
+    this.unq_compnany_id = highestOrder ? highestOrder.unq_compnany_id + 1 : 1;
+  }
+  next();
+});
 
 module.exports = mongoose.model("companies_information", Company_information);
