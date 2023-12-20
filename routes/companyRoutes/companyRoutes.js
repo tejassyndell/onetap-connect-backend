@@ -130,7 +130,7 @@ router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
 
-router.post("/user/update/:id",isAuthenticatedUser, updateUserDetails);
+router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
 router.post("/cardDetails", isAuthenticatedUser, addCardDetails);
@@ -242,7 +242,7 @@ router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 router.post("/user/updateplanonrolechange", isAuthenticatedUser, updateUserPlanonRoleChange);
 
 // router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
-router.post( "/users/add-manual-user",isAuthenticatedUser,inviteTeamMembermanually);
+router.post("/users/add-manual-user", isAuthenticatedUser, inviteTeamMembermanually);
 router.post("/users/image-upload", imageinviteUpload, uploadImage);
 router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
@@ -250,27 +250,27 @@ router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
 // router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
 // router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
 router.post('/recover_account', verifyRecoveryToken)
-router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo); 
+router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo);
 // router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
 router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
-router.post('/generate-otp', isAuthenticatedUser, generateotp )
-router.post('/verify-otp',  verifyotp) 
-router.post('/google_acc_recover',google_verify_recover_account)
+router.post('/generate-otp', isAuthenticatedUser, generateotp)
+router.post('/verify-otp', verifyotp)
+router.post('/google_acc_recover', google_verify_recover_account)
 router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
 router.get('/userslugs/:id', getuniqueslugbyid)
 
-router.post('/update_accountSetupsteps', isAuthenticatedUser ,accountSetupsteps)
-router.post('/cancel_invitation' ,CancelInvitedUser)
-router.get("/getallcompanies", isAuthenticatedUser, getcompanies);  
-router.get('/getOrders', isAuthenticatedUser ,getOrders)
-router.post('/user/redirect' ,redirectUser)
+router.post('/update_accountSetupsteps', isAuthenticatedUser, accountSetupsteps)
+router.post('/cancel_invitation', CancelInvitedUser)
+router.get("/getallcompanies", isAuthenticatedUser, getcompanies);
+router.get('/getOrders', isAuthenticatedUser, getOrders)
+router.post('/user/redirect', redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
 router.get('/ship/shipstation', postshipstation);
 router.post('/ship/shipstation', getchangesoforder);
 // router.post('/ship/shipstation/webhook', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
-router.post('/getorderdetails',getorderdetails)
-router.post('/getAddonsForOrderSummary',getAddonsForOrderSummary)
+router.post('/getorderdetails', getorderdetails)
+router.post('/getAddonsForOrderSummary', getAddonsForOrderSummary)
 // router.post('/ship/rate', getrateoforder)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)

@@ -40,7 +40,7 @@ const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
 
 const { getMaxListeners } = require("events");
-const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
+// const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
 const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
 dotenv.config();
@@ -81,7 +81,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
   const message = {
-    from: process.env.NODMAILER_EMAIL,
+    from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
     to: email,
     subject: `Verify your email address`,
     //   text: `Your Verification code is ${code}`,
@@ -713,7 +713,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const message = {
-      from: "OneTapConnect:otcdevelopers@gmail.com",
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -1017,8 +1017,8 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const messageData = {
-      from: "yashpatel.syndell@gmail.com",
-      to: email, // Set the recipient email address
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
+      to: email,
       subject: "Request for Assistance",
       html: `
       <!DOCTYPE html>
@@ -1151,7 +1151,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "OneTapConnect:otcdevelopers@gmail.com",
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       html: `
@@ -1319,7 +1319,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const message = {
-        from: "OneTapConnect:otcdevelopers@gmail.com",
+        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
         to: email,
         subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2489,6 +2489,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         renewal_date: planData.renewal_date,
         taxRate: planData.taxRate,
         customer_id: planData.customer_id,
+        planID:planData.planID
       },
     });
     // userInformation.subscription_details = planData;
@@ -2513,7 +2514,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       renewal_date: planData.renewal_date,
       taxRate: planData.taxRate,
       customer_id: planData.customer_id,
-      perUser_price : planData.perUser_price
+      perUser_price : planData.perUser_price,
+      planID:planData.planID
     };
   }
   shippingAddressFind.shipping_address.address_name = "Default";
@@ -2529,6 +2531,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.first_login = true;
 
   const order = new Order({
+    paymentStatus:"paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -2536,6 +2539,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     email: user.email,
     paymentDate: new Date(),
     type: "Subscription",
+    smartAccessories: planData.smartAccessories.map((e)=> ({
+      productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
+    })) ,
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones.map((addon) => ({
@@ -2646,7 +2652,7 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -2860,6 +2866,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   company.address = billingdata;
   company.company_name = company_name;
   const order = new Order({
+    paymentStatus:"paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -2901,7 +2908,7 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`", // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -3731,7 +3738,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     const message = {
-      from: "OneTapConnect:otcdevelopers@gmail.com",
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -3999,7 +4006,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "OneTapConnect:otcdevelopers@gmail.com",
+    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4544,6 +4551,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
     // Create a new order linked to the specific user
     const order = new Order({
+      paymentStatus:"paid",
       user: userId, // Link the order to the specific user
       smartAccessories,
       totalAmount,
@@ -4621,7 +4629,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: "OneTapConnect:otcdevelopers@gmail.com",
+    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4720,6 +4728,19 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         },
         { new: true }
       );
+      const companyUsers = await User.updateMany(
+        {
+          companyID: companyid,
+          role: { $in: ["administrator", "teammember", "manager"] },
+        },
+        {
+          $set: { delete_account_status: 'inactive' },
+        },
+      );
+      if (companyUsers.nModified === 0) {
+        console.log('No matching users found for companyUsers update.');
+      }
+
       if (!updatedUser) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
@@ -4727,7 +4748,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: "OneTapConnect:otcdevelopers@gmail.com",
+        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
@@ -4790,8 +4811,8 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         expires: new Date(Date.now()),
         httpOnly: true,
       });
-      return res.status(200).json({ success: true, message: 'OTP verified' });
       scheduleTokenExpiration(recoveryToken, userid, companyid);
+      return res.status(200).json({ success: true, message: 'OTP verified' });
     } else {
       return res.status(400).json({ success: false, message: 'Incorrect OTP' });
     }
@@ -4804,11 +4825,20 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+const userTimeouts = {};
 function scheduleTokenExpiration(token, userid, companyid) {
   const { exp } = jwt.decode(token);
   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
-  console.log(expirationTime, ".....expiring time")
-  setTimeout(async () => {
+  console.log(expirationTime, ".....expiring time");
+
+  const expirationTimeInSeconds = Math.floor(expirationTime / 1000);
+  const hours = Math.floor(expirationTimeInSeconds / 3600);
+  const minutes = Math.floor((expirationTimeInSeconds % 3600) / 60);
+  const seconds = expirationTimeInSeconds % 60;
+  // console.log(`Expiration Time: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+
+  const timeoutId = setTimeout(async () => {
+    console.log('called delete');
     try {
       const user = await User.findOne({ _id: userid });
       if (user && user.recoveryToken === token) {
@@ -4834,24 +4864,113 @@ function scheduleTokenExpiration(token, userid, companyid) {
           'Company Share Referral data not found'
         );
         deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+        delete userTimeouts[userid];
         await Promise.all(deletePromises);
+        await handleDataDeletionSuccess(companyid);
         // console.log(`Expired token for user ${userid} deleted.`);
       }
     } catch (error) {
       console.error('Error deleting expired token:', error);
     }
   }, expirationTime);
+  // Store the timeout ID associated with the user
+  userTimeouts[userid] = timeoutId;
 }
+// function scheduleTokenExpiration(token, userid, companyid) {
+//   const { exp } = jwt.decode(token);
+//   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
+//   console.log(expirationTime, ".....expiring time")
+
+//   const expirationTimeInSeconds = Math.floor(expirationTime / 1000);
+//   const hours = Math.floor(expirationTimeInSeconds / 3600);
+//   const minutes = Math.floor((expirationTimeInSeconds % 3600) / 60);
+//   const seconds = expirationTimeInSeconds % 60;
+//   // console.log(`Expiration Time: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+
+//   setTimeout(async () => {
+//     console.log('called delete')
+//     try {
+//       const user = await User.findOne({ _id: userid });
+//       if (user && user.recoveryToken === token) {
+//         const deletePromises = [];
+//         const pushDeletePromise = async (deletePromise, errorMessage) => {
+//           try {
+//             const result = await deletePromise;
+//             if (!result) {
+//               console.log(errorMessage);
+//             }
+//           } catch (error) {
+//             console.error('Error deleting data:', error);
+//           }
+//         };
+//         pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
+//         pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
+//         pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
+//         pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
+//         pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
+//         pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+//         pushDeletePromise(
+//           CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
+//           'Company Share Referral data not found'
+//         );
+//         deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+//         await Promise.all(deletePromises);
+//         await handleDataDeletionSuccess(companyid);
+//         // console.log(`Expired token for user ${userid} deleted.`);
+//       }
+//     } catch (error) {
+//       console.error('Error deleting expired token:', error);
+//     }
+//   }, expirationTime);
+// }
+async function handleDataDeletionSuccess(companyid) {
+  console.log(`Data for company ${companyid} successfully deleted.`);
+  // const companyuser = await User.find({ companyID: companyid });
+  try {
+    const companyUsers = await User.find({
+      companyID: companyid,
+      role: { $in: ["administrator", "teammember", "manager"] }
+    });
+
+    const deletePromises = [];
+    const pushDeletePromise = async (deletePromise, errorMessage) => {
+      try {
+        const result = await deletePromise;
+        if (!result) {
+          console.log(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error deleting data:', error);
+      }
+    };
+    for (const user of companyUsers) {
+      const deletePromise = User.findOneAndDelete({ _id: user._id });
+      pushDeletePromise(deletePromise, `User with _id ${user._id} not found`);
+      const userInfoDeletePromise = UserInformation.findOneAndDelete({ user_id: user._id });
+      pushDeletePromise(userInfoDeletePromise, `User Information for _id ${user._id} not found`);
+      const cardsDeletePromise = Cards.findOneAndDelete({ userID: user._id });
+      pushDeletePromise(cardsDeletePromise, `Card info for _id ${user._id} not found`);
+      const billingAddressDeletePromise = billingAddress.findOneAndDelete({ userId: user._id });
+      pushDeletePromise(billingAddressDeletePromise, `Billing address for _id ${user._id} not found`);
+      const shippingAddressDeletePromise = shippingAddress.findOneAndDelete({ userId: user._id });
+      pushDeletePromise(shippingAddressDeletePromise, `Shipping address for _id ${user._id} not found`);
+    }
+    await Promise.all(deletePromises);
+  } catch (error) {
+    console.error('Error deleting users:', error);
+  }
+}
+
 exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
   const { email, password, token } = req.body;
-  // console.log("tooken.....",token)
+  console.log("tooken.....",token)
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password are required' });
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userid = decoded._id;
-    // console.log("iddd...",userid)
+    console.log("iddd...",userid)
     const user = await User.findOne({ _id: userid }).select("+password");
     if (!user) {
       return res.status(400).json({ success: false, message: 'User not found' });
@@ -4865,7 +4984,7 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Incorrect Password' });
     }
     const userRecoveryToken = user.recoveryToken;
-    // console.log("database token........",userRecoveryToken)
+    console.log("database token........",userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
@@ -4880,18 +4999,18 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
         );
         return res.status(200).json({ success: true, message: 'Token verified and fields updated successfully' });
       } catch (error) {
-        // console.error(error);
+        console.error(error);
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
       }
     });
   } catch (error) {
-    // console.error(error);
+    console.error(error);
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) => {
   const { acc_recover_token } = req.body;
-  // console.log(acc_recover_token, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+  console.log(acc_recover_token, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
   try {
     const decoded = jwt.verify(acc_recover_token, process.env.JWT_SECRET);
     const userid = decoded._id;
@@ -4900,7 +5019,7 @@ exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) 
       return res.status(400).json({ success: false, message: 'User not found' });
     }
     const userRecoveryToken = user.recoveryToken;
-    // console.log("database token........", userRecoveryToken)
+    console.log("database token........", userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET);
     await User.findOneAndUpdate(
       { _id: userid },
@@ -5120,7 +5239,7 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: 'OneTapConnect:otcdevelopers@gmail.com',
+    from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
     to: recipientEmail,
     subject: `${recipientName} shared their digital business card.`,
     // text: 'Body of your email'

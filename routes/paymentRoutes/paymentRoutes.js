@@ -19,7 +19,9 @@ const {
   fetchCardsforOtcAdminPanel,
   updateCardsforOtcAdminPanel,
   switchToManualRenewalforOtcAdminPanel,
-  createOrderWithoutPayment
+  createOrderWithoutPayment,
+  purchaseusers,
+  createOrderWithoutPaymentAndSendInvoice,
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -37,6 +39,7 @@ router.post('/payment/cancelSubscription', cancelPlan)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card', isAuthenticatedUser, updateCards)
 router.post("/addon-purchase", isAuthenticatedUser, purchaseaddon);
+router.post("/user-purchase",isAuthenticatedUser , purchaseusers);
 
 
 
@@ -44,5 +47,6 @@ router.post("/addon-purchase", isAuthenticatedUser, purchaseaddon);
 router.post('/admin/payment/get-saved-cards', fetchCardsforOtcAdminPanel)
 router.post('/admin/payment/update-card', updateCardsforOtcAdminPanel)
 router.post('/admin/create-order-without-Payment', createOrderWithoutPayment)
+router.post('/admin/create-order-and-send-invoice', createOrderWithoutPaymentAndSendInvoice)
 router.post('/admin/payment/switchToManualRenewal', switchToManualRenewalforOtcAdminPanel)
 module.exports = router;
