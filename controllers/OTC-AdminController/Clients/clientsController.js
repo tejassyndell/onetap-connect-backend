@@ -28,6 +28,7 @@ const { Types } = require('mongoose');
 const user_billing_addressModel = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const user_shipping_addressesModel = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
 const Company_information = require("../../../models/NewSchemas/Company_informationModel.js")
+const Otc_Adminteams = require("../../../models/Otc_AdminModels/Otc_Adminteams.js")
 function generateUniqueCode() {
   let code;
   const alphabetic = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -3007,3 +3008,59 @@ exports.getreferer = catchAsyncErrors(async(req,res,next)=>{
 
   res.status(200).json({ success: true, referer });
 })
+
+exports.createTeam = catchAsyncErrors(async (req, res, next) => {
+  const { team_name } = req.body;
+
+  try {
+    const newTeam = new Otc_Adminteams({ team_name });
+    await newTeam.save();
+    res.status(201).json({ message: 'Admin Team added successfully' });
+  } catch (error) {
+    console.error('Error adding team:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+
+});
+
+exports.getAdminTeam = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const teams = await Otc_Adminteams.find();
+    res.status(200).json({ teams });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+exports.deleteAdminTeam = catchAsyncErrors(async (req, res, next) => {
+  const { teamId } = req.params;
+  try {
+    const result = await Otc_Adminteams.deleteOne({ _id: teamId });
+
+    if (result.deletedCount > 0) {
+      res.status(200).json({ message: 'Team deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Team not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting team:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+exports.adminRenameTeam = catchAsyncErrors(async (req, res, next) => {
+  const { teamId, newTeamName } = req.body; 
+  console.log("team id for rename",teamId);
+  console.log("team name for rename",newTeamName);
+
+  try {
+    const result = await Otc_Adminteams.updateOne({ _id: teamId }, {team_name: newTeamName });
+
+    if (result) {
+      res.status(200).json({ message: 'Team updated successfully' });
+    }
+  } catch (error) {
+    console.error('Error updating team:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});

@@ -5,7 +5,8 @@ const {
   ,createClient, getActiveUsersOfCompany, getTeamofCompany, updateTeamNamebyAdmin, removeTeamFromUsersByadmin, deleteteamofselectedcompany, renameteamofselectedcompany, createNewteamofselectedcompany, getAllShippingAddressofcompany, createShippingAddressofcompany, removeShippingAddressofcompany, editShippingAddressofcompany, updateuserroleofcompanyusers, updateuserplanonrolechangeofcompany, fetchbillingaddressofcompany, updateBillingAddressofcompany, getallcompanynames, otcadminusers, addAdminUser, updateAdminUser,getcompanyorders, GetorderByCompanyIDandOrderNumber, saveclientTags, getclienttags
 ,sendOrderInvoice,
 addreferer,
-getreferer} = require("../../controllers/OTC-AdminController/Clients/clientsController");
+getreferer,
+createTeam,getAdminTeam,deleteAdminTeam,adminRenameTeam} = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -120,5 +121,9 @@ router.post('/admin/savetag', saveclientTags)
 router.post('/admin/getclienttags', getclienttags)
 router.post('/admin/addreferer',addreferer)
 router.post('/admin/getreferer',getreferer)
+router.post("/admin/create-team", createTeam);
+router.get("/admin/teamdata", getAdminTeam);
+router.delete("/admin/delete-team/:teamId", deleteAdminTeam);
+router.post("/admin/rename-team", adminRenameTeam);
 
 module.exports = router;
