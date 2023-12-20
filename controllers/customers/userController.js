@@ -5348,11 +5348,13 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   console.log("get req----------------------------------------------------------------------------")
   // console.log("called-----------------------------------------");
   const allorders = await Order.find({ type: 'smartAccessories' });
+  // const allorders = await Order.find({ orderNumber: "188" });
   console.log(allorders)
 
   const xmlOrders = allorders.map(order => {
     const orderID = order._id;
     const odrNum = order.orderNumber;
+    const odrtotalweight = order.sumTotalWeights;
     const OrderDate = order.createdAt;
     const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
     const OrderStatus = order.status;
@@ -5372,6 +5374,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
     const Pcode = order?.shippingAddress[0]?.postal_code;
 
     const xmlItems = order?.smartAccessories.map(item => {
+      const unitPriceFloat = parseFloat(item.price).toFixed(2);
       return `
     <Item>
       <SKU><![CDATA[FD88821]]></SKU>
@@ -5380,7 +5383,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
       <Weight>16</Weight>
       <WeightUnits>Ounces</WeightUnits>
       <Quantity>${item.quantity}</Quantity>
-      <UnitPrice>${item.price}</UnitPrice>
+      <UnitPrice>${unitPriceFloat}</UnitPrice>
       <Location><![CDATA[C3-D4]]></Location>
       <Options>
           <Option>
@@ -5446,6 +5449,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
     ${xmlOrders}
   </Orders>`;
 
+  console.log(xmlOrders)
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
 
