@@ -63,6 +63,12 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
 
+exports.getauser = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.params;
+  const user = await User.findOne({ email }).populate('companyID');
+  res.send(user);
+});
+
 exports.getClients = catchAsyncErrors(async (req, res, next) => {
   // Find user information with a non-empty 'plan'
   const userInformationWithPlan = await UserInformation.find({
