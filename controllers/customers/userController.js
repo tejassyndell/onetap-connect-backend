@@ -81,7 +81,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
   const message = {
-    from: process.env.NODMAILER_EMAIL,
+    from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
     to: email,
     subject: `Verify your email address`,
     //   text: `Your Verification code is ${code}`,
@@ -713,7 +713,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const message = {
-      from: "OneTapConnect:otcdevelopers@gmail.com",
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -1017,8 +1017,8 @@ exports.requestToManagerForUpdateUserInfo = catchAsyncErrors(async (req, res, ne
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const messageData = {
-      from: "yashpatel.syndell@gmail.com",
-      to: email, // Set the recipient email address
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
+      to: email,
       subject: "Request for Assistance",
       html: `
       <!DOCTYPE html>
@@ -1151,7 +1151,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "OneTapConnect:otcdevelopers@gmail.com",
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       html: `
@@ -1319,7 +1319,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const message = {
-        from: "OneTapConnect:otcdevelopers@gmail.com",
+        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
         to: email,
         subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -2652,7 +2652,7 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -2908,7 +2908,7 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`", // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -3738,7 +3738,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     const message = {
-      from: "OneTapConnect:otcdevelopers@gmail.com",
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4006,7 +4006,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "OneTapConnect:otcdevelopers@gmail.com",
+    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4629,7 +4629,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: "OneTapConnect:otcdevelopers@gmail.com",
+    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4748,7 +4748,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: "OneTapConnect:otcdevelopers@gmail.com",
+        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
@@ -5239,7 +5239,7 @@ exports.sharemycard_email = catchAsyncErrors(async (req, res, next) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: 'OneTapConnect:otcdevelopers@gmail.com',
+    from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
     to: recipientEmail,
     subject: `${recipientName} shared their digital business card.`,
     // text: 'Body of your email'
