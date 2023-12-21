@@ -1411,10 +1411,10 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const userId = userRecord.id;
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       const userinfocreate = await UserInformation.create({
-        user_id : userId,
-        company_ID : id,
-       
-       })
+        user_id: userId,
+        company_ID: id,
+
+      })
 
       const user_parmalink = await parmalinkSlug.create({
         user_id: userId,
@@ -2480,7 +2480,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
           addonId: addon.addonId,  // Convert addonId to ObjectId
           status: addon.status,
           assignTo: addon.assignTo,
-          price: addon.price,   
+          price: addon.price,
         })),
         subscription_id: planData.subscription_id,
         total_amount: planData.total_amount,
@@ -2492,7 +2492,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         renewal_date: planData.renewal_date,
         taxRate: planData.taxRate,
         customer_id: planData.customer_id,
-        planID:planData.planID
+        planID: planData.planID
       },
     });
     // userInformation.subscription_details = planData;
@@ -2517,8 +2517,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       renewal_date: planData.renewal_date,
       taxRate: planData.taxRate,
       customer_id: planData.customer_id,
-      perUser_price : planData.perUser_price,
-      planID:planData.planID
+      perUser_price: planData.perUser_price,
+      planID: planData.planID
     };
   }
   userInformation.smartAccessories = planData.smartAccessories.map((e)=> ({
@@ -2537,7 +2537,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.first_login = true;
 
   const order = new Order({
-    paymentStatus:"paid",
+    paymentStatus: "paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -2546,9 +2546,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     contact: user.contact,
     paymentDate: new Date(),
     type: "Subscription",
-    smartAccessories: planData.smartAccessories.map((e)=> ({
-      productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
-    })) ,
+    smartAccessories: planData.smartAccessories.map((e) => ({
+      productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+    })),
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones.map((addon) => ({
@@ -2557,7 +2557,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         assignTo: addon.assignTo,
         price: addon.price,
       })),
-   ...planData
+      ...planData
     },
     // subscription_details: planData,
     shippingAddress: shippingData,
@@ -2631,6 +2631,32 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     )
     console.log(logCoupons);
   }
+
+  // status update for supeadmin deactivated account.
+  const updatedUser = await User.updateOne(
+    { _id: id },
+    {
+      $set: { Account_status: 'is_Activated' },
+    },
+    { new: true }
+  );
+  const companyUsers = await User.updateMany(
+    {
+      companyID: companyID,
+      role: { $in: ["administrator", "teammember", "manager"] },
+    },
+    {
+      $set: { status: 'active' },
+    },
+  );
+  if (companyUsers.nModified === 0) {
+    console.log('No matching users found for companyUsers update.');
+  }
+  if (!updatedUser) {
+    console.log('No matching users found for companyUsers update.');
+    // return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
   await user.save();
   await card.save();
   await company.save();
@@ -2873,7 +2899,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   company.address = billingdata;
   company.company_name = company_name;
   const order = new Order({
-    paymentStatus:"paid",
+    paymentStatus: "paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -3816,22 +3842,22 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
 exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
   try {
     const { id } = req.user;
-    
+
     const userInfo = await UserInformation.find({ user_id: id });
-    
+
     if (!userInfo || userInfo.length === 0) {
       return next(new ErrorHandler("User Information Not Found", 401));
     }
-    
+
     const firstuserInfo = userInfo[0];
-    
+
     res.status(200).json({
       success: true,
-      firstuserInfo,  
+      firstuserInfo,
     });
   } catch (error) {
     return next(new ErrorHandler(error, 501));
-  
+
   }
 });
 
@@ -4558,7 +4584,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
     // Create a new order linked to the specific user
     const order = new Order({
-      paymentStatus:"paid",
+      paymentStatus: "paid",
       user: userId, // Link the order to the specific user
       smartAccessories,
       totalAmount,
@@ -4602,7 +4628,7 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.generateotp = catchAsyncErrors(async (req, res, next) => {
-  const { email, firstname } = req.body;
+  const { email, firstname, status } = req.body;
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const verificationToken = jwt.sign(
     { otp, email },
@@ -4618,7 +4644,12 @@ exports.generateotp = catchAsyncErrors(async (req, res, next) => {
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    sendOtpEmail(email, otp, firstname);
+    if (status === "deactivate") {
+      console.log(otp, "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ")
+      senddeactivateotpEmail(email, otp, firstname)
+    } else {
+      sendOtpEmail(email, otp, firstname);
+    }
     return res.status(200).json({ success: true, message: 'OTP sent successfully.' });
   } catch (error) {
     console.error(error);
@@ -4677,6 +4708,78 @@ const sendOtpEmail = (email, otp, firstname) => {
               Team OneTapConnect.<br/>
           </div>
       </body>
+    </html>
+  `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error(error);
+    } else {
+      // console.log('OTP email sent successfully:', info.response);
+    }
+  });
+};
+const senddeactivateotpEmail = (email, otp, firstname) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+  const mailOptions = {
+    from: "OneTapConnect:otcdevelopers@gmail.com",
+    to: email,
+    // to: "tarun.syndell@gmail.com",
+    subject: 'One-Time Password (OTP) for Onetap Connect Account Deactivation',
+    // text: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
+    html: `
+    <!DOCTYPE html>
+      <html>
+      
+      <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </head>
+      
+      <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+      
+      </div>
+      <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+     
+      <p>Dear ${firstname}<br/><br/>
+      We have received a request to deactivate your account. To proceed with this request, we need to verify your identity.<br/><br/>
+      Please use the following One-Time Password (OTP) within the next 10 minutes to confirm the deactivation of your account:<br/><br/><br/>
+
+      <span style="font-weight: bold;">OTP:</span>&nbsp; ${otp}<br/><br/><br/>
+
+      <span style="font-weight: bold;">Caution:</span>&nbsp; Once you deactivate your account, your subscription will also be canceled.<br/>
+
+      <div style="margin-top: 25px;">
+       <div style="font-weight: bold;">Technical issue?</div>
+         <div style="margin-top: 5px;">
+         <span>In case you're facing any technical issue, please contact our support team </span>
+         <span style="color: #2572e6;"><a href="https://support.onetapconnect.com/">here.</a></span>
+       </div>
+      </div><br/>
+      Thank you for using our platform.<br/><br/>
+      Best regards,<br/>
+      Team OneTapConnect.<br/>
+  </div>
+</body>
     </html>
   `,
     attachments: [
@@ -4970,14 +5073,14 @@ async function handleDataDeletionSuccess(companyid) {
 
 exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
   const { email, password, token } = req.body;
-  console.log("tooken.....",token)
+  console.log("tooken.....", token)
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password are required' });
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userid = decoded._id;
-    console.log("iddd...",userid)
+    console.log("iddd...", userid)
     const user = await User.findOne({ _id: userid }).select("+password");
     if (!user) {
       return res.status(400).json({ success: false, message: 'User not found' });
@@ -4991,7 +5094,7 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Incorrect Password' });
     }
     const userRecoveryToken = user.recoveryToken;
-    console.log("database token........",userRecoveryToken)
+    console.log("database token........", userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
@@ -5472,14 +5575,14 @@ exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
   if (!trcNum) {
     return res.status(404).json({ message: 'User not found' });
   }
-  const order = await Order.findOne({orderNumber: orderNum});
+  const order = await Order.findOne({ orderNumber: orderNum });
   if (order) {
     await Order.updateOne({ orderNumber: orderNum }, { tracking_number: trcNum });
     return res.status(200).json({
       message: 'Tracking number updated',
       order,
     });
-  }else{
+  } else {
     error
   }
   res.status(200).json({ message: 'Webhook received successfully' });
@@ -5490,7 +5593,7 @@ const apiKey = '4631a6eafe2e4771b4ceb4981881d1f1';
 const ratesEndpoint = 'https://ssapi.shipstation.com/shipments/getrates';
 
 exports.getrateoforder = catchAsyncErrors(async (req, res, next) => {
-  const {shipmentData}=req.body;
+  const { shipmentData } = req.body;
   // Make API request to get rates
   axios.post(ratesEndpoint, shipmentData, {
     headers: {
@@ -5518,7 +5621,7 @@ exports.sendTestData = async (req, res, next) => {
     res.status(500).json({ success: false, msg: "Internal Server Error" });
   }
 };
-exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
+exports.getorderdetails = catchAsyncErrors(async (req, res, next) => {
   try {
     const { orderNumber, user } = req.body;
     // console.log(orderNumber , user,"req.body")
@@ -5544,7 +5647,7 @@ exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
 
 exports.getAddonsForOrderSummary = catchAsyncErrors(async (req, res, next) => {
   try {
-    const {addonIds} = req.body;
+    const { addonIds } = req.body;
     // console.log(addonIds, "add on ids");
 
     // Assuming you have a MongoDB model named Addon
@@ -5915,7 +6018,7 @@ exports.cardEditorData = catchAsyncErrors(async (req, res, next) => {
         root: { props: { title: "About Us" } },
       },
     };
-  res.send(data)
+    res.send(data)
     return
   } catch (error) {
     console.error('Error :', error);
@@ -5923,3 +6026,51 @@ exports.cardEditorData = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+
+
+exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email: email });
+  const storedotp = user.otptoken;
+  const userid = user._id;
+  const userinfo = await UserInformation.findOne({ user_id: userid })
+  const user_subscription_id = userinfo.subscription_details.subscription_id
+  // console.log(user_subscription_id)
+  const companyid = user.companyID;
+  try {
+    const decodedToken = jwt.verify(storedotp, process.env.JWT_SECRET);
+    const userotp = decodedToken.otp;
+    // console.log(userotp, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    if (otp === userotp) {
+      console.log('verified')
+      const updatedUser = await User.updateOne(
+        { _id: userid },
+        {
+          $set: { Account_status: 'is_Deactivated' },
+          otptoken: null,
+        },
+        { new: true }
+      );
+      const companyUsers = await User.updateMany(
+        {
+          companyID: companyid,
+          role: { $in: ["administrator", "teammember", "manager"] },
+        },
+        {
+          $set: { status: 'Deactivate' },
+        },
+      );
+      if (companyUsers.nModified === 0) {
+        console.log('No matching users found for companyUsers update.');
+      }
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      return res.status(200).json({ success: true, message: 'OTP verified', user_subscription_id });
+    }else {
+      return res.status(400).json({ success: false, message: 'Incorrect OTP' });
+    }
+  }catch (error) {
+    console.log(error);
+  }
+});

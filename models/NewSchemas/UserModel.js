@@ -188,6 +188,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
+    Account_status: {
+      type: String,
+      default: 'is_Activated'
+    }
   },
   
   { timestamps: true }
