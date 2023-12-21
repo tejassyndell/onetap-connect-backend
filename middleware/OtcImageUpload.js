@@ -51,10 +51,10 @@ const saveImageToFolder = async (imageType, imageData) => {
     } else if (imageType === "favicon") {
         console.log("called favicon");
         fileNamePrefix = "favicon-";
-    }else if (imageType === "adminprofile") {
+    } else if (imageType === "adminprofile") {
         fileNamePrefix = "otcadmin-profile-image-";
     }
-     else {
+    else {
         throw new Error("Invalid image type");
     }
 
@@ -72,7 +72,7 @@ const saveImageToFolder = async (imageType, imageData) => {
         folderPath = "../uploads/favicon";
     } else if (imageType === "adminprofile") {
         folderPath = "../uploads/otcadminsprofileimages";
-    }  
+    }
     else {
         throw new Error("Invalid image type");
     }
@@ -109,7 +109,7 @@ const saveBase64Image = async (base64Data, filePath) => {
     }
 };
 const saveimageDatabase = async (type, userID, companyID, imagePath) => {
-    console.log(companyID,"--------------------------------------------------------------------------------------------------")
+    console.log(companyID, "--------------------------------------------------------------------------------------------------")
     const company = await Company.findById(companyID);
     if (type === "logo") {
         const oldLogoPath = company.logopath;
@@ -186,7 +186,7 @@ const saveimageDatabase = async (type, userID, companyID, imagePath) => {
             { avatar: imagePath },
             { new: true }
         );
-    }else if (type === "adminprofile") {
+    } else if (type === "adminprofile") {
         const removeuser = await OtcAdmins.findById({ _id: userID });
         const oldAvatarPath = removeuser.avatar;
 
@@ -213,7 +213,7 @@ const saveimageDatabase = async (type, userID, companyID, imagePath) => {
 };
 
 exports.otcImageUpload = (req, res, next) => {
-    console.log("calledd" , req.body);
+    console.log("calledd", req.body);
 
     upload(req, res, async (err) => {
         if (err) {
@@ -242,8 +242,8 @@ exports.otcImageUpload = (req, res, next) => {
             const { imageType } = req.body;
             const { id } = req.params;
             const { companyID } = req.body;
-            console.log(companyID , imageType ,"========================================================================================")
-            
+            console.log(companyID, imageType, "========================================================================================")
+
             const uploadedFileName = req.file ? req.file.filename : null;
 
             let base64FileName;
@@ -255,7 +255,7 @@ exports.otcImageUpload = (req, res, next) => {
                 base64FileName = await saveImageToFolder("favicon", base64ImageData);
             } else if (imageType === "adminprofile") {
                 base64FileName = await saveImageToFolder("adminprofile", base64ImageData);
-            } 
+            }
             else {
                 throw new Error("Invalid image type");
             }
@@ -280,3 +280,18 @@ exports.otcImageUpload = (req, res, next) => {
     });
 };
 
+  
+  exports.deleteimageupload = (req, res, next) => {
+    const filename = req.params.filename;
+    const filePath = path.join('uploads', 'otcadminsprofileimages', filename);
+    console.log(filePath, "delete");
+  
+    // Check if the file exists before attempting to delete
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ message: 'File deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'File not found' });
+    }
+  };
+  

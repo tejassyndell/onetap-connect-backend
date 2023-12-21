@@ -12,7 +12,7 @@ const { createProduct, imageUpload, createProductCategory } = require("../../con
 
 const { newTestAPIS } = require('../../controllers/OTC-AdminController/Clients/couponController');
 const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
-const { otcImageUpload } = require("../../middleware/OtcImageUpload");
+const { otcImageUpload,  deleteimageupload } = require("../../middleware/OtcImageUpload");
 
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
@@ -120,5 +120,6 @@ router.post('/admin/savetag', saveclientTags)
 router.post('/admin/getclienttags', getclienttags)
 router.post('/admin/addreferer',addreferer)
 router.post('/admin/getreferer',getreferer)
+router.delete('/admin/imagedelete/:filename',deleteimageupload)
 
 module.exports = router;
