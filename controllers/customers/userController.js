@@ -5288,13 +5288,14 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
+  console.log(id,"iddddddddddddddddddd")
   try {
     // Find orders by user ID
     const orders = await Order.find({ user: id }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     });
-
+    console.log(orders,"orderss")
     // Create an array to store user data for each order
     const ordersWithUserData = [];
 
@@ -5306,7 +5307,7 @@ exports.getOrders = catchAsyncErrors(async (req, res, next) => {
       const orderWithUserData = { ...order.toObject(), userdata };
       ordersWithUserData.push(orderWithUserData);
     }
-
+    console.log(ordersWithUserData,"orrrrrrrrrrrrrrrrrrr")
     res.status(200).json({ success: true, orders: ordersWithUserData });
   } catch (error) {
     console.error(error);

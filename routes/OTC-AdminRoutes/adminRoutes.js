@@ -8,15 +8,9 @@ const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth")
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
 
-const {
-  newTestAPIS,
-} = require("../../controllers/OTC-AdminController/Clients/couponController");
-const {
-  uploadProfilePicture,
-  uploadfavicon,
-  uploadLogo,
-} = require("../../controllers/customers/userController");
-const { otcImageUpload } = require("../../middleware/OtcImageUpload");
+const { newTestAPIS } = require('../../controllers/OTC-AdminController/Clients/couponController');
+const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
+const { otcImageUpload,  deleteimageupload } = require("../../middleware/OtcImageUpload");
 
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
@@ -184,5 +178,5 @@ router.post("/admin/delete-team", deleteAdminTeam);
 router.post("/admin/rename-team", adminRenameTeam);
 router.post("/admin/adduser-team", addUserTeam);
 router.post("/admin/remove-user-team", removeUserTeam);
-
+router.delete('/admin/imagedelete/:filename',deleteimageupload)
 module.exports = router;
