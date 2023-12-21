@@ -25,6 +25,7 @@ const order_Schema = new mongoose.Schema(
     email: {
       type: String,
     },
+    contact: { type: Number, default: null },
     status: {
       type: String,
       default: "Processing"

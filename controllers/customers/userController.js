@@ -2471,6 +2471,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
+      smartAccessories: planData.smartAccessories.map((e)=> ({
+        productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
+      })) ,
       subscription_details: {
         // addones: planData.addones,
         addones: planData.addones.map((addon) => ({
@@ -2518,6 +2521,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       planID:planData.planID
     };
   }
+  userInformation.smartAccessories = planData.smartAccessories.map((e)=> ({
+    productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
+  })) ,
   shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
   userInformation.shipping_method = shipping_method;
@@ -2537,6 +2543,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
+    contact: user.contact,
     paymentDate: new Date(),
     type: "Subscription",
     smartAccessories: planData.smartAccessories.map((e)=> ({

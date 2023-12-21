@@ -90,6 +90,17 @@ const users_information = new mongoose.Schema(
             type: { type: String },
             price: { type: Number }
           }],
+          smartAccessories: [
+            {
+              productId: { type: mongoose.Schema.Types.ObjectId, ref: "product" },
+              variationId: { type: String },
+              subtotal: { type: Number },
+              quantity: { type: Number },
+              price: { type: Number }, // final price
+              status: { type: String, default: 'N/A' },
+      
+            },
+          ],
         subscription_details: {
             // subscription: {
             //   type: mongoose.Schema.Types.ObjectId,
