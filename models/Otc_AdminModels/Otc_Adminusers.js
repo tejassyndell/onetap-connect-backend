@@ -2,41 +2,43 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 // Define the schema for administrators
-const adminSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    default: null,
+const adminSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      default: null,
+    },
+    lastName: {
+      type: String,
+      default: null,
+    },
+    email: {
+      type: String,
+      default: null,
+    },
+    password: {
+      type: String,
+      minLength: [8, "Minimum 8 character"],
+      select: false,
+      default: null,
+    },
+    userRole: {
+      type: String,
+      default: null,
+    },
+    phoneNumber: {
+      type: String,
+      default: null,
+    },
+    avatar: { type: String, default: "" },
+    officenumber: {
+      type: String,
+      default: null,
+    },
+    jobTitles: [{ type: String }],
+    team: { type: mongoose.Schema.Types.ObjectId, ref: "Otc_Adminteams" },
   },
-  lastName: {
-    type: String,
-    default: null,
-  },
-  email: {
-    type: String,
-    default: null,
-  },
-  password: {
-    type: String,
-    minLength: [8, "Minimum 8 character"],
-    select: false,
-    default: null,
-  },
-  userRole: {
-    type: String,
-    default: null,
-  },
-  phoneNumber: {
-    type: String,
-    default: null,
-  },
-  avatar: { type: String, default: "" },
-  officenumber: {
-    type: String,
-    default: null,
-  },
-  jobTitles: [{ type: String }],
-} ,
-{ timestamps: true }
+  { timestamps: true }
 );
 
 adminSchema.pre("save", async function (next) {
@@ -62,4 +64,3 @@ adminSchema.methods.getJWTToken = function () {
 const Admin = mongoose.model("Otc_Adminusers", adminSchema);
 
 module.exports = Admin;
-                                                                                                                                                                          

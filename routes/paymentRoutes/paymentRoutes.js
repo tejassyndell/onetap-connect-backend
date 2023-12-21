@@ -22,6 +22,7 @@ const {
   createOrderWithoutPayment,
   purchaseusers,
   createOrderWithoutPaymentAndSendInvoice,
+  manualRenewSubscription,
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -40,6 +41,7 @@ router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card', isAuthenticatedUser, updateCards)
 router.post("/addon-purchase", isAuthenticatedUser, purchaseaddon);
 router.post("/user-purchase",isAuthenticatedUser , purchaseusers);
+router.post("/payment/manual-renew-subscription" , manualRenewSubscription);
 
 
 
