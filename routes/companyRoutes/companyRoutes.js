@@ -100,6 +100,7 @@ const {
   getAddonsForOrderSummary,
   getrateoforder,
   cardEditorData,
+  verifydeactivateAccountotp,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -275,6 +276,7 @@ router.post('/getAddonsForOrderSummary', getAddonsForOrderSummary)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
 router.get('/test/cardEditordata', cardEditorData)
+router.post('/deactivate/verify-otp',verifydeactivateAccountotp)
 
 
 
