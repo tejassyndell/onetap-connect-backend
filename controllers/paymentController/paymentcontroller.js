@@ -9,6 +9,7 @@ const billingAddressModal = require("../../models/NewSchemas/user_billing_addres
 const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
 const path = require("path");
 const nodemailer = require("nodemailer");
+const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -520,9 +521,7 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     const proration_date = Math.floor(Date.now() / 1000);
     const { paymentToken, customerID, subscriptionId, plandata, selectedCard, existingcard } = req.body;
     const { type, planName } = plandata;
-    console.log(".......................................................................")
-    console.log(req.body.plandata.type)
-    console.log(".......................................................................")
+
     const productID = type === 'monthly'
       ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
       : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
@@ -1107,7 +1106,11 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       const order = new Order({
         paymentStatus:"paid",
         user: userId === 'Guest' ? null : userId,
-        company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+        company: userId === 'Guest' ? null : user.companyID,
+        first_name: userId === 'Guest' ? null : user.first_name,
+        last_name: userId === 'Guest' ? null : user.last_name,
+        email: userId === 'Guest' ? null : user.email,
+        contact: userId === 'Guest' ? null : user.contact, // Link the order to the specific user
         smartAccessories,
         totalAmount,
         tax,
@@ -1121,6 +1124,12 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       });
       // Save the order to the database
       const orderData = await order.save();
+
+      const company = await Company_informationModel.findById({ _id :orderData.company})
+
+      company.smartAccessories.push(...smartAccessories);
+
+      const companyData = company.save();
       console.log("orderData")
       console.log(orderData)
       console.log("orderData")
@@ -2032,6 +2041,74 @@ exports.switchToManualRenewalforOtcAdminPanel = catchAsyncErrors(async (req, res
     }
   } catch (error) {
     console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+exports.manualRenewSubscription = catchAsyncErrors(async (req, res, next) => {
+  console.log("called manualRenewSubscription..........................................................................................................")
+  try {
+    const { subscriptionId, customerID, paymentToken,  plandata} = req.body;
+
+    const { type , planName } = plandata;
+
+    // Retrieve the current subscription
+    const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log("??????????????????????????????????????????????")
+console.log(currentSubscription)
+console.log("??????????????????????????????????????????????")
+
+    // Check if the subscription is eligible for renewal
+    if (currentSubscription.status === 'active' && !currentSubscription.cancel_at_period_end) {
+
+      console.log("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
+      // Determine the product ID based on the plan and type (monthly/yearly)
+      const productID = planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly;
+
+      // Create a new price for the subscription
+      const newPrice = await stripe.prices.create({
+        currency: 'usd',
+        unit_amount: req.body.amount * 100, // Adjust the amount based on your needs
+        product: productID,
+        tax_behavior: 'exclusive',
+        recurring: {
+          interval: type === 'monthly' ? 'month' : 'year',
+          interval_count: 1,
+        },
+      });
+
+      // Create a new subscription with the new price
+      const renewedSubscription = await stripe.subscriptions.create({
+        customer: customerID,
+        default_payment_method: paymentToken,
+        items: [{ price: newPrice.id }],
+        collection_method: 'charge_automatically',
+        cancel_at_period_end: false,
+        automatic_tax: {
+          enabled: true,
+        },
+      });
+console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+      console.log(renewedSubscription)
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+
+      // Update your database or perform any necessary business logic here
+
+      // Return success response
+      return res.status(200).json({
+        success: true,
+        message: 'Subscription manually renewed successfully.',
+        renewedSubscriptionID: renewedSubscription.id,
+      });
+    } else {
+      // Subscription is not eligible for renewal
+      return res.status(400).json({ success: false, error: 'Subscription is not eligible for renewal.' });
+    }
+  } catch (error) {
+    console.error(error);
+
+    // Handle any errors and send an appropriate response
     res.status(500).json({ success: false, error: error.message });
   }
 });
