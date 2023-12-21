@@ -1177,7 +1177,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex ;  margin-top: 25px">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:100%; margin-right:10px ">
-                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept effeinvitation</a>
+                <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
             <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:100%;">
                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
@@ -4654,7 +4654,7 @@ const sendOtpEmail = (email, otp, firstname) => {
              
               <p>Dear ${firstname}<br/><br/>
               We have received a request to delete your account. To proceed with this request, we need to verify your identity.<br/><br/>
-              Please use the following One-Time Password (OTP) within the next [10 minutes] to confirm the deletion of your account:<br/><br/>
+              Please use the following One-Time Password (OTP) within the next 10 minutes to confirm the deletion of your account:<br/><br/>
   
               <span style="font-weight: bold;">OTP:</span>&nbsp; ${otp}<br/>
   

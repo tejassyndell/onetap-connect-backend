@@ -13,7 +13,7 @@ exports.fecthCoupons = catchAsyncErrors(async (req, res, next) => {
   const coupons = await Coupons.find({ code: { $in: codes } });
   console.log(coupons)
   if(coupons.length <= 0){
-    return res.status(200).json({ success: false,status : 404, msg : "No coupons found"});
+    return res.status(200).json({ success: false,status : 404, msg : "Invalid coupon code."});
   }
   const activeCoupons = coupons.filter(coupon => coupon.status === 'Published');
 
