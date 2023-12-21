@@ -5919,3 +5919,82 @@ exports.cardEditorData = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+exports.assignSmartAccessroiesToUser = catchAsyncErrors(async(req, res, next) => {
+  try {
+      const { userId, uniqueIds, companyId } = req.body;
+
+      // Update the userId in the smartAccessories array for multiple uniqueIds
+      const updatedCompany = await Company.updateMany(
+          { _id: companyId, "smartAccessories.uniqueId": { $in: uniqueIds } },
+          { $set: { "smartAccessories.$.userId": userId } },
+          { new: true }
+      );
+
+      if (!updatedCompany) {
+          // If the company with the specified ID or uniqueIds is not found
+          return res.status(404).json({ message: "Company not found" });
+      }
+
+      // Return the updated company details
+      res.status(200).json({ updatedCompany , success:true });
+  } catch (error) {
+      next(error); // Pass the error to the error handling middleware
+  }
+});
+
+
+// exports.assignSmartAccessroiesToUser = catchAsyncErrors(async(req,res,next)=>{
+//   try {
+//     const { userId, uniqueId , companyId } = req.body;
+//     // const { companyID } = req.user;
+
+//     // Update the userId in the smartAccessories array based on the uniqueId
+//     const updatedCompany = await Company.findOneAndUpdate(
+//       { _id: companyId, "smartAccessories.uniqueId": uniqueId },
+//       { $set: { "smartAccessories.$.userId": userId } },
+//       { new: true }
+//     );
+
+//     if (!updatedCompany) {
+//       // If the company with the specified ID or uniqueId is not found
+//       return res.status(404).json({ message: "Company not found" });
+//     }
+
+//     // Return the updated company details
+//     res.status(200).json({ updatedCompany });
+//   } catch (error) {
+//     next(error); // Pass the error to the error handling middleware
+//   }
+// });
+
+exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Assuming you want to get smartAccessories based on company ID
+    const { companyID } = req.user;
+
+    const company = await Company.findById(companyID)
+      .populate({
+        path: 'smartAccessories.userId',
+        select: 'first_name last_name email',
+      })
+      .populate('smartAccessories.productId');
+
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Filter smartAccessories array to include only objects with non-null userId
+    const smartAccessories = company.smartAccessories.filter(sa => sa.userId !== undefined);
+    const smartAccessorieswithoutUserId = company.smartAccessories.map(e => e);
+const companyName = company.company_name
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(smartAccessories, "SmartAccessories");
+
+    res.status(200).json({ smartAccessories , companyName: companyName , smartAccessorieswithoutUserId});
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+});
+
+
+

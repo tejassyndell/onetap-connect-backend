@@ -100,6 +100,8 @@ const {
   getAddonsForOrderSummary,
   getrateoforder,
   cardEditorData,
+  assignSmartAccessroiesToUser,
+  getUserAssignSmartAccessoriesForCompany,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -275,6 +277,8 @@ router.post('/getAddonsForOrderSummary', getAddonsForOrderSummary)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
 router.get('/test/cardEditordata', cardEditorData)
+router.post('/assignSmartAccessroiesToUser',isAuthenticatedUser, assignSmartAccessroiesToUser)
+router.get('/getUserAssignSmartAccessoriesForCompany',isAuthenticatedUser, getUserAssignSmartAccessoriesForCompany)
 
 
 

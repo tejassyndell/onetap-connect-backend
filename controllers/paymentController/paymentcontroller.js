@@ -9,6 +9,7 @@ const billingAddressModal = require("../../models/NewSchemas/user_billing_addres
 const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
 const path = require("path");
 const nodemailer = require("nodemailer");
+const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -1123,6 +1124,12 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       });
       // Save the order to the database
       const orderData = await order.save();
+
+      const company = await Company_informationModel.findById({ _id :orderData.company})
+
+      company.smartAccessories.push(...smartAccessories);
+
+      const companyData = company.save();
       console.log("orderData")
       console.log(orderData)
       console.log("orderData")
