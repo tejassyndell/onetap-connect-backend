@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const order_Schema = new mongoose.Schema(
   {
-   
+
     orderNumber: {
       type: Number,
       default: 1,
@@ -78,15 +78,16 @@ const order_Schema = new mongoose.Schema(
         addonDiscountPrice: { type: Number, default: 0 }
       },
     ],
-    addusers: 
-      {
-        addusercount: { type: Number },
-        status: { type: String , default: 'N/A' },
-        price: {type: Number} ,
-        plan:{type:String},
-        billing_cycle:{type:String},
-      },
+    addusers:
+    {
+      addusercount: { type: Number },
+      status: { type: String, default: 'N/A' },
+      price: { type: Number },
+      plan: { type: String },
+      billing_cycle: { type: String },
+    },
     subscription_details: {
+      planID: { type: mongoose.Schema.Types.ObjectId, ref: "otc_plans" },
       discountedPrice: { type: Number },
       addOnsWithPlan: [],  // addon included in plan
       smartAccessoriesWithPlan: [], // products included in plan
@@ -168,7 +169,8 @@ const order_Schema = new mongoose.Schema(
       price: { type: Number }
     }],
     tracking_number: { type: String },
-    sumTotalWeights:{ type: String },
+    sumTotalWeights: { type: String },
+    discount: { type: Number }, //when admin creates order, special discount on order is given (subtract this amount from total)
   },
   { timestamps: true }
 );

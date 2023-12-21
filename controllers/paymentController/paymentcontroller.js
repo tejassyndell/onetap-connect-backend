@@ -678,6 +678,7 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
   try {
     // Get the user ID from the authenticated user or request data
     const userId = req.body.userId;
+    const orderId = req.body.orderId;
     const {
       email,
       last_name,
@@ -692,6 +693,7 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
       dealOwner,
       customerIp,
       orderedBy,
+      discount,
     } = req.body;
 
 
@@ -734,47 +736,86 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
       await shippingAddressFind.save();
     }
 
-    // Create a new order linked to the specific user
-    const order = new Order({
-      user: userId === 'Guest' ? null : userId,
-      company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
-      email,
-      last_name,
-      first_name,
-      subscription_details: orderData.subscription_details,
-      smartAccessories: orderData.smartAccessories,
-      addaddons: orderData.addaddons,
-      shipping_method: orderData.shipping_method,
-      totalAmount,
-      // tax,
-      type: 'combined',
-      shippingAddress,
-      billingAddress,
-      orderNotes: orderData.orderNotes,
-      isGuest: userId === 'Guest' ? true : false,
-      paymentStatus: 'pending',
-    });
+    // Check if orderId is provided
+    if (orderId) {
+      // Update existing order using findByIdAndUpdate
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          email,
+          last_name,
+          first_name,
+          billingAddress,
+          shippingAddress,
+          orderData,
+          totalAmount,
+          referrer,
+          referrerName,
+          dealOwner,
+          customerIp,
+          orderedBy,
+          discount,
+        },
+        { new: true, runValidators: true }
+      );
 
-    // Save the order to the database
-    const newOrder = await order.save();
-    console.log(newOrder, "newOrder")
-    const orderNumber = newOrder.orderNumber;
-   
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      order,
-    });
+      if (!updatedOrder) {
+        return next(new ErrorHandler("Order not found", 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order updated successfully',
+        order: updatedOrder,
+      });
+    } else {
+
+      // Create a new order linked to the specific user
+      const order = new Order({
+        user: userId === 'Guest' ? null : userId,
+        company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+        email,
+        last_name,
+        first_name,
+        subscription_details: orderData.subscription_details,
+        smartAccessories: orderData.smartAccessories,
+        addaddons: orderData.addaddons,
+        shipping_method: orderData.shipping_method,
+        totalAmount,
+        // tax,
+        type: 'combined',
+        shippingAddress,
+        billingAddress,
+        orderNotes: orderData.orderNotes,
+        isGuest: userId === 'Guest' ? true : false,
+        paymentStatus: 'pending',
+        discount,
+      });
+
+      // Save the order to the database
+      const newOrder = await order.save();
+      console.log(newOrder, "newOrder")
+      res.status(201).json({
+        success: true,
+        message: 'Order created successfully',
+        order,
+      });
+    }
+
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error });
   }
 });
+
 // Creates an order and send invoice
 exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, res, next) => {
   try {
     // Get the user ID from the authenticated user or request data
+    let orderNumber;
     const userId = req.body.userId;
+    const orderId = req.body.orderId;
     const {
       email,
       last_name,
@@ -789,6 +830,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       dealOwner,
       customerIp,
       orderedBy,
+      discount
     } = req.body;
 
 
@@ -831,31 +873,75 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       await shippingAddressFind.save();
     }
 
-    // Create a new order linked to the specific user
-    const order = new Order({
-      user: userId === 'Guest' ? null : userId,
-      company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
-      email,
-      last_name,
-      first_name,
-      subscription_details: orderData.subscription_details,
-      smartAccessories: orderData.smartAccessories,
-      addaddons: orderData.addaddons,
-      shipping_method: orderData.shipping_method,
-      totalAmount,
-      // tax,
-      type: 'combined',
-      shippingAddress,
-      billingAddress,
-      orderNotes: orderData.orderNotes,
-      isGuest: userId === 'Guest' ? true : false,
-      paymentStatus: 'pending',
-    });
+    // Check if orderId is provided
+    if (orderId) {
+      // Update existing order using findByIdAndUpdate
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          email,
+          last_name,
+          first_name,
+          billingAddress,
+          shippingAddress,
+          orderData,
+          totalAmount,
+          referrer,
+          referrerName,
+          dealOwner,
+          customerIp,
+          orderedBy,
+          discount,
+        },
+        { new: true, runValidators: true }
+      );
 
-    // Save the order to the database
-    const newOrder = await order.save();
-    console.log(newOrder, "newOrder")
-    const orderNumber = newOrder.orderNumber;
+      if (!updatedOrder) {
+        return next(new ErrorHandler("Order not found", 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order updated successfully',
+        order: updatedOrder,
+      });
+      orderNumber = updatedOrder.orderNumber;
+    } else {
+
+      // Create a new order linked to the specific user
+      const order = new Order({
+        user: userId === 'Guest' ? null : userId,
+        company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+        email,
+        last_name,
+        first_name,
+        subscription_details: orderData.subscription_details,
+        smartAccessories: orderData.smartAccessories,
+        addaddons: orderData.addaddons,
+        shipping_method: orderData.shipping_method,
+        totalAmount,
+        // tax,
+        type: 'combined',
+        shippingAddress,
+        billingAddress,
+        orderNotes: orderData.orderNotes,
+        isGuest: userId === 'Guest' ? true : false,
+        paymentStatus: 'pending',
+        discount,
+      });
+
+      // Save the order to the database
+      const newOrder = await order.save();
+      console.log(newOrder, "newOrder")
+      res.status(201).json({
+        success: true,
+        message: 'Order created successfully',
+        order,
+      });
+      orderNumber = newOrder.orderNumber;
+    }
+
+
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       port: 587,
@@ -926,11 +1012,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       }
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      order,
-    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error });
@@ -1105,7 +1187,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
       // Create a new order linked to the specific user
       const order = new Order({
-        paymentStatus:"paid",
+        paymentStatus: "paid",
         user: userId === 'Guest' ? null : userId,
         company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
         smartAccessories,
@@ -1530,7 +1612,7 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
 
 
     const order = new Order({
-      paymentStatus:"paid",
+      paymentStatus: "paid",
       user: userId,
       company: companyID,
       shippingAddress,
@@ -1581,7 +1663,7 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
     // Update UserInformation document
     console.log(addaddons)
     const updatedUserInformation = await UserInformation.updateMany(
-      { company_ID: companyID , 'subscription_details.plan': { $ne: null } },
+      { company_ID: companyID, 'subscription_details.plan': { $ne: null } },
       {
         $push: {
           'subscription_details.addones': { $each: addaddons.map((addon) => addon) }
@@ -1744,11 +1826,11 @@ exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
     const ordertype = (addusers ? "UserPurchase" : "")
     const paymentDate = new Date();
     console.log("1")
-    
+
     const { type, planName } = plandata;
     const productID = type === 'monthly'
-    ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
-    : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
+      ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
+      : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
     let attachedPaymentMethod;
     console.log("2")
     if (!selectedCard && existingcard === false) {
@@ -1757,11 +1839,11 @@ exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
       });
     }
     console.log("3")
-    
-    console.log(ammount , totalAmount)
+
+    console.log(ammount, totalAmount)
     const price = await stripe.prices.create({
       currency: 'usd',
-      unit_amount: (ammount + totalAmount)* 100,
+      unit_amount: (ammount + totalAmount) * 100,
       product: productID,
       recurring: {
         interval: type === "monthly" ? "month" : "year",
@@ -1822,7 +1904,7 @@ exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
 
     const order = new Order({
       user: userId,
-      company:companyID,
+      company: companyID,
       shippingAddress,
       billingAddress,
       totalAmount,
@@ -1831,7 +1913,7 @@ exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
       email,
       contact,
       last_name,
-      type:ordertype,
+      type: ordertype,
       addusers: { ...addusers },
       paymentDate,
       shipping_method,
@@ -1853,11 +1935,11 @@ exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
     // Update UserInformation document
     console.log(addusers)
     const updatedUserInformation = await UserInformation.updateMany(
-      { company_ID: companyID , 'subscription_details.plan': { $ne: null } },
+      { company_ID: companyID, 'subscription_details.plan': { $ne: null } },
       {
-        $inc: { 
+        $inc: {
           'subscription_details.total_user.0.additionalUser': addusers.addusercount,
-          'subscription_details.total_amount': totalAmount 
+          'subscription_details.total_amount': totalAmount
         }
       },
       { new: true } // Return the updated document
