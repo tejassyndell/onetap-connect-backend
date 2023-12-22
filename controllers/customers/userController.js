@@ -2649,6 +2649,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     {
       companyID: companyID,
       role: { $in: ["administrator", "teammember", "manager"] },
+      Account_status: { $in: ['is_Deactivated']}
     },
     {
       $set: { status: 'active' },
@@ -4650,7 +4651,7 @@ exports.generateotp = catchAsyncErrors(async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     if (status === "deactivate") {
-      console.log(otp, "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ")
+      // console.log(otp, "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ")
       senddeactivateotpEmail(email, otp, firstname)
     } else {
       sendOtpEmail(email, otp, firstname);
@@ -6061,9 +6062,10 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
         {
           companyID: companyid,
           role: { $in: ["administrator", "teammember", "manager"] },
+          status:{ $in:['active'] }
         },
         {
-          $set: { status: 'Deactivate' },
+          $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
         },
       );
       if (companyUsers.nModified === 0) {
