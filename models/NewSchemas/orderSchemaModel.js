@@ -28,7 +28,7 @@ const order_Schema = new mongoose.Schema(
     contact: { type: Number, default: null },
     status: {
       type: String,
-      default: "Processing"
+      default: "On Hold"
     },
     fulfillment: {
       type: String,
