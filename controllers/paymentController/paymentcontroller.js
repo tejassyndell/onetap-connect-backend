@@ -10,6 +10,7 @@ const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addr
 const path = require("path");
 const nodemailer = require("nodemailer");
 const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
+const PurchasedSmartAccessoryModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -466,6 +467,59 @@ exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
           'subscription_details.billing_cycle': null,
           'subscription_details.endDate': null,
           'subscription_details.plan': 'Free',
+          'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
+          'subscription_details.recurring_amount': null,
+          'subscription_details.renewal_date': null,
+          'subscription_details.auto_renewal': null,
+          'subscription_details.taxRate': null,
+        }
+      },
+      { new: true }
+    );
+    if (!updatedUserInfo) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    console.log(updatedUserInfo)
+    console.log("updatedUserInfo")
+
+    res.status(200).json({ success: true, delete: "Subscription Canceled successfully" });
+    // res.status(200).json({ success: true, message: canceledSubscription });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+//for account deactivate plan cancel
+exports.cancelPlandeactivateaccount = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.body)
+  try {
+    const { subId, currentPlan } = req.body
+    if (!subId) {
+      return res.status(500).json({ success: false, error: 'No Subscription Id found' });
+    }
+
+    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+      invoice_now: true,
+      prorate: true
+    });
+    console.log(canceledSubscription);
+    console.log('canceledSubscription');
+
+    if (!canceledSubscription) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    const updatedUserInfo = await UserInformation.findOneAndUpdate(
+      { 'subscription_details.customer_id': canceledSubscription.customer },
+      {
+        $set: {
+          'subscription_details.subscription_id': null,
+          'subscription_details.addones': [],
+          'subscription_details.total_amount': null,
+          'subscription_details.billing_cycle': null,
+          'subscription_details.endDate': null,
+          'subscription_details.plan': currentPlan,
           'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
           'subscription_details.recurring_amount': null,
           'subscription_details.renewal_date': null,
@@ -1124,6 +1178,21 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       });
       // Save the order to the database
       const orderData = await order.save();
+
+      // const purchasedSmartAccessory = new PurchasedSmartAccessoryModal({
+      //   company: userId === 'Guest' ? null : user.companyID,
+      //   // user : userId === 'Guest' ? null : userId,
+      //   productId: smartAccessories.productId,
+      //   variationId: smartAccessories.variationId  ,
+      //   productName: smartAccessories.productName ,
+      //   subtotal :  smartAccessories.subtotal   ,
+      //   quantity: smartAccessories.quantity ,
+      //   price:   smartAccessories.price ,
+      //   status:  smartAccessories.status  ,
+      //   uniqueId:  smartAccessories.uniqueId  ,
+      // })
+// const purchased_smartAccessoryData = await purchasedSmartAccessory.save();
+// console.log(purchased_smartAccessoryData, "purchased_smartAccessoryData............")
 
       const company = await Company_informationModel.findById({ _id :orderData.company})
 

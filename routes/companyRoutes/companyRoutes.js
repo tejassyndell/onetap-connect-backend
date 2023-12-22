@@ -103,6 +103,9 @@ const {
   verifydeactivateAccountotp,
   assignSmartAccessroiesToUser,
   getUserAssignSmartAccessoriesForCompany,
+  updateSmartAccessoryStatus,
+  removeUserFromSmartAccessories,
+  getuniqueslug,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -279,9 +282,11 @@ router.post('/getAddonsForOrderSummary', getAddonsForOrderSummary)
 router.get('/wp/getdata', sendTestData)
 router.get('/test/cardEditordata', cardEditorData)
 router.post('/deactivate/verify-otp',verifydeactivateAccountotp)
-router.post('/assignSmartAccessroiesToUser',isAuthenticatedUser, assignSmartAccessroiesToUser)
-router.get('/getUserAssignSmartAccessoriesForCompany',isAuthenticatedUser, getUserAssignSmartAccessoriesForCompany)
-
+router.post('/assignSmartAccessroiesToUser', assignSmartAccessroiesToUser)
+router.post('/updateSmartAccessoryStatus', updateSmartAccessoryStatus)
+router.post('/removeUserFromSmartAccessories', removeUserFromSmartAccessories)
+router.get('/getUserAssignSmartAccessoriesForCompany', getUserAssignSmartAccessoriesForCompany)
+router.post('/getuniqueslugs',getuniqueslug)
 
 
 // router.post('/testapii' ,Testapidummy)
