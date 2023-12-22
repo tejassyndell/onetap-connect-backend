@@ -17,6 +17,7 @@ const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModa
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
 const billingAddress = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const crypto = require("crypto");
 const path = require("path");
@@ -1853,6 +1854,7 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
           .replace(/\s+/g, " ")
           .toLowerCase();
         return trimmedExistingName === trimedString;
+        return
       });
 
       if (companyExists) {
@@ -1934,6 +1936,93 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
     });
     await user_parmalink.save();
 
+
+    const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    const date = new Date();
+    console.log(date);
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587, // Use 465 for SSL
+      secure: true, // true for 465, false for other ports
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+      tls: { rejectUnauthorized: false },
+    });
+ 
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const message = {
+      from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
+      to: email,
+      subject: `Please confirm your email`,
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h4><center>Email verification</center></h4>
+          </br>
+          <p>Hi ${first_name} ${last_name},<br/>
+          click the link below to verify your email and activate your account.</p>
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/create-password/${token}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Verify email</a>
+            </div>
+            
+        </div> <br/>
+        <p>Your privacy in important to us. By creating an account, you agree to our<a href="https://app.1tapconnect.com/terms-of-use"> terms of service</a> and <a href="https://app.1tapconnect.com/privacy-policy"> privacy policy</a>. The information you provide to us will be use to contact you about your account, relevant content, products, and services.</p>
+        <br/>
+        <h5><center>Technical issue?</center></h5>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log("error", err);
+        return next(
+          new ErrorHandler("The email was not sent. Please try again later.", 500)
+        );
+      } else {
+        console.log(info);
+        res.status(200).json({
+          success: true,
+          message: "Email sent successfully.",
+        });
+      }
+    });
+
+
     res.status(200).json({
       success: true,
       user,
@@ -1944,7 +2033,31 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 500));
   }
 });
+//create password
+exports.createPassword = catchAsyncErrors(async (req, res, next) => {
+  const { token,password } = req.body;
+  const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+  const email = decodedData.email;
+  try {
+    // Find the user based on the email
+    let user = await User.findOne({ email });
 
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    // Set the password for the found user
+    user.password = password;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password created successfully',
+      user 
+    });
+  } catch (error) {
+    return next(error);
+  }
+})
 exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
   try {
     // Find all companies
