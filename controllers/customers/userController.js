@@ -6152,5 +6152,20 @@ const companyName = company.company_name
   }
 });
 
+exports.getuniqueslug = catchAsyncErrors(async(req,res,next)=>{
+  const {id} = req.body
+  
+  console.log(id );
+  const users_slug = await parmalinkSlug.find({ user_id: id });
+  console.log(users_slug)
 
+  if (!users_slug) {
+    return next(new ErrorHandler("No slug details Found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    users_slug,
+  });
+})
 

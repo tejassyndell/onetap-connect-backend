@@ -103,6 +103,7 @@ const {
   verifydeactivateAccountotp,
   assignSmartAccessroiesToUser,
   getUserAssignSmartAccessoriesForCompany,
+  getuniqueslug,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -281,7 +282,7 @@ router.get('/test/cardEditordata', cardEditorData)
 router.post('/deactivate/verify-otp',verifydeactivateAccountotp)
 router.post('/assignSmartAccessroiesToUser',isAuthenticatedUser, assignSmartAccessroiesToUser)
 router.get('/getUserAssignSmartAccessoriesForCompany',isAuthenticatedUser, getUserAssignSmartAccessoriesForCompany)
-
+router.post('/getuniqueslugs',getuniqueslug)
 
 
 // router.post('/testapii' ,Testapidummy)
