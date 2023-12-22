@@ -2110,6 +2110,41 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+// exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
+//   const { orderIds, orderData } = req.body;
+//   try {
+//     // Loop through the array of order IDs
+//     for (let i = 0; i < orderIds.length; i++) {
+//       const orderId = orderIds[i];
+//       const updatedData = orderData[i];
+
+//       const order = await Order.findById(orderId);
+
+//       console.log(order);
+
+//       if (!order) {
+//         return res.status(404).json({
+//           success: false,
+//           message: `No order found with ID: ${orderId}`,
+//         });
+//       }
+
+//       // Update the order based on the orderData
+//       // You might need to adjust this depending on your orderData structure
+//       Object.assign(order, updatedData);
+
+//       await order.save(); // Save the changes to the order
+//       console.log(order, "order updated data");
+//       res
+//         .status(200)
+//         .json({ success: true, message: "Orders updated successfully", order });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// });
+
 exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds, orderData } = req.body;
   try {
@@ -2118,32 +2153,23 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
       const orderId = orderIds[i];
       const updatedData = orderData[i];
 
-      const order = await Order.findById(orderId);
+      const result = await Order.updateOne({ _id: orderId }, { $set: updatedData });
 
-      console.log(order);
-
-      if (!order) {
+      if (result.n === 0) {
         return res.status(404).json({
           success: false,
           message: `No order found with ID: ${orderId}`,
         });
       }
 
-      // Update the order based on the orderData
-      // You might need to adjust this depending on your orderData structure
-      Object.assign(order, updatedData);
-
-      await order.save(); // Save the changes to the order
-      console.log(order, "order updated data");
-      res
-        .status(200)
-        .json({ success: true, message: "Orders updated successfully", order });
+      res.status(200).json({ success: true, message: "Orders updated successfully" });
     }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds } = req.body;

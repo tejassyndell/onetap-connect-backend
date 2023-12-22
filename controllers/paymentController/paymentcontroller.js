@@ -10,6 +10,7 @@ const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addr
 const path = require("path");
 const nodemailer = require("nodemailer");
 const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
+const PurchasedSmartAccessoryModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -1177,6 +1178,21 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       });
       // Save the order to the database
       const orderData = await order.save();
+
+      // const purchasedSmartAccessory = new PurchasedSmartAccessoryModal({
+      //   company: userId === 'Guest' ? null : user.companyID,
+      //   // user : userId === 'Guest' ? null : userId,
+      //   productId: smartAccessories.productId,
+      //   variationId: smartAccessories.variationId  ,
+      //   productName: smartAccessories.productName ,
+      //   subtotal :  smartAccessories.subtotal   ,
+      //   quantity: smartAccessories.quantity ,
+      //   price:   smartAccessories.price ,
+      //   status:  smartAccessories.status  ,
+      //   uniqueId:  smartAccessories.uniqueId  ,
+      // })
+// const purchased_smartAccessoryData = await purchasedSmartAccessory.save();
+// console.log(purchased_smartAccessoryData, "purchased_smartAccessoryData............")
 
       const company = await Company_informationModel.findById({ _id :orderData.company})
 

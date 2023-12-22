@@ -43,6 +43,7 @@ const { getMaxListeners } = require("events");
 // const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
 const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
+const SmartAccessoriesModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 dotenv.config();
 const usedCodes = new Set();
 
@@ -6082,28 +6083,72 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
     console.log(error);
   }
 });
-exports.assignSmartAccessroiesToUser = catchAsyncErrors(async(req, res, next) => {
+exports.assignSmartAccessroiesToUser = catchAsyncErrors(async (req, res, next) => {
   try {
-      const { userId, uniqueIds, companyId } = req.body;
+    const { userId, uniqueIds } = req.body;
 
-      // Update the userId in the smartAccessories array for multiple uniqueIds
-      const updatedCompany = await Company.updateMany(
-          { _id: companyId, "smartAccessories.uniqueId": { $in: uniqueIds } },
-          { $set: { "smartAccessories.$.userId": userId } },
-          { new: true }
-      );
+    // Update the userId for multiple uniqueIds
+    const updatedAccessories = await SmartAccessoriesModal.updateMany(
+      { uniqueId: { $in: uniqueIds } },
+      { $set: { userId: userId } },
+      { new: true }
+    );
 
-      if (!updatedCompany) {
-          // If the company with the specified ID or uniqueIds is not found
-          return res.status(404).json({ message: "Company not found" });
-      }
+    if (!updatedAccessories) {
+      return res.status(404).json({ message: "Accessories not found" });
+    }
 
-      // Return the updated company details
-      res.status(200).json({ updatedCompany , success:true });
+    // Return the updated accessories details
+    res.status(200).json({ updatedAccessories, success: true });
   } catch (error) {
-      next(error); // Pass the error to the error handling middleware
+    next(error);
   }
 });
+
+
+exports.updateSmartAccessoryStatus = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { Ids, status } = req.body;
+
+    // Update the status for the specified uniqueIds
+    const updatedAccessories = await SmartAccessoriesModal.updateMany(
+      { _id: { $in: Ids } },
+      { $set: { status: status } },
+      { new: true }
+    );
+
+    if (!updatedAccessories) {
+      return res.status(404).json({ message: "Accessories not found" });
+    }
+
+    // Return the updated accessories details
+    res.status(200).json({ updatedAccessories, success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+exports.removeUserFromSmartAccessories = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { uniqueIds } = req.body;
+    // Convert uniqueIds to ObjectId array
+    // const objectIdArray = uniqueIds.map(id => mongoose.Types.ObjectId(id));
+
+    // Remove the userId field for the specified uniqueIds
+    const removedUserAccessories = await SmartAccessoriesModal.updateMany(
+      { _id: { $in: uniqueIds } },
+      { $unset: { userId: 1 } },
+      { new: true }
+    );
+    if (!removedUserAccessories) {
+      return res.status(404).json({ message: "Accessories not found" });
+    }
+    res.status(200).json({ removedUserAccessories, success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 
 // exports.assignSmartAccessroiesToUser = catchAsyncErrors(async(req,res,next)=>{
@@ -6133,27 +6178,25 @@ exports.assignSmartAccessroiesToUser = catchAsyncErrors(async(req, res, next) =>
 exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, res, next) => {
   try {
     // Assuming you want to get smartAccessories based on company ID
-    const { companyID } = req.user;
+    // const { companyID } = req.user;
 
-    const company = await Company.findById(companyID)
+    const SmartAccessorie = await SmartAccessoriesModal.find()
       .populate({
-        path: 'smartAccessories.userId',
-        select: 'first_name last_name email',
+        path: 'userId',
+        select: 'first_name last_name email designation',
       })
-      .populate('smartAccessories.productId');
+      .populate('productId');
+  
 
-    if (!company) {
-      return res.status(404).json({ message: 'Company not found' });
+    if (!SmartAccessorie) {
+      return res.status(404).json({ message: 'SmartAccessorie does not have a data' });
     }
 
-    // Filter smartAccessories array to include only objects with non-null userId
-    const smartAccessories = company.smartAccessories.filter(sa => sa.userId !== undefined);
-    const smartAccessorieswithoutUserId = company.smartAccessories.map(e => e);
-const companyName = company.company_name
-    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log(smartAccessories, "SmartAccessories");
+    const smartAccessories = SmartAccessorie.filter(sa => sa.userId !== undefined);
+    const smartAccessorieswithoutUserId = SmartAccessorie.map(e => e);
+// const companyName = company.company_name
 
-    res.status(200).json({ smartAccessories , companyName: companyName , smartAccessorieswithoutUserId});
+    res.status(200).json({ smartAccessories ,  smartAccessorieswithoutUserId , AllSmartAccessories : SmartAccessorie});
   } catch (error) {
     next(error); // Pass the error to the error handling middleware
   }
