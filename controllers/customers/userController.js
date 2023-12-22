@@ -2303,25 +2303,30 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
     companyurlslug,
     company_url_edit_permission,
     user_profile_edit_permission,
+    userid
   } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
   // console.log(companyurlslug);
   // console.log(companyId);
   // console.log(company_url_edit_permission);
-  console.log("update is hit");
+  console.log("update is hit" , userid , req.body);
   // const trimslug = companyurlslug.trim()
   const trimslug = companyurlslug?.trim() || companyurlslug;
+  const uniquecompanySlug = { value: trimslug, timestamp: Date.now() };
   try {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
       companyurlslug: trimslug,
       company_url_edit_permission: company_url_edit_permission,
       user_profile_edit_permission: user_profile_edit_permission,
     });
-
+    const updatedCompanyinsluddata =  await parmalinkSlug.updateOne(
+      { user_id: userid },
+      { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug : trimslug },
+    );
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
 
-    res.json({ message: "Company slug updated successfully", updatedCompany });
+    res.json({ message: "Company slug updated successfully", updatedCompany , updatedCompanyinsluddata});
   } catch (error) {
     console.error("Error updating company slug:", error);
     res.status(500).json({ error: "Internal server error" });
