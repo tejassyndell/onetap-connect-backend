@@ -102,7 +102,7 @@ router.get("/admin/getActiveUSers", getActiveUsersOfCompany);
 router.get("/admin/orders", isOtcAdminAuthenticatedUser, getAllOrders);
 router.post("/admin/orders/update", isOtcAdminAuthenticatedUser, updateOrders);
 router.post("/admin/orders/delete", isOtcAdminAuthenticatedUser, deleteOrders);
-router.get("/admin/order/:id", isOtcAdminAuthenticatedUser, getSingleOrder);
+router.get("/admin/order/:id", getSingleOrder);
 router.post(
   "/admin/order/update/:id",
   isOtcAdminAuthenticatedUser,
