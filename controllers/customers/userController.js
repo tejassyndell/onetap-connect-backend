@@ -714,7 +714,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const message = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -1152,7 +1152,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       html: `
@@ -1320,7 +1320,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const message = {
-        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+        from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
         to: email,
         subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -1413,17 +1413,20 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       const userinfocreate = await UserInformation.create({
         user_id: userId,
-        company_ID: id,
-
+        company_ID: companyID,
       })
+      const existingCompanySlug = await parmalinkSlug.findOne({
+        companyID: companyID,
+      });
+      const companyuniqueSlugValue = existingCompanySlug?.companyunique_slug[0]?.value
 
       const user_parmalink = await parmalinkSlug.create({
         user_id: userId,
         companyID: companyID,
         unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
-        companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
+        companyunique_slug: [{ value: companyuniqueSlugValue, timestamp: Date.now() }],
         userurlslug: generatedCode,
-        companyurlslug: generatedcompanyCode,
+        companyurlslug: companyuniqueSlugValue,
       })
       await user_parmalink.save();
       await userinfocreate.save();
@@ -1588,9 +1591,18 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
 
 //fetch billing address
 exports.fetchBillingAddress = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.user;
+  const { id , companyID } = req.user;
 
-  const billingData = await billingAddress.find({ userId: id });
+ 
+  let billingData;
+
+  // Try to find by companyId
+  billingData = await billingAddress.find({ companyId: companyID });
+
+  // If not found or companyId is null, fall back to finding by userId
+  if (!billingData || billingData.length === 0) {
+    billingData = await billingAddress.find({ userId: id });
+  }
 
   if (!billingData || billingData.length === 0) {
     return next(new ErrorHandler("No Billing details found", 404));
@@ -1621,7 +1633,7 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
 
   const updateUser = await User.findByIdAndUpdate(id, userData);
   const updateBilling = await billingAddress.findOneAndUpdate(
-    { userId: id },
+    {  companyId: companyID  },
     BillingAddressData,
     { new: true }
   );
@@ -2214,6 +2226,25 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
         .json({ message: "companyurlslug is already taken." });
     }
 
+    // Check for existing URL companyurlslug in the parmalinkSlug model globally
+    const existingGlobalUrlSlug = await parmalinkSlug.findOne({
+      "companyunique_slug.value": companyurlslug,
+    });
+    if (existingGlobalUrlSlug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+    // Check case-sensitive duplicates in the parmalinkSlug model globally
+    const caseSensitiveGlobalUrlSlug = await parmalinkSlug.findOne({
+      "companyunique_slug.value": new RegExp(`^${companyurlslug}$`, "i"),
+    });
+    if (caseSensitiveGlobalUrlSlug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
     // Check case-sensitive duplicates
     const caseSensitivecompanyurlslug = await Company.findOne({
       _id: { $ne: currentCompanyId }, // Exclude the current company by ID
@@ -2309,7 +2340,7 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   // console.log(companyurlslug);
   // console.log(companyId);
   // console.log(company_url_edit_permission);
-  console.log("update is hit" , userid , req.body);
+  console.log("update is hit", userid, req.body);
   // const trimslug = companyurlslug.trim()
   const trimslug = companyurlslug?.trim() || companyurlslug;
   const uniquecompanySlug = { value: trimslug, timestamp: Date.now() };
@@ -2319,15 +2350,15 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
       company_url_edit_permission: company_url_edit_permission,
       user_profile_edit_permission: user_profile_edit_permission,
     });
-    const updatedCompanyinsluddata =  await parmalinkSlug.updateOne(
+    const updatedCompanyinsluddata = await parmalinkSlug.updateOne(
       { user_id: userid },
-      { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug : trimslug },
+      { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug: trimslug },
     );
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
 
-    res.json({ message: "Company slug updated successfully", updatedCompany , updatedCompanyinsluddata});
+    res.json({ message: "Company slug updated successfully", updatedCompany, updatedCompanyinsluddata });
   } catch (error) {
     console.error("Error updating company slug:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -2436,7 +2467,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
-      // companyId: user.companyID,
+      companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -2477,9 +2508,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
-      smartAccessories: planData.smartAccessories.map((e)=> ({
-        productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
-      })) ,
+      smartAccessories: planData.smartAccessories.map((e) => ({
+        productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+      })),
       subscription_details: {
         // addones: planData.addones,
         addones: planData.addones.map((addon) => ({
@@ -2527,10 +2558,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       planID: planData.planID
     };
   }
-  userInformation.smartAccessories = planData.smartAccessories.map((e)=> ({
-    productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
-  })) ,
-  shippingAddressFind.shipping_address.address_name = "Default";
+  userInformation.smartAccessories = planData.smartAccessories.map((e) => ({
+    productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+  })),
+    shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
   userInformation.shipping_method = shipping_method;
   userInformation.isInitailUser = false;
@@ -2650,10 +2681,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     {
       companyID: companyID,
       role: { $in: ["administrator", "teammember", "manager"] },
-      Account_status: { $in: ['is_Deactivated']}
+      Account_status: { $in: ['is_Deactivated'] }
     },
     {
-      $set: { status: 'active' },
+      $set: { status: 'active', Account_status: 'is_Activated' },
     },
   );
   if (companyUsers.nModified === 0) {
@@ -2948,7 +2979,7 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`", // Replace with your email
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`, // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -3602,6 +3633,10 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       // Add any other fields you want to store in userinfo
     });
     await userInfo.save();
+    const existingCompanySlug = await parmalinkSlug.findOne({
+      companyID: user.companyID,
+    });
+    const companyuniqueSlugValue = existingCompanySlug?.companyunique_slug[0]?.value
 
     const generatedCode = generateUniqueCode();
     const user_parmalink = await parmalinkSlug.create({
@@ -3609,6 +3644,8 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       companyID: userdetails.companyId,
       unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
       userurlslug: generatedCode,
+      companyunique_slug: [{ value: companyuniqueSlugValue, timestamp: Date.now() }],
+      companyurlslug: companyuniqueSlugValue,
     })
     await user_parmalink.save();
     user.userurlslug = generatedCode;
@@ -3778,7 +3815,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     const message = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4046,7 +4083,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+    from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4145,11 +4182,18 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   await UserInformation.create(userInformationData);
 
   // console.log(userData._id)
+  const existingCompanySlug = await parmalinkSlug.findOne({
+    companyID: userData.companyID,
+  });
+  const companyuniqueSlugValue = existingCompanySlug?.companyunique_slug[0]?.value
+
   const user_parmalink = await parmalinkSlug.create({
     user_id: userData._id,
     companyID: companyID,
     unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
     userurlslug: generatedCode,
+    companyunique_slug: [{ value: companyuniqueSlugValue, timestamp: Date.now() }],
+    companyurlslug: companyuniqueSlugValue,
   })
   await user_parmalink.save();
 
@@ -4622,15 +4666,16 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User ID is missing in the request", 400));
   }
 
-  const user = await User.findById(_id);
-  const userprofileimage = user.avatar;
-  if (!user) {
+  const Avataruser = await User.findById(_id);
+  const userprofileimage = Avataruser.avatar;
+  if (!Avataruser) {
     return next(new ErrorHandler("User not found", 401));
   }
 
   res.status(200).json({
     success: true,
     userprofileimage,
+    Avataruser,
   });
 });
 
@@ -4674,7 +4719,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+    from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4865,7 +4910,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+        from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
@@ -5294,15 +5339,18 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 // });
 
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.user;
-  console.log(id,"iddddddddddddddddddd")
+  const { companyID } = req.user;
+  console.log(companyID,"iddddddddddddddddddd")
   try {
     // Find orders by user ID
-    const orders = await Order.find({ user: id }).populate({
+    const orders = await Order.find({ company: companyID }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
+    }).populate({
+      path: 'addaddons.addonId',
+      model: 'otc_addons',
     });
-    console.log(orders,"orderss")
+    console.log(orders, "orderss")
     // Create an array to store user data for each order
     const ordersWithUserData = [];
 
@@ -5314,7 +5362,7 @@ exports.getOrders = catchAsyncErrors(async (req, res, next) => {
       const orderWithUserData = { ...order.toObject(), userdata };
       ordersWithUserData.push(orderWithUserData);
     }
-    console.log(ordersWithUserData,"orrrrrrrrrrrrrrrrrrr")
+    // console.log(ordersWithUserData,"orrrrrrrrrrrrrrrrrrr")
     res.status(200).json({ success: true, orders: ordersWithUserData });
   } catch (error) {
     console.error(error);
@@ -6063,7 +6111,7 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
         {
           companyID: companyid,
           role: { $in: ["administrator", "teammember", "manager"] },
-          status:{ $in:['active'] }
+          status: { $in: ['active'] }
         },
         {
           $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
@@ -6076,10 +6124,10 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
         return res.status(404).json({ success: false, message: 'User not found' });
       }
       return res.status(200).json({ success: true, message: 'OTP verified', user_subscription_id });
-    }else {
+    } else {
       return res.status(400).json({ success: false, message: 'Incorrect OTP' });
     }
-  }catch (error) {
+  } catch (error) {
     console.log(error);
   }
 });
@@ -6186,7 +6234,7 @@ exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, r
         select: 'first_name last_name email designation',
       })
       .populate('productId');
-  
+
 
     if (!SmartAccessorie) {
       return res.status(404).json({ message: 'SmartAccessorie does not have a data' });
@@ -6194,18 +6242,18 @@ exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, r
 
     const smartAccessories = SmartAccessorie.filter(sa => sa.userId !== undefined);
     const smartAccessorieswithoutUserId = SmartAccessorie.map(e => e);
-// const companyName = company.company_name
+    // const companyName = company.company_name
 
-    res.status(200).json({ smartAccessories ,  smartAccessorieswithoutUserId , AllSmartAccessories : SmartAccessorie});
+    res.status(200).json({ smartAccessories, smartAccessorieswithoutUserId, AllSmartAccessories: SmartAccessorie });
   } catch (error) {
     next(error); // Pass the error to the error handling middleware
   }
 });
 
-exports.getuniqueslug = catchAsyncErrors(async(req,res,next)=>{
-  const {id} = req.body
-  
-  console.log(id );
+exports.getuniqueslug = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body
+
+  console.log(id);
   const users_slug = await parmalinkSlug.find({ user_id: id });
   console.log(users_slug)
 

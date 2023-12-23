@@ -13,13 +13,13 @@ const parmalink_slug_Schema = new mongoose.Schema(
         },
         unique_slugs: [
             {
-                value: { type: String, unique: true },
+                value: { type: String },
                 timestamp: { type: Date, default: Date.now },
             }
         ],
         companyunique_slug: [
             {
-                value: { type: String, unique: true, sparse: true },
+                value: { type: String },
                 timestamp: { type: Date, default: Date.now },
             }
         ],
