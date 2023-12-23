@@ -67,6 +67,94 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
   res.send("test called");
 });
 
+
+exports.mockdata = catchAsyncErrors(async (req, res, next) => {
+  res.send({
+    "/": {
+      "content": [
+        {
+          "type": "Card",
+          "props": {
+              "title": "Title",
+              "description": "Description",
+              "icon": "Feather",
+              "mode": "flat",
+              "id": "Card-1b0e8edb5672dc988de78063815be8db5bae8360"
+          }
+      },
+        {
+            "type": "Hero",
+            "props": {
+                "rights": true,
+                "title": "This page was built with Puck",
+                "description": "Puck is the self-hosted visual editor for React. Bring your own components and make site changes instantly, without a deploy.",
+                "buttons": [
+                    {
+                        "label": "Visit GitHub",
+                        "href": "https://github.com/measuredco/puck"
+                    },
+                    {
+                        "label": "Edit this page",
+                        "href": "/edit",
+                        "variant": "secondary"
+                    }
+                ],
+                "id": "Hero-1687283596554",
+                "height": "",
+                "image": {
+                    "url": "https://images.unsplash.com/photo-1687204209659-3bded6aecd79?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
+                    "mode": "inline"
+                },
+                "padding": "128px",
+                "align": "left"
+            },
+            "readOnly": {
+                "rights": true,
+                "title": true,
+                "description": true,
+                "buttons": true,
+                "id": true,
+                "height": true,
+                "image": true,
+                "padding": true,
+                "align": true
+            }
+        },
+        
+    ],
+      "root": {
+        "props": {
+          "title": "Name"
+        }
+      },
+      "zones": {
+        "Columns-2d650a8ceb081a2c04f3a2d17a7703ca6efb0d06:column-0": [
+          {
+            "type": "Text",
+            "props": {
+              "align": "left",
+              "text": "Texthfhgfghf",
+              "padding": "24px",
+              "size": "m",
+              "color": "default",
+              "Font": "serif",
+              "id": "Text-3b03e805faaa1912e422f712c3c0019c7f6624ce"
+            }
+          }
+        ],
+        "Columns-2d650a8ceb081a2c04f3a2d17a7703ca6efb0d06:column-1": [],
+        "Columns-2d650a8ceb081a2c04f3a2d17a7703ca6efb0d06:column-2": [],
+        "Columns-3c2ca5b045ee26535fcdf0eddf409a6308764634:column-0": [],
+        "Columns-3c2ca5b045ee26535fcdf0eddf409a6308764634:column-1": [],
+        "Columns-3c2ca5b045ee26535fcdf0eddf409a6308764634:column-2": [],
+        "Columns-3c2ca5b045ee26535fcdf0eddf409a6308764634:column-3": [],
+        "Columns-3c2ca5b045ee26535fcdf0eddf409a6308764634:column-4": [],
+        "Columns-3c2ca5b045ee26535fcdf0eddf409a6308764634:column-5": []
+      }
+    },
+  });
+});
+
 exports.getauser = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.params;
   const user = await User.findOne({ email }).populate('companyID');
@@ -2173,7 +2261,7 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
 
 exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds } = req.body;
-
+console.log('....................................',orderIds)
   try {
     const result = await Order.deleteMany({ _id: { $in: orderIds } });
     if (result.deletedCount > 0) {
