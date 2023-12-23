@@ -714,7 +714,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
     const message = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: email, // Replace with the recipient's email
       subject: "Password Recovery Email",
       // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
@@ -1152,7 +1152,7 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
       html: `
@@ -1320,7 +1320,7 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const message = {
-        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+        from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
         to: email,
         subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -1588,9 +1588,18 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
 
 //fetch billing address
 exports.fetchBillingAddress = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.user;
+  const { id , companyID } = req.user;
 
-  const billingData = await billingAddress.find({ userId: id });
+ 
+  let billingData;
+
+  // Try to find by companyId
+  billingData = await billingAddress.find({ companyId: companyID });
+
+  // If not found or companyId is null, fall back to finding by userId
+  if (!billingData || billingData.length === 0) {
+    billingData = await billingAddress.find({ userId: id });
+  }
 
   if (!billingData || billingData.length === 0) {
     return next(new ErrorHandler("No Billing details found", 404));
@@ -1621,7 +1630,7 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
 
   const updateUser = await User.findByIdAndUpdate(id, userData);
   const updateBilling = await billingAddress.findOneAndUpdate(
-    { userId: id },
+    {  companyId: companyID  },
     BillingAddressData,
     { new: true }
   );
@@ -2436,7 +2445,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!billingAddressFind) {
     billingAddressFind = new billingAddress({
       userId: user._id,
-      // companyId: user.companyID,
+      companyId: user.companyID,
       billing_address: billingdata,
     });
   } else {
@@ -2948,7 +2957,7 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`", // Replace with your email
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`, // Replace with your email
       to: orderemail,
       // to: "tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
@@ -3778,7 +3787,7 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
     await user.save();
 
     const message = {
-      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: user.email,
       subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4046,7 +4055,7 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   }
 
   const message = {
-    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+    from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
     to: email,
     subject: `${company.company_name} Invited you to join OneTapConnect`,
 
@@ -4674,7 +4683,7 @@ const sendOtpEmail = (email, otp, firstname) => {
   const rootDirectory = process.cwd();
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
   const mailOptions = {
-    from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+    from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
     to: email,
     // to: "tarun.syndell@gmail.com",
     subject: 'One-Time Password (OTP) for Onetap Connect Account Deletion',
@@ -4865,7 +4874,7 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
       const rootDirectory = process.cwd();
       const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
       const mailOptions = {
-        from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
+        from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
         to: email,
         // to: "tarun.syndell@gmail.com",
         subject: 'OneTap Connect Account Recovery',
@@ -5294,11 +5303,11 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 // });
 
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.user;
-  console.log(id,"iddddddddddddddddddd")
+  const { companyID } = req.user;
+  console.log(companyID,"iddddddddddddddddddd")
   try {
     // Find orders by user ID
-    const orders = await Order.find({ user: id }).populate({
+    const orders = await Order.find({ company: companyID }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     });
