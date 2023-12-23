@@ -184,9 +184,29 @@ const userSchema = new mongoose.Schema(
     customerIp: {
       type: String,
     },
+    userID: {
+      type: Number,
+      default: 1,
+    },
+    Account_status: {
+      type: String,
+      default: 'is_Activated'
+    }
   },
+  
   { timestamps: true }
 );
+
+
+userSchema.pre("save", async function (next) {
+  // Increment userID only if it's a new document
+  if (this.isNew && this.userID) {
+    const highestOrder = await this.constructor.findOne({}, {}, { sort: { userID: -1 } });
+    this.userID = highestOrder ? highestOrder.userID + 1 : 1;
+  }
+  next();
+});
+
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {

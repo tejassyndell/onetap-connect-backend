@@ -25,6 +25,24 @@ const Company_information = new mongoose.Schema(
       country: { type: String, default: null },
       postal_code: { type: String, default: null },
     },
+    smartAccessories: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "user",
+          require: false,
+          set: (v) => (v === "" ? null : v),
+        },
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: "product" },
+        variationId: { type: String },
+        productName: { type: String },
+        subtotal: { type: Number },
+        quantity: { type: Number },
+        price: { type: Number }, // final price
+        status: { type: String, default: 'N/A' },
+        uniqueId: { type: String, default:'', }
+      },
+    ],
     global_email: {
       type: String,
       default: ""
@@ -185,8 +203,27 @@ const Company_information = new mongoose.Schema(
         }
       ],
       status: { type: String, default: "active" },
+      referer : {
+        type : String,
+        default:null
+      },
+      unq_compnany_id: {
+        type: Number,
+        default: 1,
+      },
+     
   },
   { timestamps: true }
 );
+
+
+Company_information.pre("save", async function (next) {
+  // Increment userID only if it's a new document
+  if (this.isNew && this.unq_compnany_id) {
+    const highestOrder = await this.constructor.findOne({}, {}, { sort: { unq_compnany_id: -1 } });
+    this.unq_compnany_id = highestOrder ? highestOrder.unq_compnany_id + 1 : 1;
+  }
+  next();
+});
 
 module.exports = mongoose.model("companies_information", Company_information);

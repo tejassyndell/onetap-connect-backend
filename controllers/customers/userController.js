@@ -40,9 +40,10 @@ const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
 
 const { getMaxListeners } = require("events");
-const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
+// const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
 const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
+const SmartAccessoriesModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 dotenv.config();
 const usedCodes = new Set();
 
@@ -1174,11 +1175,11 @@ exports.inviteTeamMember = catchAsyncErrors(async (req, res, next) => {
           <p>Hi ${first_name},<br/>
           You’ve been invited by ${company.company_name} to join OneTapConnect. Please click the link below to complete your account setup and start using your new digital business card.</p>
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
-          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
-            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+          <div style="display: flex ;  margin-top: 25px">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:100%; margin-right:10px ">
                 <a href="${process.env.FRONTEND_URL}/sign-up/${invitationToken}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">Accept invitation</a>
             </div>
-            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:30%;">
+            <div style="flex: 1; border: 1px solid #333; border-radius: 4px; overflow: hidden; justify-content: center;display: flex; width:100%;">
                 <a href="${process.env.FRONTEND_URL}/email-invitations/${invitationToken}" style="display: inline-block; width: 79%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none; color:black;">Reject</a>
             </div>
         </div> <br/>
@@ -1410,10 +1411,10 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       const userId = userRecord.id;
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       const userinfocreate = await UserInformation.create({
-        user_id : userId,
-        company_ID : id,
-       
-       })
+        user_id: userId,
+        company_ID: id,
+
+      })
 
       const user_parmalink = await parmalinkSlug.create({
         user_id: userId,
@@ -2302,25 +2303,30 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
     companyurlslug,
     company_url_edit_permission,
     user_profile_edit_permission,
+    userid
   } = req.body; // Assuming you send companyId and companyurlslug from your React frontend
   // console.log(companyurlslug);
   // console.log(companyId);
   // console.log(company_url_edit_permission);
-  console.log("update is hit");
+  console.log("update is hit" , userid , req.body);
   // const trimslug = companyurlslug.trim()
   const trimslug = companyurlslug?.trim() || companyurlslug;
+  const uniquecompanySlug = { value: trimslug, timestamp: Date.now() };
   try {
     const updatedCompany = await Company.findByIdAndUpdate(companyId, {
       companyurlslug: trimslug,
       company_url_edit_permission: company_url_edit_permission,
       user_profile_edit_permission: user_profile_edit_permission,
     });
-
+    const updatedCompanyinsluddata =  await parmalinkSlug.updateOne(
+      { user_id: userid },
+      { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug : trimslug },
+    );
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
 
-    res.json({ message: "Company slug updated successfully", updatedCompany });
+    res.json({ message: "Company slug updated successfully", updatedCompany , updatedCompanyinsluddata});
   } catch (error) {
     console.error("Error updating company slug:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -2470,13 +2476,16 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
+      smartAccessories: planData.smartAccessories.map((e)=> ({
+        productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
+      })) ,
       subscription_details: {
         // addones: planData.addones,
         addones: planData.addones.map((addon) => ({
           addonId: addon.addonId,  // Convert addonId to ObjectId
           status: addon.status,
           assignTo: addon.assignTo,
-          price: addon.price,   
+          price: addon.price,
         })),
         subscription_id: planData.subscription_id,
         total_amount: planData.total_amount,
@@ -2488,6 +2497,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         renewal_date: planData.renewal_date,
         taxRate: planData.taxRate,
         customer_id: planData.customer_id,
+        planID: planData.planID
       },
     });
     // userInformation.subscription_details = planData;
@@ -2512,9 +2522,13 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       renewal_date: planData.renewal_date,
       taxRate: planData.taxRate,
       customer_id: planData.customer_id,
-      perUser_price : planData.perUser_price
+      perUser_price: planData.perUser_price,
+      planID: planData.planID
     };
   }
+  userInformation.smartAccessories = planData.smartAccessories.map((e)=> ({
+    productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
+  })) ,
   shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
   userInformation.shipping_method = shipping_method;
@@ -2528,13 +2542,18 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   user.first_login = true;
 
   const order = new Order({
+    paymentStatus: "paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
+    contact: user.contact,
     paymentDate: new Date(),
     type: "Subscription",
+    smartAccessories: planData.smartAccessories.map((e) => ({
+      productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+    })),
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones && planData.addones.map((addon) => ({
@@ -2543,7 +2562,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         assignTo: addon.assignTo,
         price: addon.price,
       })),
-   ...planData
+      ...planData
     },
     // subscription_details: planData,
     shippingAddress: shippingData,
@@ -2617,6 +2636,33 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     )
     console.log(logCoupons);
   }
+
+  // status update for supeadmin deactivated account.
+  const updatedUser = await User.updateOne(
+    { _id: id },
+    {
+      $set: { Account_status: 'is_Activated' },
+    },
+    { new: true }
+  );
+  const companyUsers = await User.updateMany(
+    {
+      companyID: companyID,
+      role: { $in: ["administrator", "teammember", "manager"] },
+      Account_status: { $in: ['is_Deactivated']}
+    },
+    {
+      $set: { status: 'active' },
+    },
+  );
+  if (companyUsers.nModified === 0) {
+    console.log('No matching users found for companyUsers update.');
+  }
+  if (!updatedUser) {
+    console.log('No matching users found for companyUsers update.');
+    // return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
   await user.save();
   await card.save();
   await company.save();
@@ -2859,6 +2905,7 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   company.address = billingdata;
   company.company_name = company_name;
   const order = new Order({
+    paymentStatus: "paid",
     user: user._id,
     company: companyID,
     first_name: user.first_name,
@@ -3801,22 +3848,22 @@ exports.resendemailinvitation = catchAsyncErrors(async (req, res, next) => {
 exports.getUserInformation = catchAsyncErrors(async (req, res, next) => {
   try {
     const { id } = req.user;
-    
+
     const userInfo = await UserInformation.find({ user_id: id });
-    
+
     if (!userInfo || userInfo.length === 0) {
       return next(new ErrorHandler("User Information Not Found", 401));
     }
-    
+
     const firstuserInfo = userInfo[0];
-    
+
     res.status(200).json({
       success: true,
-      firstuserInfo,  
+      firstuserInfo,
     });
   } catch (error) {
     return next(new ErrorHandler(error, 501));
-  
+
   }
 });
 
@@ -4543,6 +4590,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
     // Create a new order linked to the specific user
     const order = new Order({
+      paymentStatus: "paid",
       user: userId, // Link the order to the specific user
       smartAccessories,
       totalAmount,
@@ -4586,7 +4634,7 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.generateotp = catchAsyncErrors(async (req, res, next) => {
-  const { email, firstname } = req.body;
+  const { email, firstname, status } = req.body;
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const verificationToken = jwt.sign(
     { otp, email },
@@ -4602,7 +4650,12 @@ exports.generateotp = catchAsyncErrors(async (req, res, next) => {
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    sendOtpEmail(email, otp, firstname);
+    if (status === "deactivate") {
+      // console.log(otp, "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ")
+      senddeactivateotpEmail(email, otp, firstname)
+    } else {
+      sendOtpEmail(email, otp, firstname);
+    }
     return res.status(200).json({ success: true, message: 'OTP sent successfully.' });
   } catch (error) {
     console.error(error);
@@ -4645,7 +4698,7 @@ const sendOtpEmail = (email, otp, firstname) => {
              
               <p>Dear ${firstname}<br/><br/>
               We have received a request to delete your account. To proceed with this request, we need to verify your identity.<br/><br/>
-              Please use the following One-Time Password (OTP) within the next [10 minutes] to confirm the deletion of your account:<br/><br/>
+              Please use the following One-Time Password (OTP) within the next 10 minutes to confirm the deletion of your account:<br/><br/>
   
               <span style="font-weight: bold;">OTP:</span>&nbsp; ${otp}<br/>
   
@@ -4661,6 +4714,78 @@ const sendOtpEmail = (email, otp, firstname) => {
               Team OneTapConnect.<br/>
           </div>
       </body>
+    </html>
+  `,
+    attachments: [
+      {
+        filename: "Logo.png",
+        path: uploadsDirectory,
+        cid: "logo",
+      },
+    ],
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error(error);
+    } else {
+      // console.log('OTP email sent successfully:', info.response);
+    }
+  });
+};
+const senddeactivateotpEmail = (email, otp, firstname) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.NODMAILER_EMAIL,
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
+  const rootDirectory = process.cwd();
+  const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+  const mailOptions = {
+    from: "OneTapConnect:otcdevelopers@gmail.com",
+    to: email,
+    // to: "tarun.syndell@gmail.com",
+    subject: 'One-Time Password (OTP) for Onetap Connect Account Deactivation',
+    // text: `Your OTP is: ${otp}. It will expire in 10 minutes.`,
+    html: `
+    <!DOCTYPE html>
+      <html>
+      
+      <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </head>
+      
+      <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+      
+      </div>
+      <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+     
+      <p>Dear ${firstname}<br/><br/>
+      We have received a request to deactivate your account. To proceed with this request, we need to verify your identity.<br/><br/>
+      Please use the following One-Time Password (OTP) within the next 10 minutes to confirm the deactivation of your account:<br/><br/><br/>
+
+      <span style="font-weight: bold;">OTP:</span>&nbsp; ${otp}<br/><br/><br/>
+
+      <span style="font-weight: bold;">Caution:</span>&nbsp; Once you deactivate your account, your subscription will also be canceled.<br/>
+
+      <div style="margin-top: 25px;">
+       <div style="font-weight: bold;">Technical issue?</div>
+         <div style="margin-top: 5px;">
+         <span>In case you're facing any technical issue, please contact our support team </span>
+         <span style="color: #2572e6;"><a href="https://support.onetapconnect.com/">here.</a></span>
+       </div>
+      </div><br/>
+      Thank you for using our platform.<br/><br/>
+      Best regards,<br/>
+      Team OneTapConnect.<br/>
+  </div>
+</body>
     </html>
   `,
     attachments: [
@@ -4719,6 +4844,19 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         },
         { new: true }
       );
+      const companyUsers = await User.updateMany(
+        {
+          companyID: companyid,
+          role: { $in: ["administrator", "teammember", "manager"] },
+        },
+        {
+          $set: { delete_account_status: 'inactive' },
+        },
+      );
+      if (companyUsers.nModified === 0) {
+        console.log('No matching users found for companyUsers update.');
+      }
+
       if (!updatedUser) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
@@ -4789,8 +4927,8 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         expires: new Date(Date.now()),
         httpOnly: true,
       });
-      return res.status(200).json({ success: true, message: 'OTP verified' });
       scheduleTokenExpiration(recoveryToken, userid, companyid);
+      return res.status(200).json({ success: true, message: 'OTP verified' });
     } else {
       return res.status(400).json({ success: false, message: 'Incorrect OTP' });
     }
@@ -4803,11 +4941,20 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+const userTimeouts = {};
 function scheduleTokenExpiration(token, userid, companyid) {
   const { exp } = jwt.decode(token);
   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
-  console.log(expirationTime, ".....expiring time")
-  setTimeout(async () => {
+  console.log(expirationTime, ".....expiring time");
+
+  const expirationTimeInSeconds = Math.floor(expirationTime / 1000);
+  const hours = Math.floor(expirationTimeInSeconds / 3600);
+  const minutes = Math.floor((expirationTimeInSeconds % 3600) / 60);
+  const seconds = expirationTimeInSeconds % 60;
+  // console.log(`Expiration Time: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+
+  const timeoutId = setTimeout(async () => {
+    console.log('called delete');
     try {
       const user = await User.findOne({ _id: userid });
       if (user && user.recoveryToken === token) {
@@ -4833,24 +4980,113 @@ function scheduleTokenExpiration(token, userid, companyid) {
           'Company Share Referral data not found'
         );
         deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+        delete userTimeouts[userid];
         await Promise.all(deletePromises);
+        await handleDataDeletionSuccess(companyid);
         // console.log(`Expired token for user ${userid} deleted.`);
       }
     } catch (error) {
       console.error('Error deleting expired token:', error);
     }
   }, expirationTime);
+  // Store the timeout ID associated with the user
+  userTimeouts[userid] = timeoutId;
 }
+// function scheduleTokenExpiration(token, userid, companyid) {
+//   const { exp } = jwt.decode(token);
+//   const expirationTime = (exp - Math.floor(Date.now() / 1000)) * 1000;
+//   console.log(expirationTime, ".....expiring time")
+
+//   const expirationTimeInSeconds = Math.floor(expirationTime / 1000);
+//   const hours = Math.floor(expirationTimeInSeconds / 3600);
+//   const minutes = Math.floor((expirationTimeInSeconds % 3600) / 60);
+//   const seconds = expirationTimeInSeconds % 60;
+//   // console.log(`Expiration Time: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+
+//   setTimeout(async () => {
+//     console.log('called delete')
+//     try {
+//       const user = await User.findOne({ _id: userid });
+//       if (user && user.recoveryToken === token) {
+//         const deletePromises = [];
+//         const pushDeletePromise = async (deletePromise, errorMessage) => {
+//           try {
+//             const result = await deletePromise;
+//             if (!result) {
+//               console.log(errorMessage);
+//             }
+//           } catch (error) {
+//             console.error('Error deleting data:', error);
+//           }
+//         };
+//         pushDeletePromise(User.findOneAndDelete({ _id: userid }), 'User not found');
+//         pushDeletePromise(UserInformation.findOneAndDelete({ user_id: userid }), 'User Information not found');
+//         pushDeletePromise(Cards.findOneAndDelete({ userID: userid }), 'Card info not found');
+//         pushDeletePromise(billingAddress.findOneAndDelete({ userId: userid }), 'Billing address not found');
+//         pushDeletePromise(shippingAddress.findOneAndDelete({ userId: userid }), 'Shipping address not found');
+//         pushDeletePromise(Company.findOneAndDelete({ primary_account: userid }), 'Company info not found');
+//         pushDeletePromise(
+//           CompanyShareReferralModel.findOneAndDelete({ companyID: companyid }),
+//           'Company Share Referral data not found'
+//         );
+//         deletePromises.push(TeamDetails.deleteMany({ companyID: companyid }));
+//         await Promise.all(deletePromises);
+//         await handleDataDeletionSuccess(companyid);
+//         // console.log(`Expired token for user ${userid} deleted.`);
+//       }
+//     } catch (error) {
+//       console.error('Error deleting expired token:', error);
+//     }
+//   }, expirationTime);
+// }
+async function handleDataDeletionSuccess(companyid) {
+  console.log(`Data for company ${companyid} successfully deleted.`);
+  // const companyuser = await User.find({ companyID: companyid });
+  try {
+    const companyUsers = await User.find({
+      companyID: companyid,
+      role: { $in: ["administrator", "teammember", "manager"] }
+    });
+
+    const deletePromises = [];
+    const pushDeletePromise = async (deletePromise, errorMessage) => {
+      try {
+        const result = await deletePromise;
+        if (!result) {
+          console.log(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error deleting data:', error);
+      }
+    };
+    for (const user of companyUsers) {
+      const deletePromise = User.findOneAndDelete({ _id: user._id });
+      pushDeletePromise(deletePromise, `User with _id ${user._id} not found`);
+      const userInfoDeletePromise = UserInformation.findOneAndDelete({ user_id: user._id });
+      pushDeletePromise(userInfoDeletePromise, `User Information for _id ${user._id} not found`);
+      const cardsDeletePromise = Cards.findOneAndDelete({ userID: user._id });
+      pushDeletePromise(cardsDeletePromise, `Card info for _id ${user._id} not found`);
+      const billingAddressDeletePromise = billingAddress.findOneAndDelete({ userId: user._id });
+      pushDeletePromise(billingAddressDeletePromise, `Billing address for _id ${user._id} not found`);
+      const shippingAddressDeletePromise = shippingAddress.findOneAndDelete({ userId: user._id });
+      pushDeletePromise(shippingAddressDeletePromise, `Shipping address for _id ${user._id} not found`);
+    }
+    await Promise.all(deletePromises);
+  } catch (error) {
+    console.error('Error deleting users:', error);
+  }
+}
+
 exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
   const { email, password, token } = req.body;
-  // console.log("tooken.....",token)
+  console.log("tooken.....", token)
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password are required' });
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userid = decoded._id;
-    // console.log("iddd...",userid)
+    console.log("iddd...", userid)
     const user = await User.findOne({ _id: userid }).select("+password");
     if (!user) {
       return res.status(400).json({ success: false, message: 'User not found' });
@@ -4864,7 +5100,7 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Incorrect Password' });
     }
     const userRecoveryToken = user.recoveryToken;
-    // console.log("database token........",userRecoveryToken)
+    console.log("database token........", userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
@@ -4879,18 +5115,18 @@ exports.verifyRecoveryToken = catchAsyncErrors(async (req, res, next) => {
         );
         return res.status(200).json({ success: true, message: 'Token verified and fields updated successfully' });
       } catch (error) {
-        // console.error(error);
+        console.error(error);
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
       }
     });
   } catch (error) {
-    // console.error(error);
+    console.error(error);
     return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) => {
   const { acc_recover_token } = req.body;
-  // console.log(acc_recover_token, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+  console.log(acc_recover_token, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
   try {
     const decoded = jwt.verify(acc_recover_token, process.env.JWT_SECRET);
     const userid = decoded._id;
@@ -4899,7 +5135,7 @@ exports.google_verify_recover_account = catchAsyncErrors(async (req, res, next) 
       return res.status(400).json({ success: false, message: 'User not found' });
     }
     const userRecoveryToken = user.recoveryToken;
-    // console.log("database token........", userRecoveryToken)
+    console.log("database token........", userRecoveryToken)
     jwt.verify(userRecoveryToken, process.env.JWT_SECRET);
     await User.findOneAndUpdate(
       { _id: userid },
@@ -5058,13 +5294,14 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
+  console.log(id,"iddddddddddddddddddd")
   try {
     // Find orders by user ID
     const orders = await Order.find({ user: id }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     });
-
+    console.log(orders,"orderss")
     // Create an array to store user data for each order
     const ordersWithUserData = [];
 
@@ -5076,7 +5313,7 @@ exports.getOrders = catchAsyncErrors(async (req, res, next) => {
       const orderWithUserData = { ...order.toObject(), userdata };
       ordersWithUserData.push(orderWithUserData);
     }
-
+    console.log(ordersWithUserData,"orrrrrrrrrrrrrrrrrrr")
     res.status(200).json({ success: true, orders: ordersWithUserData });
   } catch (error) {
     console.error(error);
@@ -5228,11 +5465,13 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
   console.log("get req----------------------------------------------------------------------------")
   // console.log("called-----------------------------------------");
   const allorders = await Order.find({ type: 'smartAccessories' });
+  // const allorders = await Order.find({ orderNumber: "188" });
   console.log(allorders)
 
   const xmlOrders = allorders.map(order => {
     const orderID = order._id;
     const odrNum = order.orderNumber;
+    const odrtotalweight = order.sumTotalWeights;
     const OrderDate = order.createdAt;
     const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
     const OrderStatus = order.status;
@@ -5252,6 +5491,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
     const Pcode = order?.shippingAddress[0]?.postal_code;
 
     const xmlItems = order?.smartAccessories.map(item => {
+      const unitPriceFloat = parseFloat(item.price).toFixed(2);
       return `
     <Item>
       <SKU><![CDATA[FD88821]]></SKU>
@@ -5260,7 +5500,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
       <Weight>16</Weight>
       <WeightUnits>Ounces</WeightUnits>
       <Quantity>${item.quantity}</Quantity>
-      <UnitPrice>${item.price}</UnitPrice>
+      <UnitPrice>${unitPriceFloat}</UnitPrice>
       <Location><![CDATA[C3-D4]]></Location>
       <Options>
           <Option>
@@ -5326,6 +5566,7 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
     ${xmlOrders}
   </Orders>`;
 
+  console.log(xmlOrders)
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
 
@@ -5341,14 +5582,14 @@ exports.getchangesoforder = catchAsyncErrors(async (req, res, next) => {
   if (!trcNum) {
     return res.status(404).json({ message: 'User not found' });
   }
-  const order = await Order.findOne({orderNumber: orderNum});
+  const order = await Order.findOne({ orderNumber: orderNum });
   if (order) {
     await Order.updateOne({ orderNumber: orderNum }, { tracking_number: trcNum });
     return res.status(200).json({
       message: 'Tracking number updated',
       order,
     });
-  }else{
+  } else {
     error
   }
   res.status(200).json({ message: 'Webhook received successfully' });
@@ -5359,7 +5600,7 @@ const apiKey = '4631a6eafe2e4771b4ceb4981881d1f1';
 const ratesEndpoint = 'https://ssapi.shipstation.com/shipments/getrates';
 
 exports.getrateoforder = catchAsyncErrors(async (req, res, next) => {
-  const {shipmentData}=req.body;
+  const { shipmentData } = req.body;
   // Make API request to get rates
   axios.post(ratesEndpoint, shipmentData, {
     headers: {
@@ -5387,7 +5628,7 @@ exports.sendTestData = async (req, res, next) => {
     res.status(500).json({ success: false, msg: "Internal Server Error" });
   }
 };
-exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
+exports.getorderdetails = catchAsyncErrors(async (req, res, next) => {
   try {
     const { orderNumber, user } = req.body;
     // console.log(orderNumber , user,"req.body")
@@ -5413,7 +5654,7 @@ exports.getorderdetails = catchAsyncErrors(async(req,res,next)=>{
 
 exports.getAddonsForOrderSummary = catchAsyncErrors(async (req, res, next) => {
   try {
-    const {addonIds} = req.body;
+    const { addonIds } = req.body;
     // console.log(addonIds, "add on ids");
 
     // Assuming you have a MongoDB model named Addon
@@ -5784,11 +6025,196 @@ exports.cardEditorData = catchAsyncErrors(async (req, res, next) => {
         root: { props: { title: "About Us" } },
       },
     };
-  res.send(data)
+    res.send(data)
     return
   } catch (error) {
     console.error('Error :', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+
+exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email: email });
+  const storedotp = user.otptoken;
+  const userid = user._id;
+  const userinfo = await UserInformation.findOne({ user_id: userid })
+  const user_subscription_id = userinfo.subscription_details.subscription_id
+  // console.log(user_subscription_id)
+  const companyid = user.companyID;
+  try {
+    const decodedToken = jwt.verify(storedotp, process.env.JWT_SECRET);
+    const userotp = decodedToken.otp;
+    // console.log(userotp, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    if (otp === userotp) {
+      console.log('verified')
+      const updatedUser = await User.updateOne(
+        { _id: userid },
+        {
+          $set: { Account_status: 'is_Deactivated' },
+          otptoken: null,
+        },
+        { new: true }
+      );
+      const companyUsers = await User.updateMany(
+        {
+          companyID: companyid,
+          role: { $in: ["administrator", "teammember", "manager"] },
+          status:{ $in:['active'] }
+        },
+        {
+          $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
+        },
+      );
+      if (companyUsers.nModified === 0) {
+        console.log('No matching users found for companyUsers update.');
+      }
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      return res.status(200).json({ success: true, message: 'OTP verified', user_subscription_id });
+    }else {
+      return res.status(400).json({ success: false, message: 'Incorrect OTP' });
+    }
+  }catch (error) {
+    console.log(error);
+  }
+});
+exports.assignSmartAccessroiesToUser = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { userId, uniqueIds } = req.body;
+
+    // Update the userId for multiple uniqueIds
+    const updatedAccessories = await SmartAccessoriesModal.updateMany(
+      { uniqueId: { $in: uniqueIds } },
+      { $set: { userId: userId } },
+      { new: true }
+    );
+
+    if (!updatedAccessories) {
+      return res.status(404).json({ message: "Accessories not found" });
+    }
+
+    // Return the updated accessories details
+    res.status(200).json({ updatedAccessories, success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+exports.updateSmartAccessoryStatus = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { Ids, status } = req.body;
+
+    // Update the status for the specified uniqueIds
+    const updatedAccessories = await SmartAccessoriesModal.updateMany(
+      { _id: { $in: Ids } },
+      { $set: { status: status } },
+      { new: true }
+    );
+
+    if (!updatedAccessories) {
+      return res.status(404).json({ message: "Accessories not found" });
+    }
+
+    // Return the updated accessories details
+    res.status(200).json({ updatedAccessories, success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+exports.removeUserFromSmartAccessories = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { uniqueIds } = req.body;
+    // Convert uniqueIds to ObjectId array
+    // const objectIdArray = uniqueIds.map(id => mongoose.Types.ObjectId(id));
+
+    // Remove the userId field for the specified uniqueIds
+    const removedUserAccessories = await SmartAccessoriesModal.updateMany(
+      { _id: { $in: uniqueIds } },
+      { $unset: { userId: 1 } },
+      { new: true }
+    );
+    if (!removedUserAccessories) {
+      return res.status(404).json({ message: "Accessories not found" });
+    }
+    res.status(200).json({ removedUserAccessories, success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+// exports.assignSmartAccessroiesToUser = catchAsyncErrors(async(req,res,next)=>{
+//   try {
+//     const { userId, uniqueId , companyId } = req.body;
+//     // const { companyID } = req.user;
+
+//     // Update the userId in the smartAccessories array based on the uniqueId
+//     const updatedCompany = await Company.findOneAndUpdate(
+//       { _id: companyId, "smartAccessories.uniqueId": uniqueId },
+//       { $set: { "smartAccessories.$.userId": userId } },
+//       { new: true }
+//     );
+
+//     if (!updatedCompany) {
+//       // If the company with the specified ID or uniqueId is not found
+//       return res.status(404).json({ message: "Company not found" });
+//     }
+
+//     // Return the updated company details
+//     res.status(200).json({ updatedCompany });
+//   } catch (error) {
+//     next(error); // Pass the error to the error handling middleware
+//   }
+// });
+
+exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Assuming you want to get smartAccessories based on company ID
+    // const { companyID } = req.user;
+
+    const SmartAccessorie = await SmartAccessoriesModal.find()
+      .populate({
+        path: 'userId',
+        select: 'first_name last_name email designation',
+      })
+      .populate('productId');
+  
+
+    if (!SmartAccessorie) {
+      return res.status(404).json({ message: 'SmartAccessorie does not have a data' });
+    }
+
+    const smartAccessories = SmartAccessorie.filter(sa => sa.userId !== undefined);
+    const smartAccessorieswithoutUserId = SmartAccessorie.map(e => e);
+// const companyName = company.company_name
+
+    res.status(200).json({ smartAccessories ,  smartAccessorieswithoutUserId , AllSmartAccessories : SmartAccessorie});
+  } catch (error) {
+    next(error); // Pass the error to the error handling middleware
+  }
+});
+
+exports.getuniqueslug = catchAsyncErrors(async(req,res,next)=>{
+  const {id} = req.body
+  
+  console.log(id );
+  const users_slug = await parmalinkSlug.find({ user_id: id });
+  console.log(users_slug)
+
+  if (!users_slug) {
+    return next(new ErrorHandler("No slug details Found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    users_slug,
+  });
+})
 

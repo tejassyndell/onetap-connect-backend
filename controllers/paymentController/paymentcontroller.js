@@ -7,7 +7,10 @@ const UserModel = require("../../models/NewSchemas/UserModel");
 const ErrorHandler = require("../../utils/errorHandler.js");
 const billingAddressModal = require("../../models/NewSchemas/user_billing_addressModel");
 const shippingAddressModal = require("../../models/NewSchemas/user_shipping_addressesModel.js");
-
+const path = require("path");
+const nodemailer = require("nodemailer");
+const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
+const PurchasedSmartAccessoryModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -16,6 +19,8 @@ const Product_Professional_Yearly = process.env.Professional_Yearly
 const Product_Professional_monthly = process.env.Professional_monthly
 const monthlyProfessionalPriceID = process.env.MONTHLY_PROFESSIONAL_PLAN_PRICE_ID
 const monthlyTeamPriceID = process.env.MONTHLY_TEAM_PLAN_PRICE_ID
+const Subscription_Addons = process.env.Subscription_Addons
+const Onetime_Addons = process.env.Onetime_Addons
 
 // const { v4: uuidv4 } = require('uuid');
 
@@ -199,6 +204,8 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
   console.log(primary_card)
   console.log("..........")
   const taxID = req.body.taxId;
+
+  // console.log(req.body)
   const { type, planName } = req.body.plandata;
   const productID = type === 'monthly'
   ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
@@ -225,8 +232,23 @@ if(initialSetupCharge){
     customer: customerID,
     amount: initialSetupCharge * 100,  // need to pass charge amount
     currency: 'usd',
-    description: 'Initial setup fee',
+    unit_amount: req.body.amount * 100,
+    product: productID,
+    tax_behavior: 'exclusive',
+    recurring: {
+      interval: type === "monthly" ? "month" : "year",
+      interval_count: 1
+    },
   });
+  if (initialSetupCharge) {
+
+    const invoiceItem = await stripe.invoiceItems.create({
+      customer: customerID,
+      amount: initialSetupCharge * 100,  // need to pass charge amount
+      currency: 'usd',
+      description: 'Initial setup fee',
+    });
+  }
 }
 
 if (isCouponApplied) {
@@ -523,6 +545,59 @@ exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+//for account deactivate plan cancel
+exports.cancelPlandeactivateaccount = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.body)
+  try {
+    const { subId, currentPlan } = req.body
+    if (!subId) {
+      return res.status(500).json({ success: false, error: 'No Subscription Id found' });
+    }
+
+    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+      invoice_now: true,
+      prorate: true
+    });
+    console.log(canceledSubscription);
+    console.log('canceledSubscription');
+
+    if (!canceledSubscription) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    const updatedUserInfo = await UserInformation.findOneAndUpdate(
+      { 'subscription_details.customer_id': canceledSubscription.customer },
+      {
+        $set: {
+          'subscription_details.subscription_id': null,
+          'subscription_details.addones': [],
+          'subscription_details.total_amount': null,
+          'subscription_details.billing_cycle': null,
+          'subscription_details.endDate': null,
+          'subscription_details.plan': currentPlan,
+          'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
+          'subscription_details.recurring_amount': null,
+          'subscription_details.renewal_date': null,
+          'subscription_details.auto_renewal': null,
+          'subscription_details.taxRate': null,
+        }
+      },
+      { new: true }
+    );
+    if (!updatedUserInfo) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    console.log(updatedUserInfo)
+    console.log("updatedUserInfo")
+
+    res.status(200).json({ success: true, delete: "Subscription Canceled successfully" });
+    // res.status(200).json({ success: true, message: canceledSubscription });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 
 exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
@@ -555,6 +630,7 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     const proration_date = Math.floor(Date.now() / 1000);
     const { paymentToken, customerID, subscriptionId, plandata, selectedCard, existingcard } = req.body;
     const { type, planName } = plandata;
+
     const productID = type === 'monthly'
       ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
       : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
@@ -705,6 +781,351 @@ exports.isActive = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+// Creates an order from admin 
+exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Get the user ID from the authenticated user or request data
+    const userId = req.body.userId;
+    const orderId = req.body.orderId;
+    const {
+      email,
+      last_name,
+      first_name,
+      // tax,
+      billingAddress,
+      shippingAddress,
+      orderData,
+      totalAmount,
+      referrer,
+      referrerName,
+      dealOwner,
+      customerIp,
+      orderedBy,
+      discount,
+    } = req.body;
+
+
+    // Save Addresses
+    let user;
+    if (userId !== "Guest") {
+      user = await UserModel.findById(userId);
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+      // Update user fields
+      user.referrerName = referrerName;
+      user.dealOwner = dealOwner;
+      user.referrer = referrer;
+      user.customerIp = customerIp;
+
+      // Save user updates
+      await user.save();
+
+      let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
+      if (!billingAddressFind) {
+        billingAddressFind = new billingAddressModal({
+          userId: user._id,
+          billing_address: billingAddress,
+        });
+      } else {
+        billingAddressFind.billing_address = billingAddress;
+      }
+
+      let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
+
+      if (!shippingAddressFind) {
+        shippingAddressFind = new shippingAddressModal({
+          userId: user._id,
+          shipping_address: shippingAddress,
+        });
+      }
+
+      await billingAddressFind.save();
+      await shippingAddressFind.save();
+    }
+
+    // Check if orderId is provided
+    if (orderId) {
+      // Update existing order using findByIdAndUpdate
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          email,
+          last_name,
+          first_name,
+          billingAddress,
+          shippingAddress,
+          orderData,
+          totalAmount,
+          referrer,
+          referrerName,
+          dealOwner,
+          customerIp,
+          orderedBy,
+          discount,
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedOrder) {
+        return next(new ErrorHandler("Order not found", 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order updated successfully',
+        order: updatedOrder,
+      });
+    } else {
+
+      // Create a new order linked to the specific user
+      const order = new Order({
+        user: userId === 'Guest' ? null : userId,
+        company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+        email,
+        last_name,
+        first_name,
+        subscription_details: orderData.subscription_details,
+        smartAccessories: orderData.smartAccessories,
+        addaddons: orderData.addaddons,
+        shipping_method: orderData.shipping_method,
+        totalAmount,
+        // tax,
+        type: 'combined',
+        shippingAddress,
+        billingAddress,
+        orderNotes: orderData.orderNotes,
+        isGuest: userId === 'Guest' ? true : false,
+        paymentStatus: 'pending',
+        discount,
+      });
+
+      // Save the order to the database
+      const newOrder = await order.save();
+      console.log(newOrder, "newOrder")
+      res.status(201).json({
+        success: true,
+        message: 'Order created successfully',
+        order,
+      });
+    }
+
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+});
+
+// Creates an order and send invoice
+exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // Get the user ID from the authenticated user or request data
+    let orderNumber;
+    const userId = req.body.userId;
+    const orderId = req.body.orderId;
+    const {
+      email,
+      last_name,
+      first_name,
+      // tax,
+      billingAddress,
+      shippingAddress,
+      orderData,
+      totalAmount,
+      referrer,
+      referrerName,
+      dealOwner,
+      customerIp,
+      orderedBy,
+      discount
+    } = req.body;
+
+
+    // Save Addresses
+    let user;
+    if (userId !== "Guest") {
+      user = await UserModel.findById(userId);
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+      // Update user fields
+      user.referrerName = referrerName;
+      user.dealOwner = dealOwner;
+      user.referrer = referrer;
+      user.customerIp = customerIp;
+
+      // Save user updates
+      await user.save();
+
+      let billingAddressFind = await billingAddressModal.findOne({ userId: user._id });
+      if (!billingAddressFind) {
+        billingAddressFind = new billingAddressModal({
+          userId: user._id,
+          billing_address: billingAddress,
+        });
+      } else {
+        billingAddressFind.billing_address = billingAddress;
+      }
+
+      let shippingAddressFind = await shippingAddressModal.findOne({ userId: user._id });
+
+      if (!shippingAddressFind) {
+        shippingAddressFind = new shippingAddressModal({
+          userId: user._id,
+          shipping_address: shippingAddress,
+        });
+      }
+
+      await billingAddressFind.save();
+      await shippingAddressFind.save();
+    }
+
+    // Check if orderId is provided
+    if (orderId) {
+      // Update existing order using findByIdAndUpdate
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          email,
+          last_name,
+          first_name,
+          billingAddress,
+          shippingAddress,
+          orderData,
+          totalAmount,
+          referrer,
+          referrerName,
+          dealOwner,
+          customerIp,
+          orderedBy,
+          discount,
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedOrder) {
+        return next(new ErrorHandler("Order not found", 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Order updated successfully',
+        order: updatedOrder,
+      });
+      orderNumber = updatedOrder.orderNumber;
+    } else {
+
+      // Create a new order linked to the specific user
+      const order = new Order({
+        user: userId === 'Guest' ? null : userId,
+        company: userId === 'Guest' ? null : user.companyID, // Link the order to the specific user
+        email,
+        last_name,
+        first_name,
+        subscription_details: orderData.subscription_details,
+        smartAccessories: orderData.smartAccessories,
+        addaddons: orderData.addaddons,
+        shipping_method: orderData.shipping_method,
+        totalAmount,
+        // tax,
+        type: 'combined',
+        shippingAddress,
+        billingAddress,
+        orderNotes: orderData.orderNotes,
+        isGuest: userId === 'Guest' ? true : false,
+        paymentStatus: 'pending',
+        discount,
+      });
+
+      // Save the order to the database
+      const newOrder = await order.save();
+      console.log(newOrder, "newOrder")
+      res.status(201).json({
+        success: true,
+        message: 'Order created successfully',
+        order,
+      });
+      orderNumber = newOrder.orderNumber;
+    }
+
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const message = {
+      from: "OneTapConnect:otcdevelopers@gmail.com",
+      to: email,
+      subject: `Please confirm your email`,
+      html: `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+  
+      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+          <img src="cid:logo">
+          </div>
+          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+          <h4><center>Invoice ${orderNumber}</center></h4>
+          </br>
+          <p>Hi ${first_name} ${last_name},<br/>
+          An invoice has been create for you by  ${orderedBy}.</p>
+          <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
+          <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
+            <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
+                <a href="${process.env.FRONTEND_URL}/ordersummary/${orderNumber}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
+            </div>
+            
+        </div> <br/>
+        <p>Your privacy in important to us. By placing the order, you agree to<a href="https://app.1tapconnect.com/terms-of-use"> our terms of service,</a><a href="https://app.1tapconnect.com/privacy-policy"> privacy policy</a> and <a href="https://app.1tapconnect.com/refund-policy">refund policy.</a> </p>
+        <br/>
+        <h5><center>Technical issue?</center></h5>
+          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      </div>
+  
+  </body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(info.response);
+      }
+    });
+
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+});
 
 // Creates an order
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
@@ -722,6 +1143,8 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       existingcard,
       saveAddress,
       selectedEditAddress,
+      email,
+      sumTotalWeights,
     } = req.body;
 
     if (userId === "Guest") {
@@ -818,7 +1241,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     // console.log("paymentIntentUpdate")
     let user;
     if (userId !== "Guest") {
-       user = await UserModel.findById(userId);
+      user = await UserModel.findById(userId);
       if (!user) {
         return next(new ErrorHandler("User not found", 404));
       }
@@ -872,8 +1295,13 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
       // Create a new order linked to the specific user
       const order = new Order({
+        paymentStatus: "paid",
         user: userId === 'Guest' ? null : userId,
-        company : userId === 'Guest' ? null  : user.companyID, // Link the order to the specific user
+        company: userId === 'Guest' ? null : user.companyID,
+        first_name: userId === 'Guest' ? null : user.first_name,
+        last_name: userId === 'Guest' ? null : user.last_name,
+        email: userId === 'Guest' ? null : user.email,
+        contact: userId === 'Guest' ? null : user.contact, // Link the order to the specific user
         smartAccessories,
         totalAmount,
         tax,
@@ -882,10 +1310,32 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         paymentDate,
         shippingAddress,
         billingAddress,
+        sumTotalWeights: sumTotalWeights,
         isGuest: userId === 'Guest' ? true : false,
       });
       // Save the order to the database
       const orderData = await order.save();
+
+      // const purchasedSmartAccessory = new PurchasedSmartAccessoryModal({
+      //   company: userId === 'Guest' ? null : user.companyID,
+      //   // user : userId === 'Guest' ? null : userId,
+      //   productId: smartAccessories.productId,
+      //   variationId: smartAccessories.variationId  ,
+      //   productName: smartAccessories.productName ,
+      //   subtotal :  smartAccessories.subtotal   ,
+      //   quantity: smartAccessories.quantity ,
+      //   price:   smartAccessories.price ,
+      //   status:  smartAccessories.status  ,
+      //   uniqueId:  smartAccessories.uniqueId  ,
+      // })
+// const purchased_smartAccessoryData = await purchasedSmartAccessory.save();
+// console.log(purchased_smartAccessoryData, "purchased_smartAccessoryData............")
+
+      const company = await Company_informationModel.findById({ _id :orderData.company})
+
+      company.smartAccessories.push(...smartAccessories);
+
+      const companyData = company.save();
       console.log("orderData")
       console.log(orderData)
       console.log("orderData")
@@ -914,6 +1364,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         order,
         clientSecret: paymentIntent.client_secret
       });
+      await sendpurchaseOrderconfirmationEmail(email, shippingAddress, smartAccessories, order);
     } else {
       // Payment confirmation failed
       res.status(400).json({
@@ -926,6 +1377,151 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ message: error });
   }
 });
+async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress, smartAccessories, order) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    let productsHTML = '';
+    let totalAmount = 0;
+    smartAccessories.forEach((product) => {
+      productsHTML += `
+        <tr>
+          <td>&nbsp;&nbsp;&nbsp;${product.productName}</td>
+          <td style="text-align: center;">&nbsp;&nbsp;${product.quantity}</td>
+          <td></td>
+          <td>&nbsp;&nbsp;$ ${product.price}</td>
+        </tr>
+      `;
+      totalAmount += parseFloat(product.price);
+    });
+
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
+      to: customeremail,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'OneTapConnect! Order Confirmation',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, width=device-width" />
+</head>
+
+<body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+    </div>
+    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+      <h3>Thanks for your order!</h3>
+      <p>Dear ${shippingAddress.first_name},<br />
+      <p>We are delighted that you have found something you like!</p>
+      <p>Below, you will find a summary of your order details:</p>
+
+      <table style="width: 100%;">
+  <tr>
+    <td style="width: 50%; vertical-align: top;">
+      <p>
+        Delivery address:<br />
+        ${shippingAddress.line1}<br />
+        ${shippingAddress.line2}<br />
+        ${shippingAddress.city}<br />
+        ${shippingAddress.state}<br />
+        ${shippingAddress.country}<br />
+        ${shippingAddress.postal_code}<br />
+      </p>
+    </td>
+    <td style="width: 50%; vertical-align: top;">
+      <p>
+        Order Number: <b>${order.orderNumber}</b><br />
+        Date: ${new Date(order.createdAt).toLocaleDateString()}
+      </p>
+    </td>
+  </tr>
+</table>
+
+      <!-- Invoice Table -->
+      <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #e65925; color: #fff; text-align: left;">
+            <th style="padding: 10px;">Products</th>
+            <!-- <th style="padding: 10px;">Description</th> -->
+            <!-- <th style="padding: 10px;">Unit Price</th> -->
+            <th style="padding: 10px;text-align: center;">Quantity</th>
+            <th></th>
+            <th style="padding: 10px;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add your invoice items dynamically here -->
+          ${productsHTML}
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Sub-Total:</b></td>
+            <td>&nbsp;&nbsp;$ ${totalAmount.toFixed(2)}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Shipping:</b></td>
+            <td>&nbsp;&nbsp;$ 0.0</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Total:</b></td>
+            <td>&nbsp;&nbsp;$ ${order.totalAmount}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Payment method: Credit / Debit Card</p>
+      <p>Please keep this email for your records.</p>
+      <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+      </div>
+      <h3>Technical issue?</h3>
+      <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+    </div>
+
+</body>
+
+</html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
 
 exports.fetchCards = catchAsyncErrors(async (req, res, next) => {
   const { customerID } = req.body
@@ -1149,8 +1745,9 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
 
 
     const order = new Order({
+      paymentStatus: "paid",
       user: userId,
-      company:companyID,
+      company: companyID,
       shippingAddress,
       billingAddress,
       totalAmount,
@@ -1198,8 +1795,8 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
     // Update UserInformation document
     // Update UserInformation document
     console.log(addaddons)
-    const updatedUserInformation = await UserInformation.findOneAndUpdate(
-      { user_id: userId },
+    const updatedUserInformation = await UserInformation.updateMany(
+      { company_ID: companyID, 'subscription_details.plan': { $ne: null } },
       {
         $push: {
           'subscription_details.addones': { $each: addaddons.map((addon) => addon) }
@@ -1339,6 +1936,168 @@ exports.addonPurchase = catchAsyncErrors(async (req, res, next) => {
 // })
 // ////
 
+exports.purchaseusers = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const userId = req.body.userId;
+    const companyID = req.user.companyID;
+    const {
+      totalAmount,
+      tax,
+      billingAddress,
+      shippingAddress,
+      addusers,
+      selectedCard,
+      existingcard,
+      saveAddress,
+      selectedEditAddress,
+      shipping_method,
+      first_name,
+      email,
+      contact,
+      last_name,
+      createOrderData,
+      plandata,
+      customerID,
+      subscriptionId,
+      paymentToken,
+      ammount
+    } = req.body;
+    const ordertype = (addusers ? "UserPurchase" : "")
+    const paymentDate = new Date();
+    console.log("1")
+
+    const { type, planName } = plandata;
+    const productID = type === 'monthly'
+      ? planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly
+      : planName === 'Professional' ? Product_Professional_Yearly : Product_Team_Yearly;
+    let attachedPaymentMethod;
+    console.log("2")
+    if (!selectedCard && existingcard === false) {
+      attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
+        customer: customerID,
+      });
+    }
+    console.log("3")
+
+    console.log(ammount, totalAmount)
+    const price = await stripe.prices.create({
+      currency: 'usd',
+      unit_amount: (ammount + totalAmount) * 100,
+      product: productID,
+      recurring: {
+        interval: type === "monthly" ? "month" : "year",
+        interval_count: 1
+      },
+    });
+    console.log("4")
+    console.log(price)
+
+    console.log("called0")
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log("called1")
+    let myPayment;
+    if (selectedCard) {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }]
+      });
+    } else if (existingcard) {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }]
+      });
+    }
+    else {
+      myPayment = await stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: price.id
+        }]
+      });
+
+
+      console.log("myPayment");
+      console.log(myPayment);
+      console.log("myPayment");
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
+
+
+
+
+      // // Remove the existing item from the subscription
+      // console.log(myPayment);
+      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
+      // const paymentIntent = await stripe.paymentIntents.retrieve(
+      //   latestInvoice.payment_intent
+      // );
+
+      // Save payment ID and user details in your database after successful payment
+    }
+
+    const order = new Order({
+      user: userId,
+      company: companyID,
+      shippingAddress,
+      billingAddress,
+      totalAmount,
+      tax,
+      first_name,
+      email,
+      contact,
+      last_name,
+      type: ordertype,
+      addusers: { ...addusers },
+      paymentDate,
+      shipping_method,
+    });
+
+
+
+    // Save the order to the database
+    const orderData = await order.save();
+
+    console.log("orderData")
+    console.log(orderData)
+    console.log("orderData")
+
+
+
+
+    // Update UserInformation document
+    // Update UserInformation document
+    console.log(addusers)
+    const updatedUserInformation = await UserInformation.updateMany(
+      { company_ID: companyID, 'subscription_details.plan': { $ne: null } },
+      {
+        $inc: {
+          'subscription_details.total_user.0.additionalUser': addusers.addusercount,
+          'subscription_details.total_amount': totalAmount
+        }
+      },
+      { new: true } // Return the updated document
+    );
+
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order,
+      userInformation: updatedUserInformation,
+    });
+  }
+
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+})
 
 
 // ---------------------------------OTC ADMIN PANEL API ---------------------------------------------------------------------
@@ -1366,7 +2125,7 @@ exports.fetchCardsforOtcAdminPanel = catchAsyncErrors(async (req, res, next) => 
 })
 
 exports.updateCardsforOtcAdminPanel = catchAsyncErrors(async (req, res, next) => {
-  const { paymentData , superAdminUserid} = req.body;
+  const { paymentData, superAdminUserid } = req.body;
   // const isPrimary = req.body.isPrimary 
   const { type } = paymentData;
   if (type === 'create') {
@@ -1494,6 +2253,74 @@ exports.switchToManualRenewalforOtcAdminPanel = catchAsyncErrors(async (req, res
     }
   } catch (error) {
     console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+exports.manualRenewSubscription = catchAsyncErrors(async (req, res, next) => {
+  console.log("called manualRenewSubscription..........................................................................................................")
+  try {
+    const { subscriptionId, customerID, paymentToken,  plandata} = req.body;
+
+    const { type , planName } = plandata;
+
+    // Retrieve the current subscription
+    const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log("??????????????????????????????????????????????")
+console.log(currentSubscription)
+console.log("??????????????????????????????????????????????")
+
+    // Check if the subscription is eligible for renewal
+    if (currentSubscription.status === 'active' && !currentSubscription.cancel_at_period_end) {
+
+      console.log("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
+      // Determine the product ID based on the plan and type (monthly/yearly)
+      const productID = planName === 'Professional' ? Product_Professional_monthly : Product_Team_monthly;
+
+      // Create a new price for the subscription
+      const newPrice = await stripe.prices.create({
+        currency: 'usd',
+        unit_amount: req.body.amount * 100, // Adjust the amount based on your needs
+        product: productID,
+        tax_behavior: 'exclusive',
+        recurring: {
+          interval: type === 'monthly' ? 'month' : 'year',
+          interval_count: 1,
+        },
+      });
+
+      // Create a new subscription with the new price
+      const renewedSubscription = await stripe.subscriptions.create({
+        customer: customerID,
+        default_payment_method: paymentToken,
+        items: [{ price: newPrice.id }],
+        collection_method: 'charge_automatically',
+        cancel_at_period_end: false,
+        automatic_tax: {
+          enabled: true,
+        },
+      });
+console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+      console.log(renewedSubscription)
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+
+      // Update your database or perform any necessary business logic here
+
+      // Return success response
+      return res.status(200).json({
+        success: true,
+        message: 'Subscription manually renewed successfully.',
+        renewedSubscriptionID: renewedSubscription.id,
+      });
+    } else {
+      // Subscription is not eligible for renewal
+      return res.status(400).json({ success: false, error: 'Subscription is not eligible for renewal.' });
+    }
+  } catch (error) {
+    console.error(error);
+
+    // Handle any errors and send an appropriate response
     res.status(500).json({ success: false, error: error.message });
   }
 });

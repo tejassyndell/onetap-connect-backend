@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const order_Schema = new mongoose.Schema(
   {
+
     orderNumber: {
       type: Number,
       default: 1,
@@ -24,22 +25,27 @@ const order_Schema = new mongoose.Schema(
     email: {
       type: String,
     },
+    contact: { type: Number, default: null },
     status: {
       type: String,
-      default: "Processing"
+      default: "On Hold"
     },
     fulfillment: {
       type: String,
       default: "In Progress"
     },
-    addOnStatus: String ,
-    addOnsNote: String ,
-    addOnsActivityLog: String ,
+    addOnStatus: String,
+    addOnsNote: String,
+    addOnsActivityLog: String,
     shippingNotes: {
       type: String,
       default: ""
     },
     customPrintingNotes: {
+      type: String,
+      default: ""
+    },
+    orderNotes: {
       type: String,
       default: ""
     },
@@ -61,26 +67,38 @@ const order_Schema = new mongoose.Schema(
         quantity: { type: Number },
         price: { type: Number }, // final price
         status: { type: String, default: 'N/A' },
-        
+
       },
     ],
     addaddons: [
       {
         addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
-        status: { type: String , default: 'N/A' },
-        assignTo: { type: String , default: '' },
-        price: {type: Number, default: 0} ,
-        addonDiscountPrice: {type: Number, default: 0 }
+        status: { type: String, default: 'N/A' },
+        assignTo: { type: String, default: '' },
+        price: { type: Number, default: 0 },
+        addonDiscountPrice: { type: Number, default: 0 }
       },
     ],
+    addusers:
+    {
+      addusercount: { type: Number },
+      status: { type: String, default: 'N/A' },
+      price: { type: Number },
+      plan: { type: String },
+      billing_cycle: { type: String },
+    },
     subscription_details: {
+      planID: { type: mongoose.Schema.Types.ObjectId, ref: "otc_plans" },
+      discountedPrice: { type: Number },
+      addOnsWithPlan: [],  // addon included in plan
+      smartAccessoriesWithPlan: [], // products included in plan
       addones: [
-       { 
-        addonId : { type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"},
-        status: { type: String , default: 'N/A' },
-        assignTo: { type: String , default: '' },
-        price: {type: Number, default: 0}
-      }
+        {
+          addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
+          status: { type: String, default: 'N/A' },
+          assignTo: { type: String, default: '' },
+          price: { type: Number, default: 0 }
+        }
       ],
       // addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
       userCount: { type: Number },
@@ -97,9 +115,9 @@ const order_Schema = new mongoose.Schema(
       renewal_date: { type: Date },
       auto_renewal: { type: Boolean, default: true },
       taxRate: { type: String },
-      InitialSetupFee : { type: Number, default: 0 },
-      perUserDiscountPrice: { type: Number, default:''},
-      perUser_price : { type: Number, default: 0 },
+      InitialSetupFee: { type: Number, default: 0 },
+      perUserDiscountPrice: { type: Number, default: '' },
+      perUser_price: { type: Number, default: 0 },
     },
     subscriptionPlan: {
       subscription: {
@@ -152,6 +170,8 @@ const order_Schema = new mongoose.Schema(
       price: { type: Number }
     }],
     tracking_number: { type: String },
+    sumTotalWeights: { type: String },
+    discount: { type: Number }, //when admin creates order, special discount on order is given (subtract this amount from total)
   },
   { timestamps: true }
 );
