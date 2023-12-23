@@ -1413,17 +1413,20 @@ exports.inviteTeamMemberByCSV = catchAsyncErrors(async (req, res, next) => {
       // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       const userinfocreate = await UserInformation.create({
         user_id: userId,
-        company_ID: id,
-
+        company_ID: companyID,
       })
+      const existingCompanySlug = await parmalinkSlug.findOne({
+        companyID: companyID,
+      });
+      const companyuniqueSlugValue = existingCompanySlug?.companyunique_slug[0]?.value
 
       const user_parmalink = await parmalinkSlug.create({
         user_id: userId,
         companyID: companyID,
         unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
-        companyunique_slug: [{ value: generatedcompanyCode, timestamp: Date.now() }],
+        companyunique_slug: [{ value: companyuniqueSlugValue, timestamp: Date.now() }],
         userurlslug: generatedCode,
-        companyurlslug: generatedcompanyCode,
+        companyurlslug: companyuniqueSlugValue,
       })
       await user_parmalink.save();
       await userinfocreate.save();
@@ -2214,6 +2217,25 @@ exports.checkcompanyurlslugavailiblity = catchAsyncErrors(
         .json({ message: "companyurlslug is already taken." });
     }
 
+    // Check for existing URL companyurlslug in the parmalinkSlug model globally
+    const existingGlobalUrlSlug = await parmalinkSlug.findOne({
+      "companyunique_slug.value": companyurlslug,
+    });
+    if (existingGlobalUrlSlug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+    // Check case-sensitive duplicates in the parmalinkSlug model globally
+    const caseSensitiveGlobalUrlSlug = await parmalinkSlug.findOne({
+      "companyunique_slug.value": new RegExp(`^${companyurlslug}$`, "i"),
+    });
+    if (caseSensitiveGlobalUrlSlug) {
+      return res
+        .status(400)
+        .json({ message: "companyurlslug is already taken." });
+    }
+
     // Check case-sensitive duplicates
     const caseSensitivecompanyurlslug = await Company.findOne({
       _id: { $ne: currentCompanyId }, // Exclude the current company by ID
@@ -2309,7 +2331,7 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
   // console.log(companyurlslug);
   // console.log(companyId);
   // console.log(company_url_edit_permission);
-  console.log("update is hit" , userid , req.body);
+  console.log("update is hit", userid, req.body);
   // const trimslug = companyurlslug.trim()
   const trimslug = companyurlslug?.trim() || companyurlslug;
   const uniquecompanySlug = { value: trimslug, timestamp: Date.now() };
@@ -2319,15 +2341,15 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
       company_url_edit_permission: company_url_edit_permission,
       user_profile_edit_permission: user_profile_edit_permission,
     });
-    const updatedCompanyinsluddata =  await parmalinkSlug.updateOne(
+    const updatedCompanyinsluddata = await parmalinkSlug.updateOne(
       { user_id: userid },
-      { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug : trimslug },
+      { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug: trimslug },
     );
     if (!updatedCompany) {
       return res.status(404).json({ error: "Company not found" });
     }
 
-    res.json({ message: "Company slug updated successfully", updatedCompany , updatedCompanyinsluddata});
+    res.json({ message: "Company slug updated successfully", updatedCompany, updatedCompanyinsluddata });
   } catch (error) {
     console.error("Error updating company slug:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -2477,9 +2499,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   if (!userInformation) {
     userInformation = new UserInformation({
       user_id: user._id,
-      smartAccessories: planData.smartAccessories.map((e)=> ({
-        productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
-      })) ,
+      smartAccessories: planData.smartAccessories.map((e) => ({
+        productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+      })),
       subscription_details: {
         // addones: planData.addones,
         addones: planData.addones.map((addon) => ({
@@ -2527,10 +2549,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       planID: planData.planID
     };
   }
-  userInformation.smartAccessories = planData.smartAccessories.map((e)=> ({
-    productId: e.productId , productName:e.Type , variationId : e.variationId , price: 0 , subtotal : 0 , quantity:1
-  })) ,
-  shippingAddressFind.shipping_address.address_name = "Default";
+  userInformation.smartAccessories = planData.smartAccessories.map((e) => ({
+    productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+  })),
+    shippingAddressFind.shipping_address.address_name = "Default";
   userInformation.subscription_details.auto_renewal = true;
   userInformation.shipping_method = shipping_method;
   userInformation.isInitailUser = false;
@@ -2650,10 +2672,10 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     {
       companyID: companyID,
       role: { $in: ["administrator", "teammember", "manager"] },
-      Account_status: { $in: ['is_Deactivated']}
+      Account_status: { $in: ['is_Deactivated'] }
     },
     {
-      $set: { status: 'active' },
+      $set: { status: 'active', Account_status: 'is_Activated' },
     },
   );
   if (companyUsers.nModified === 0) {
@@ -3602,6 +3624,10 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       // Add any other fields you want to store in userinfo
     });
     await userInfo.save();
+    const existingCompanySlug = await parmalinkSlug.findOne({
+      companyID: user.companyID,
+    });
+    const companyuniqueSlugValue = existingCompanySlug?.companyunique_slug[0]?.value
 
     const generatedCode = generateUniqueCode();
     const user_parmalink = await parmalinkSlug.create({
@@ -3609,6 +3635,8 @@ exports.registerInvitedUser = catchAsyncErrors(async (req, res, next) => {
       companyID: userdetails.companyId,
       unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
       userurlslug: generatedCode,
+      companyunique_slug: [{ value: companyuniqueSlugValue, timestamp: Date.now() }],
+      companyurlslug: companyuniqueSlugValue,
     })
     await user_parmalink.save();
     user.userurlslug = generatedCode;
@@ -4145,11 +4173,18 @@ exports.inviteTeamMembermanually = catchAsyncErrors(async (req, res, next) => {
   await UserInformation.create(userInformationData);
 
   // console.log(userData._id)
+  const existingCompanySlug = await parmalinkSlug.findOne({
+    companyID: userData.companyID,
+  });
+  const companyuniqueSlugValue = existingCompanySlug?.companyunique_slug[0]?.value
+
   const user_parmalink = await parmalinkSlug.create({
     user_id: userData._id,
     companyID: companyID,
     unique_slugs: [{ value: generatedCode, timestamp: Date.now() }],
     userurlslug: generatedCode,
+    companyunique_slug: [{ value: companyuniqueSlugValue, timestamp: Date.now() }],
+    companyurlslug: companyuniqueSlugValue,
   })
   await user_parmalink.save();
 
@@ -4622,15 +4657,16 @@ exports.getProfileimage = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("User ID is missing in the request", 400));
   }
 
-  const user = await User.findById(_id);
-  const userprofileimage = user.avatar;
-  if (!user) {
+  const Avataruser = await User.findById(_id);
+  const userprofileimage = Avataruser.avatar;
+  if (!Avataruser) {
     return next(new ErrorHandler("User not found", 401));
   }
 
   res.status(200).json({
     success: true,
     userprofileimage,
+    Avataruser,
   });
 });
 
@@ -5295,14 +5331,14 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
-  console.log(id,"iddddddddddddddddddd")
+  console.log(id, "iddddddddddddddddddd")
   try {
     // Find orders by user ID
     const orders = await Order.find({ user: id }).populate({
       path: 'smartAccessories.productId',
       select: 'name', // Assuming 'name' is the field in the 'Product' model that contains the product name
     });
-    console.log(orders,"orderss")
+    console.log(orders, "orderss")
     // Create an array to store user data for each order
     const ordersWithUserData = [];
 
@@ -5314,7 +5350,7 @@ exports.getOrders = catchAsyncErrors(async (req, res, next) => {
       const orderWithUserData = { ...order.toObject(), userdata };
       ordersWithUserData.push(orderWithUserData);
     }
-    console.log(ordersWithUserData,"orrrrrrrrrrrrrrrrrrr")
+    console.log(ordersWithUserData, "orrrrrrrrrrrrrrrrrrr")
     res.status(200).json({ success: true, orders: ordersWithUserData });
   } catch (error) {
     console.error(error);
@@ -6063,7 +6099,7 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
         {
           companyID: companyid,
           role: { $in: ["administrator", "teammember", "manager"] },
-          status:{ $in:['active'] }
+          status: { $in: ['active'] }
         },
         {
           $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
@@ -6076,10 +6112,10 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
         return res.status(404).json({ success: false, message: 'User not found' });
       }
       return res.status(200).json({ success: true, message: 'OTP verified', user_subscription_id });
-    }else {
+    } else {
       return res.status(400).json({ success: false, message: 'Incorrect OTP' });
     }
-  }catch (error) {
+  } catch (error) {
     console.log(error);
   }
 });
@@ -6186,7 +6222,7 @@ exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, r
         select: 'first_name last_name email designation',
       })
       .populate('productId');
-  
+
 
     if (!SmartAccessorie) {
       return res.status(404).json({ message: 'SmartAccessorie does not have a data' });
@@ -6194,18 +6230,18 @@ exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, r
 
     const smartAccessories = SmartAccessorie.filter(sa => sa.userId !== undefined);
     const smartAccessorieswithoutUserId = SmartAccessorie.map(e => e);
-// const companyName = company.company_name
+    // const companyName = company.company_name
 
-    res.status(200).json({ smartAccessories ,  smartAccessorieswithoutUserId , AllSmartAccessories : SmartAccessorie});
+    res.status(200).json({ smartAccessories, smartAccessorieswithoutUserId, AllSmartAccessories: SmartAccessorie });
   } catch (error) {
     next(error); // Pass the error to the error handling middleware
   }
 });
 
-exports.getuniqueslug = catchAsyncErrors(async(req,res,next)=>{
-  const {id} = req.body
-  
-  console.log(id );
+exports.getuniqueslug = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.body
+
+  console.log(id);
   const users_slug = await parmalinkSlug.find({ user_id: id });
   console.log(users_slug)
 
