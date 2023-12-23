@@ -2173,7 +2173,7 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
 
 exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds } = req.body;
-
+console.log('....................................',orderIds)
   try {
     const result = await Order.deleteMany({ _id: { $in: orderIds } });
     if (result.deletedCount > 0) {
