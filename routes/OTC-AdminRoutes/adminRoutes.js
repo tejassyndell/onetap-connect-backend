@@ -12,6 +12,7 @@ const { newTestAPIS } = require('../../controllers/OTC-AdminController/Clients/c
 const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
 const { otcImageUpload,  deleteimageupload } = require("../../middleware/OtcImageUpload");
 
+router.get("/admin/mockdata", mockdata);
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
 router.get("/admin/allclients", isOtcAdminAuthenticatedUser, getordersclient);
