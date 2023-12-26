@@ -208,7 +208,6 @@ function generateCodeWithLength(length) {
   return code;
 }
 
-
 //sign-up step-2
 exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.params;
@@ -2540,7 +2539,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     userInformation.subscription_details = {
       ...userInformation.subscription_details,
       // addones: planData.addones,
-      addones: planData.addones.map((addon) => ({
+      addones: planData.addones && planData.addones.map((addon) => ({
         addonId: addon.addonId,  // Convert addonId to ObjectId
         status: addon.status,
         assignTo: addon.assignTo,
@@ -2592,7 +2591,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     })),
     subscription_details: {
       // addones: planData.addones,
-      addones: planData.addones.map((addon) => ({
+      addones: planData.addones && planData.addones.map((addon) => ({
         addonId: addon.addonId,  // Convert addonId to ObjectId
         status: addon.status,
         assignTo: addon.assignTo,
