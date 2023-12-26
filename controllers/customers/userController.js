@@ -2444,6 +2444,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     couponData
   } = req.body;
 
+
   const existingCards = await Cards.find({ userID: id });
 
   const cardData = {
@@ -2576,6 +2577,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const order = new Order({
     paymentStatus: "paid",
     user: user._id,
+    userShippingOrderNote : userData.userShippingOrderNote ,
     company: companyID,
     first_name: user.first_name,
     last_name: user.last_name,
@@ -2599,7 +2601,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     // subscription_details: planData,
     shippingAddress: shippingData,
     billingAddress: billingdata,
-    shipping_method: shipping_method
+    shipping_method: shipping_method,
+    referredby: userData.referredby,
+    referredName: userData.referredName,
   });
   const company = await Company.findById(companyID);
   company.address = billingdata;
@@ -6133,12 +6137,12 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
 });
 exports.assignSmartAccessroiesToUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { userId, uniqueIds } = req.body;
+    const { userId,companyId, uniqueIds } = req.body;
 
     // Update the userId for multiple uniqueIds
     const updatedAccessories = await SmartAccessoriesModal.updateMany(
       { uniqueId: { $in: uniqueIds } },
-      { $set: { userId: userId } },
+      { $set: { userId: userId , companyId: companyId} },
       { new: true }
     );
 
@@ -6185,7 +6189,7 @@ exports.removeUserFromSmartAccessories = catchAsyncErrors(async (req, res, next)
     // Remove the userId field for the specified uniqueIds
     const removedUserAccessories = await SmartAccessoriesModal.updateMany(
       { _id: { $in: uniqueIds } },
-      { $unset: { userId: 1 } },
+      { $unset: { userId: 1 , companyId: 1} },
       { new: true }
     );
     if (!removedUserAccessories) {
@@ -6231,7 +6235,7 @@ exports.getUserAssignSmartAccessoriesForCompany = catchAsyncErrors(async (req, r
     const SmartAccessorie = await SmartAccessoriesModal.find()
       .populate({
         path: 'userId',
-        select: 'first_name last_name email designation',
+        // select: 'first_name last_name email designation ',
       })
       .populate('productId');
 

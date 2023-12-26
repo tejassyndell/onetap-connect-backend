@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const purchasedSmartAccessory = new mongoose.Schema(
     {
 
-        // company: {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: 'company',
-        // },
+        companyId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'company',
+        },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "user",

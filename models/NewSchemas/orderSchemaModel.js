@@ -34,6 +34,9 @@ const order_Schema = new mongoose.Schema(
       type: String,
       default: "In Progress"
     },
+    referredby: String,
+    referredName:String,
+    userShippingOrderNote: String,
     addOnStatus: String,
     addOnsNote: String,
     addOnsActivityLog: String,
