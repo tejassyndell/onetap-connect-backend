@@ -1079,6 +1079,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     const userId = req.body.userId;
     const orderData = req.body.createOrderData
     const {
+      userData,
       smartAccessories,
       totalAmount,
       tax,
@@ -1257,6 +1258,9 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         billingAddress,
         sumTotalWeights: sumTotalWeights,
         isGuest: userId === 'Guest' ? true : false,
+       userShippingOrderNote : userData.userShippingOrderNote ,
+       referredby: userData.referredby,
+       referredName: userData.referredName,
       });
       // Save the order to the database
       const orderData = await order.save();
