@@ -67,12 +67,21 @@ async function updateCustomerBalance(subscriptionData) {
     }
   }
 
+  async function upComingInvoiceUpdate(upComingInvoiceData) {
+    try {
+      console.log(upComingInvoiceData)
+      
+        return null
+    } catch (error) {
+        throw error;
+    }
+  }
+
 exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
     const sig = request.headers['stripe-signature'];
   
     let event;
-    
-    try {
+    try { 
       event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
       console.log(event.type)
     } catch (err) {
@@ -82,7 +91,6 @@ exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
     }
     // Handle the event
     try {
-      
       switch (event.type) {
         case 'customer.subscription.updated':
           await updateSubscriptionData(event.data.object)
@@ -91,9 +99,11 @@ exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
           case 'customer.subscription.deleted':
             await updateCustomerBalance(event.data.object)
             break;
-            case ' customer.subscription.created':
+          case 'customer.subscription.created':
               await updateCustomerBalance(event.data.object)
               break;
+          case 'invoice.upcoming':
+              await upComingInvoiceUpdate(event.data.object)
               default:
                 console.log(`Unhandled event type ${event.type}`);
               }
@@ -102,4 +112,4 @@ exports.webhookHandler = catchAsyncErrors(async (request, response, next) => {
               console.error('Error processing webhook event:', error);
               response.status(500).send('Error processing webhook event').end();
             }
-  })
+  })  

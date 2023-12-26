@@ -163,6 +163,7 @@ const userSchema = new mongoose.Schema(
       ref: "companies_information",
       default: null,
     },
+    card_temp: {type: Object},
     otptoken: { type: String, default: null },
     personlize_company_name: { type: String, default: "" },
     personlize_primary_office_number: { type: Number, default: null },
