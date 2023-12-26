@@ -82,7 +82,7 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
   const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
   const message = {
-    from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
+    from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
     to: email,
     subject: `Verify your email address`,
     //   text: `Your Verification code is ${code}`,
@@ -2518,6 +2518,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
           status: addon.status,
           assignTo: addon.assignTo,
           price: addon.price,
+          addonDiscountPrice:addon.addonDiscountPrice
         })),
         subscription_id: planData.subscription_id,
         total_amount: planData.total_amount,
@@ -2543,6 +2544,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         status: addon.status,
         assignTo: addon.assignTo,
         price: addon.price,
+        addonDiscountPrice: addon.addonDiscountPrice
       })),
       subscription_id: planData.subscription_id,
       total_amount: planData.total_amount,

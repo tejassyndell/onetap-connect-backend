@@ -11,6 +11,7 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
 const PurchasedSmartAccessoryModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
+const UserCouponAssociation = require("../../models/NewSchemas/OtcUserCouponAssociation.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
 const Product_Team_Yearly = process.env.Team_Yearly
@@ -1625,7 +1626,8 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
       email,
       contact,
       last_name,
-      createOrderData
+      createOrderData,
+      couponData
     } = req.body;
     const type = (addaddons ? "AddonPurchase" : "")
     const paymentDate = new Date();
@@ -1708,6 +1710,19 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
       transactionId: paymentIntent.id
     });
 
+    if (couponData !== null && Object.keys(couponData).length !== 0) {
+      order.isCouponUsed = true;
+      order.coupons = {
+        code: couponData.appliedCouponCode,
+        value: couponData.discountValue
+      };
+      const logCoupons = await UserCouponAssociation.findOneAndUpdate(
+        { userId: userId, couponCode: couponData.appliedCouponCode },
+        { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+      console.log(logCoupons);
+    }
     // Ensure totalAmount is treated as a number
     // const numericTotalAmount = parseFloat(totalAmount);
 
