@@ -30,10 +30,9 @@ router.get("/admin/productCategory/fetch", getCategories);
 router.post("/admin/imageUpload", productImageUpload, imageUpload);
 router.get("/admin/users", isOtcAdminAuthenticatedUser, getallusers);
 router.get("/admin/getaUser/:email", getauser);
-router.get("/admin/user/:id", isOtcAdminAuthenticatedUser, getUser);
+router.get("/admin/user/:id", getUser);
 router.get(
   "/admin/company_share_referreldata/:id",
-  isOtcAdminAuthenticatedUser,
   otc_getcompanies_share_referral_data
 );
 router.get("/admin/companyusers/:id", getallusersofcompany);
