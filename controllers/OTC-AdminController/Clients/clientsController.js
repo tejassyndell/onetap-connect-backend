@@ -32,6 +32,7 @@ const Company_information = require("../../../models/NewSchemas/Company_informat
 const Otc_Adminteams = require("../../../models/Otc_AdminModels/Otc_Adminteams.js");
 const json = require("body-parser/lib/types/json.js");
 const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
+const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -94,13 +95,13 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateCard = catchAsyncErrors(async (req, res, next) => {
   try {
-      const { email } = req.params;
-      const user = await User.findOne({ email: email }).exec();
-      console.log('user:::::::::', req.body.cardData)
-      const { cardData } = req.body;
-      user.card_temp = cardData;
-      user.save();
-      res.send(user.card_temp);
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).exec();
+    console.log('user:::::::::', req.body.cardData)
+    const { cardData } = req.body;
+    user.card_temp = cardData;
+    user.save();
+    res.send(user.card_temp);
 
   } catch (error) {
     console.error(error);
@@ -3554,7 +3555,7 @@ exports.removeUserTeam = catchAsyncErrors(async (req, res, next) => {
 
 exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { count, prefix, year } = req.body;
+    const { count, prefix, year, productName, productId, variationId } = req.body;
 
     // Helper function to generate a random 5-digit ID
     const generateRandomId = () => Math.floor(10000 + Math.random() * 90000).toString();
@@ -3565,7 +3566,7 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
     // Generate strings with 5-digit ID that doesn't already exist in SmartAccessoriesModal's uniqueId field
     for (let i = 0; i < count; i++) {
       let isUnique = false;
-      let generatedString = '';
+      let generatedString = ''; // Declare inside the loop
 
       // Keep generating until a unique string is found
       while (!isUnique) {
@@ -3579,6 +3580,18 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
       }
 
       strings.push(generatedString);
+
+      // Create new data object for each generated string
+      const generatedObjects = {
+        uniqueId: generatedString,
+        productId,
+        variationId,
+        productName,
+        status: 'N/A',
+      };
+
+      // Save the new admin document to the database
+      await SmartAccessoriesModal.create(generatedObjects);
     }
 
     // Return the updated accessories details
@@ -3587,3 +3600,18 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 });
+
+exports.updatePrefixOfProduct = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { id, prefix } = req.body;
+
+    const item = await ProductModel.findById(id)
+    item.prefix = prefix;
+    await item.save();
+    // Return the updated accessories details
+    res.status(200).json({ item, success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
