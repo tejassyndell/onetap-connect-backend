@@ -90,6 +90,14 @@ const order_Schema = new mongoose.Schema(
       plan: { type: String },
       billing_cycle: { type: String },
     },
+    card_details: {
+      nameOnCard: { type: String },
+      cardNumber: { type: Number, required: true },
+      cardExpiryMonth: { type: Number },
+      cardExpiryYear: { type: Number },
+      CVV: { type: String },
+      brand: { type: String },
+  },
     subscription_details: {
       planID: { type: mongoose.Schema.Types.ObjectId, ref: "otc_plans" },
       discountedPrice: { type: Number },
@@ -177,6 +185,7 @@ const order_Schema = new mongoose.Schema(
     sumTotalWeights: { type: String },
     discount: { type: Number }, //when admin creates order, special discount on order is given (subtract this amount from total)
   },
+  
   { timestamps: true }
 );
 

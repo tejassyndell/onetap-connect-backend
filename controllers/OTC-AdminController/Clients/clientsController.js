@@ -31,6 +31,7 @@ const user_shipping_addressesModel = require("../../../models/NewSchemas/user_sh
 const Company_information = require("../../../models/NewSchemas/Company_informationModel.js");
 const Otc_Adminteams = require("../../../models/Otc_AdminModels/Otc_Adminteams.js");
 const json = require("body-parser/lib/types/json.js");
+const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -3554,3 +3555,15 @@ exports.removeUserTeam = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({ message: "Team removed from users successfully" });
 });
+
+
+exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
+    const guestUsers = await GuestCustomer.find();
+    if (!guestUsers) {
+      return res
+        .status(404)
+        .json({ message: `guest users not found.` });
+    }
+  res.status(200).json({guestUsers , success: true });
+});
+
