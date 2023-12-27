@@ -1137,6 +1137,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       selectedEditAddress,
       email,
       sumTotalWeights,
+      totalShipping,
     } = req.body;
 console.log(userId, "user id guest or not....")
 
@@ -1308,6 +1309,7 @@ const userInformationData = await userInformation.save();
         shippingAddress,
         billingAddress,
         sumTotalWeights: sumTotalWeights,
+        totalShipping: totalShipping,
         isGuest: userId === 'Guest' ? true : false,
        userShippingOrderNote : userData?.userShippingOrderNote === undefined ? '' : userData?.userShippingOrderNote  ,
        referredby: userData?.referredby === undefined ? '' : userData?.referredby,
