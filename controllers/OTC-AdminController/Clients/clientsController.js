@@ -33,6 +33,7 @@ const Otc_Adminteams = require("../../../models/Otc_AdminModels/Otc_Adminteams.j
 const json = require("body-parser/lib/types/json.js");
 const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
 const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
+const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -3614,6 +3615,15 @@ exports.updatePrefixOfProduct = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({ item, success: true });
   } catch (error) {
     next(error);
-  }
-});
+  }})
+
+exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
+    const guestUsers = await GuestCustomer.find();
+    if (!guestUsers) {
+      return res
+        .status(404)
+        .json({ message: `guest users not found.` });
+    }
+  res.status(200).json({guestUsers , success: true });
+})
 
