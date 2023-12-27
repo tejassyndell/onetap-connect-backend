@@ -4,6 +4,9 @@ const {
   testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan , getPlans,createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails, AdmininviteTeamMemberByCSV , AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getCompanyDetailsforAdmin, checkcompanyurlslugavailiblityAdminside, UpdateCompanySlugFromAdmin, UpdateCompanySettings, getsharereferalSettingsAdmin, UpdateLeadCaptureSettings, getAllOrders, updateOrders, deleteOrders, getSingleOrder, updateOrder
   ,createClient, getActiveUsersOfCompany, getTeamofCompany, updateTeamNamebyAdmin, removeTeamFromUsersByadmin, deleteteamofselectedcompany, renameteamofselectedcompany, createNewteamofselectedcompany, getAllShippingAddressofcompany, createShippingAddressofcompany, removeShippingAddressofcompany, editShippingAddressofcompany, updateuserroleofcompanyusers, updateuserplanonrolechangeofcompany, fetchbillingaddressofcompany, updateBillingAddressofcompany, getallcompanynames, otcadminusers, addAdminUser, updateAdminUser,getcompanyorders, GetorderByCompanyIDandOrderNumber, saveclientTags, getclienttags
 ,sendOrderInvoice,createPassword,addreferer, getreferer, getauser , createAdminTeam , getAdminTeam , deleteAdminTeam , adminRenameTeam , addUserTeam , removeUserTeam , mockdata,
+generateSmartAccessoryIds,
+updatePrefixOfProduct,
+getGuestUsers,
 updateCard,
 addCompanyCard} = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
