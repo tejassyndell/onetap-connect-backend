@@ -2849,241 +2849,6 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
   }
 }
 
-// exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
-//   const { id, companyID } = req.user;
-//   const {
-//     userData,
-//     company_name,
-//     billingdata,
-//     shippingData,
-//     shipping_method,
-//     planData,
-//     // cardDetails,
-//     saveAddress,
-//     selectedEditAddress
-//   } = req.body;
-
-//   // const cardData = {
-//   //   cardNumber: cardDetails.cardNumber,
-//   //   brand: cardDetails.brand,
-//   //   nameOnCard: cardDetails.cardName,
-//   //   cardExpiryMonth: cardDetails.cardExpiryMonth,
-//   //   cardExpiryYear: cardDetails.cardExpiryYear,
-//   //   // CVV: cardDetails.cardCVV,
-//   //   status: "primary",
-//   // };
-
-//   const user = await User.findById(id);
-//   // console.log(user, "user");
-//   if (!user) {
-//     return next(new ErrorHandler("User not found", 404));
-//   }
-
-//   let billingAddressFind = await billingAddress.findOne({ userId: user._id });
-
-//   if (!billingAddressFind) {
-//     billingAddressFind = new billingAddress({
-//       userId: user._id,
-//       // companyId: user.companyID,
-//       billing_address: billingdata,
-//     });
-//   } else {
-//     billingAddressFind.billing_address = billingdata;
-//   }
-
-//   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
-
-//   if (!shippingAddressFind) {
-//     shippingAddressFind = new shippingAddress({
-//       userId: user._id,
-//       shipping_address: [],
-//     });
-//   }
-//   // if(saveAddress) {
-//   //   shippingAddressFind.shipping_address.push(shippingData);
-//   // }
-//   if (saveAddress) {
-//     if (selectedEditAddress) {
-//       const index = shippingAddressFind.shipping_address.findIndex(
-//         (address) => address._id.toString() === selectedEditAddress._id.toString()
-//       );
-//       if (index !== -1) {
-//         // Replace the existing address with the updated address
-//         shippingAddressFind.shipping_address[index] = shippingData;
-//       }
-//     } else {
-//       // Add a new address
-//       shippingAddressFind.shipping_address.push(shippingData);
-//     }
-//   }
-
-//   // const card = await Cards.create(cardData);
-//   // console.log(card, "card");
-//   // card.userID = user._id;
-
-//   let userInformation = await UserInformation.findOne({ user_id: user._id });
-
-//   if (!userInformation) {
-//     userInformation = new UserInformation({
-//       user_id: user._id,
-//       subscription_details: planData,
-//     });
-//     userInformation.subscription_details = planData;
-//     console.log(userInformation, "userInformation");
-//   } else {
-//     userInformation.subscription_details = planData;
-//   }
-//   shippingAddressFind.shipping_address.address_name = "Default";
-//   userInformation.subscription_details.auto_renewal = true;
-//   userInformation.shipping_method = shipping_method;
-//   user.isPaidUser = true;
-//   user.first_name = userData.first_name;
-//   user.last_name = userData.last_name;
-//   user.contact = userData.contact;
-//   user.email = userData.email;
-//   user.address = billingdata;
-//   user.first_login = true;
-
-
-//   const company = await Company.findById(companyID);
-//   company.address = billingdata;
-//   company.company_name = company_name;
-//   const order = new Order({
-//     paymentStatus: "paid",
-//     user: user._id,
-//     company: companyID,
-//     first_name: user.first_name,
-//     last_name: user.last_name,
-//     email: user.email,
-//     paymentDate: new Date(),
-//     type: "Subscription",
-//     subscription_details: planData,
-//     shippingAddress: shippingData,
-//     billingAddress: billingdata,
-//     shipping_method: shipping_method
-//   });
-
-//   await user.save();
-//   await order.save();
-//   await company.save();
-//   await billingAddressFind.save();
-//   await shippingAddressFind.save();
-//   await userInformation.save();
-//   await sendOrderconfirmationEmail(order.email, order._id, order.first_name);
-
-//   res.status(200).json({
-//     success: true,
-//     user,
-//     userInformation,
-//   });
-// });
-
-
-// async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
-//   try {
-//     const transporter = nodemailer.createTransport({
-//       service: "Gmail",
-//       port: 587,
-//       auth: {
-//         user: process.env.NODMAILER_EMAIL,
-//         pass: process.env.NODEMAILER_PASS,
-//       },
-//     });
-//     const rootDirectory = process.cwd();
-//     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
-
-//     const mailOptions = {
-//       from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`, // Replace with your email
-//       to: orderemail,
-//       // to: "tarun.syndell@gmail.com",
-//       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
-//       // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
-//       html: `
-//       <!DOCTYPE html>
-//       <html>
-      
-//       <head>
-//           <meta charset="utf-8" />
-//           <meta name="viewport" content="initial-scale=1, width=device-width" />
-//       </head>
-      
-//       <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
-      
-//           <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
-//               <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-//               <img src="cid:logo">
-//               </div>
-//               <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-//               <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-//               <h3>Welcome to OneTapConnect!</h3>
-//               <p>Dear ${ordername},<br/>
-//               <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
-    
-//               <!-- Invoice Table -->
-//               <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
-//                 <thead>
-//                     <tr style="background-color: #e65925; color: #fff; text-align: left;">
-//                         <th style="padding: 10px;">Subscription</th>
-//                         <!-- <th style="padding: 10px;">Description</th> -->
-//                         <!-- <th style="padding: 10px;">Unit Price</th> -->
-//                         <th style="padding: 10px;text-align: center;">Quantity</th>
-//                         <th></th>
-//                         <th style="padding: 10px;">Price</th>
-//                     </tr>
-//                 </thead>
-//                 <tbody>
-//                     <!-- Add your invoice items dynamically here -->
-//                     <tr>
-//                         <td>&nbsp;&nbsp;&nbsp;Free</td>
-//                         <!-- <td>Description of Your Item</td> -->
-//                         <!-- <td></td> -->
-//                         <td style="text-align: center;">&nbsp;&nbsp;1</td>
-//                         <td></td>
-//                         <td>&nbsp;&nbsp;$ 0.0</td>
-//                     </tr>
-//                     <tr style="border-bottom: 1px solid #ccc;">
-//                         <td></td>
-//                         <td></td>
-//                         <td></td>
-//                         <td></td>
-//                     </tr>
-//                     <tr style="border-bottom: 1px solid #ccc;">
-//                         <td></td>
-//                         <td></td>
-//                         <td style="text-align: end;"><b>Total:</b></td>
-//                         <td>&nbsp;&nbsp;$ 0.0</td>
-//                     </tr>
-//                     <!-- Add more rows as needed -->
-//                 </tbody>
-//             </table><br/>
-    
-//               <p>Please keep this email for your records.</p>
-//               <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
-//             </div> 
-//               <h3>Technical issue?</h3>
-//               <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
-//           </div>
-      
-//       </body>
-      
-//       </html>
-// `,
-//       attachments: [
-//         {
-//           filename: "Logo.png",
-//           path: uploadsDirectory,
-//           cid: "logo",
-//         },
-//       ],
-//     };
-
-//     await transporter.sendMail(mailOptions);
-//     console.log('Order confirmation email sent successfully');
-//   } catch (error) {
-//     console.error('Error sending order confirmation email:', error);
-//   }
-// }
-
 exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
   const {
@@ -3212,6 +2977,241 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
     userInformation,
   });
 });
+
+
+async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`, // Replace with your email
+      to: orderemail,
+      // to: "tarun.syndell@gmail.com",
+      subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+      <html>
+      
+      <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </head>
+      
+      <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+      
+          <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+              <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+              <img src="cid:logo">
+              </div>
+              <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+              <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+              <h3>Welcome to OneTapConnect!</h3>
+              <p>Dear ${ordername},<br/>
+              <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+    
+              <!-- Invoice Table -->
+              <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #e65925; color: #fff; text-align: left;">
+                        <th style="padding: 10px;">Subscription</th>
+                        <!-- <th style="padding: 10px;">Description</th> -->
+                        <!-- <th style="padding: 10px;">Unit Price</th> -->
+                        <th style="padding: 10px;text-align: center;">Quantity</th>
+                        <th></th>
+                        <th style="padding: 10px;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Add your invoice items dynamically here -->
+                    <tr>
+                        <td>&nbsp;&nbsp;&nbsp;Free</td>
+                        <!-- <td>Description of Your Item</td> -->
+                        <!-- <td></td> -->
+                        <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                        <td></td>
+                        <td>&nbsp;&nbsp;$ 0.0</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                        <td></td>
+                        <td></td>
+                        <td style="text-align: end;"><b>Total:</b></td>
+                        <td>&nbsp;&nbsp;$ 0.0</td>
+                    </tr>
+                    <!-- Add more rows as needed -->
+                </tbody>
+            </table><br/>
+    
+              <p>Please keep this email for your records.</p>
+              <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+            </div> 
+              <h3>Technical issue?</h3>
+              <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+          </div>
+      
+      </body>
+      
+      </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
+
+// exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
+//   const { id, companyID } = req.user;
+//   const {
+//     userData,
+//     company_name,
+//     billingdata,
+//     shippingData,
+//     shipping_method,
+//     planData,
+//     // cardDetails,
+//     saveAddress,
+//     selectedEditAddress
+//   } = req.body;
+
+//   // const cardData = {
+//   //   cardNumber: cardDetails.cardNumber,
+//   //   brand: cardDetails.brand,
+//   //   nameOnCard: cardDetails.cardName,
+//   //   cardExpiryMonth: cardDetails.cardExpiryMonth,
+//   //   cardExpiryYear: cardDetails.cardExpiryYear,
+//   //   // CVV: cardDetails.cardCVV,
+//   //   status: "primary",
+//   // };
+
+//   const user = await User.findById(id);
+//   // console.log(user, "user");
+//   if (!user) {
+//     return next(new ErrorHandler("User not found", 404));
+//   }
+
+//   let billingAddressFind = await billingAddress.findOne({ userId: user._id });
+
+//   if (!billingAddressFind) {
+//     billingAddressFind = new billingAddress({
+//       userId: user._id,
+//       // companyId: user.companyID,
+//       billing_address: billingdata,
+//     });
+//   } else {
+//     billingAddressFind.billing_address = billingdata;
+//   }
+
+//   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+//   if (!shippingAddressFind) {
+//     shippingAddressFind = new shippingAddress({
+//       userId: user._id,
+//       shipping_address: [],
+//     });
+//   }
+//   // if(saveAddress) {
+//   //   shippingAddressFind.shipping_address.push(shippingData);
+//   // }
+//   if (saveAddress) {
+//     if (selectedEditAddress) {
+//       const index = shippingAddressFind.shipping_address.findIndex(
+//         (address) => address._id.toString() === selectedEditAddress._id.toString()
+//       );
+//       if (index !== -1) {
+//         // Replace the existing address with the updated address
+//         shippingAddressFind.shipping_address[index] = shippingData;
+//       }
+//     } else {
+//       // Add a new address
+//       shippingAddressFind.shipping_address.push(shippingData);
+//     }
+//   }
+
+//   // const card = await Cards.create(cardData);
+//   // console.log(card, "card");
+//   // card.userID = user._id;
+
+//   let userInformation = await UserInformation.findOne({ user_id: user._id });
+
+//   if (!userInformation) {
+//     userInformation = new UserInformation({
+//       user_id: user._id,
+//       subscription_details: planData,
+//     });
+//     userInformation.subscription_details = planData;
+//     console.log(userInformation, "userInformation");
+//   } else {
+//     userInformation.subscription_details = planData;
+//   }
+//   shippingAddressFind.shipping_address.address_name = "Default";
+//   userInformation.subscription_details.auto_renewal = true;
+//   userInformation.shipping_method = shipping_method;
+//   user.isPaidUser = true;
+//   user.first_name = userData.first_name;
+//   user.last_name = userData.last_name;
+//   user.contact = userData.contact;
+//   user.email = userData.email;
+//   user.address = billingdata;
+//   user.first_login = true;
+
+
+//   const company = await Company.findById(companyID);
+//   company.address = billingdata;
+//   company.company_name = company_name;
+//   const order = new Order({
+//     paymentStatus: "paid",
+//     user: user._id,
+//     company: companyID,
+//     first_name: user.first_name,
+//     last_name: user.last_name,
+//     email: user.email,
+//     paymentDate: new Date(),
+//     type: "Subscription",
+//     subscription_details: planData,
+//     shippingAddress: shippingData,
+//     billingAddress: billingdata,
+//     shipping_method: shipping_method
+//   });
+
+//   await user.save();
+//   await order.save();
+//   await company.save();
+//   await billingAddressFind.save();
+//   await shippingAddressFind.save();
+//   await userInformation.save();
+//   await sendOrderconfirmationEmail(order.email, order._id, order.first_name);
+
+//   res.status(200).json({
+//     success: true,
+//     user,
+//     userInformation,
+//   });
+// });
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;
