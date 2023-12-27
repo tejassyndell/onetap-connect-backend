@@ -76,7 +76,7 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
   
   const { email } = req.params;
   const user = await User.findOne({ email });
-
+const role = user.role
   // Check if user and user.card_temp exist
   if (user && user.card_temp[0] && user.card_temp[0].content && user.card_temp[0].content.length > 0) {
     // Assuming there is only one item in the content array
@@ -87,7 +87,7 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
         "zones": user.card_temp[0].zones
       }
     };
-    res.send(modifiedData);
+    res.send({modifiedData, role});
   } else {
     // Handle the case where user or user.card_temp is not present or does not have the expected structure
     res.status(404).send({ error: "Data not found or has unexpected structure" });
@@ -97,20 +97,65 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateCard = catchAsyncErrors(async (req, res, next) => {
   try {
-      const { email } = req.params;
-      const user = await User.findOne({ email: email }).exec();
-      const { cardData } = req.body;
-      
-      console.log('user:::::::::', req.body.cardData)
-      user.card_temp = cardData;
-      user.save();
-      res.send(user.card_temp);
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).exec();
+    const { cardData } = req.body;
+
+    console.log('NEW DATA:::::::::', req.body.cardData)
+    console.log('ALREADY EXISTS:::::::::', user.card_temp[0])
+
+    // Combine NEW DATA and ALREADY EXISTS into an array
+    const combined = [
+      req.body.cardData,
+      ...user.card_temp
+    ];
+
+    console.log('COMBINED:::::::::', combined);
+
+    // Do something with the combined data, e.g., update the user
+    user.card_temp = combined;
+    await user.save();
+
+    // Respond with the updated data or a success message
+    res.status(200).json({ message: 'Card data updated successfully', data: combined });
 
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
   }
 });
+
+
+exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).populate('companyID').exec();
+    const companies = await  Company_informationModel.findOne({_id:user.companyID}).exec();
+
+    // res.send(companies);
+  
+    // Combine NEW DATA and ALREADY EXISTS into an array
+    const combined = [
+      req.body.cardData,
+      ...companies.card_temp
+    ];
+
+    console.log('COMBINED:::::::::', combined);
+
+    // Do something with the combined data, e.g., update the user
+    companies.card_temp = combined;
+    await companies.save();
+
+    // Respond with the updated data or a success message
+    res.status(200).json({ message: 'Card data updated successfully', data: combined });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
+
 
 exports.getauser = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.params;
