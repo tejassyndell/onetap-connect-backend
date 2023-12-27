@@ -2599,6 +2599,13 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       })),
       ...planData
     },
+    card_details: {
+      nameOnCard: cardDetails.cardName,
+      cardNumber: cardDetails.cardNumber,
+      cardExpiryMonth: cardDetails.cardExpiryMonth,
+      cardExpiryYear: cardDetails.cardExpiryYear,
+      brand: cardDetails.brand,
+    },
     // subscription_details: planData,
     shippingAddress: shippingData,
     billingAddress: billingdata,
@@ -2970,6 +2977,8 @@ exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
     userInformation,
   });
 });
+
+
 async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
   try {
     const transporter = nodemailer.createTransport({
@@ -3074,6 +3083,135 @@ async function sendOrderconfirmationEmail(orderemail, orderId, ordername) {
     console.error('Error sending order confirmation email:', error);
   }
 }
+
+// exports.checkoutHandlerFree = catchAsyncErrors(async (req, res, next) => {
+//   const { id, companyID } = req.user;
+//   const {
+//     userData,
+//     company_name,
+//     billingdata,
+//     shippingData,
+//     shipping_method,
+//     planData,
+//     // cardDetails,
+//     saveAddress,
+//     selectedEditAddress
+//   } = req.body;
+
+//   // const cardData = {
+//   //   cardNumber: cardDetails.cardNumber,
+//   //   brand: cardDetails.brand,
+//   //   nameOnCard: cardDetails.cardName,
+//   //   cardExpiryMonth: cardDetails.cardExpiryMonth,
+//   //   cardExpiryYear: cardDetails.cardExpiryYear,
+//   //   // CVV: cardDetails.cardCVV,
+//   //   status: "primary",
+//   // };
+
+//   const user = await User.findById(id);
+//   // console.log(user, "user");
+//   if (!user) {
+//     return next(new ErrorHandler("User not found", 404));
+//   }
+
+//   let billingAddressFind = await billingAddress.findOne({ userId: user._id });
+
+//   if (!billingAddressFind) {
+//     billingAddressFind = new billingAddress({
+//       userId: user._id,
+//       // companyId: user.companyID,
+//       billing_address: billingdata,
+//     });
+//   } else {
+//     billingAddressFind.billing_address = billingdata;
+//   }
+
+//   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+//   if (!shippingAddressFind) {
+//     shippingAddressFind = new shippingAddress({
+//       userId: user._id,
+//       shipping_address: [],
+//     });
+//   }
+//   // if(saveAddress) {
+//   //   shippingAddressFind.shipping_address.push(shippingData);
+//   // }
+//   if (saveAddress) {
+//     if (selectedEditAddress) {
+//       const index = shippingAddressFind.shipping_address.findIndex(
+//         (address) => address._id.toString() === selectedEditAddress._id.toString()
+//       );
+//       if (index !== -1) {
+//         // Replace the existing address with the updated address
+//         shippingAddressFind.shipping_address[index] = shippingData;
+//       }
+//     } else {
+//       // Add a new address
+//       shippingAddressFind.shipping_address.push(shippingData);
+//     }
+//   }
+
+//   // const card = await Cards.create(cardData);
+//   // console.log(card, "card");
+//   // card.userID = user._id;
+
+//   let userInformation = await UserInformation.findOne({ user_id: user._id });
+
+//   if (!userInformation) {
+//     userInformation = new UserInformation({
+//       user_id: user._id,
+//       subscription_details: planData,
+//     });
+//     userInformation.subscription_details = planData;
+//     console.log(userInformation, "userInformation");
+//   } else {
+//     userInformation.subscription_details = planData;
+//   }
+//   shippingAddressFind.shipping_address.address_name = "Default";
+//   userInformation.subscription_details.auto_renewal = true;
+//   userInformation.shipping_method = shipping_method;
+//   user.isPaidUser = true;
+//   user.first_name = userData.first_name;
+//   user.last_name = userData.last_name;
+//   user.contact = userData.contact;
+//   user.email = userData.email;
+//   user.address = billingdata;
+//   user.first_login = true;
+
+
+//   const company = await Company.findById(companyID);
+//   company.address = billingdata;
+//   company.company_name = company_name;
+//   const order = new Order({
+//     paymentStatus: "paid",
+//     user: user._id,
+//     company: companyID,
+//     first_name: user.first_name,
+//     last_name: user.last_name,
+//     email: user.email,
+//     paymentDate: new Date(),
+//     type: "Subscription",
+//     subscription_details: planData,
+//     shippingAddress: shippingData,
+//     billingAddress: billingdata,
+//     shipping_method: shipping_method
+//   });
+
+//   await user.save();
+//   await order.save();
+//   await company.save();
+//   await billingAddressFind.save();
+//   await shippingAddressFind.save();
+//   await userInformation.save();
+//   await sendOrderconfirmationEmail(order.email, order._id, order.first_name);
+
+//   res.status(200).json({
+//     success: true,
+//     user,
+//     userInformation,
+//   });
+// });
 
 exports.updateAutoRenewal = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.user;

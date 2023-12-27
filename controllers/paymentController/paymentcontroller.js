@@ -113,7 +113,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
           country: user.billing_address.country,
           postal_code: user.billing_address.postal_code,
         },
-        // test_clock: "clock_1O8cA0HsjFNmmZSiqWEBGtNK",
+        // test_clock: "clock_1OPjF0HsjFNmmZSibAMwHQqh",
         shipping: {
           name: `${user.first_name} ${user.last_name}`,
           address: {
@@ -710,7 +710,7 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-
+const TAX_CODE = 'txcd_99999999';
 exports.createTax = catchAsyncErrors(async (req, res, next) => {
   const { shippingAddress } = req.body;
 
@@ -722,6 +722,7 @@ exports.createTax = catchAsyncErrors(async (req, res, next) => {
       line_items: [
         {
           amount: 0,
+          tax_code: TAX_CODE, 
           reference: 'L1',
         },
       ],
@@ -735,9 +736,11 @@ exports.createTax = catchAsyncErrors(async (req, res, next) => {
         },
         address_source: 'shipping',
       },
+
       expand: ['line_items.data.tax_breakdown'],
     });
-    res.status(200).json({ success: true, calculation });
+    // res.status(200).json({ success: true, calculation });
+    res.status(200).json({ success: true, calculation , taxCode: TAX_CODE});
 
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -1122,6 +1125,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     const orderData = req.body.createOrderData
     const {
       userData,
+      cardDetails,
       smartAccessories,
       totalAmount,
       tax,
@@ -1134,6 +1138,11 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       email,
       sumTotalWeights,
     } = req.body;
+console.log(userId, "user id guest or not....")
+
+let userInformation = await UserInformation.findOne({ user_id: userId });
+userInformation.subscription_details.customer_id = orderData.customerID
+const userInformationData = await userInformation.save();
 
     if (userId === "Guest") {
       isGuest = true;
@@ -1286,10 +1295,10 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         paymentStatus: "paid",
         user: userId === 'Guest' ? null : userId,
         company: userId === 'Guest' ? null : user.companyID,
-        first_name: userId === 'Guest' ? null : user.first_name,
-        last_name: userId === 'Guest' ? null : user.last_name,
-        email: userId === 'Guest' ? null : user.email,
-        contact: userId === 'Guest' ? null : user.contact, // Link the order to the specific user
+        first_name: userId === 'Guest' ? userData.first_name : user.first_name,
+        last_name: userId === 'Guest' ? userData.last_name : user.last_name,
+        email: userId === 'Guest' ? userData.email : user.email,
+        contact: userId === 'Guest' ? userData.contact : user.contact, // Link the order to the specific user
         smartAccessories,
         totalAmount,
         tax,
@@ -1300,12 +1309,21 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         billingAddress,
         sumTotalWeights: sumTotalWeights,
         isGuest: userId === 'Guest' ? true : false,
-       userShippingOrderNote : userData.userShippingOrderNote ,
-       referredby: userData.referredby,
+       userShippingOrderNote : userData?.userShippingOrderNote === undefined ? '' : userData?.userShippingOrderNote  ,
+       referredby: userData?.referredby === undefined ? '' : userData?.referredby,
        referredName: userData.referredName,
+       card_details: {
+        nameOnCard: cardDetails.cardName,
+        cardNumber: cardDetails.cardNumber,
+        cardExpiryMonth: cardDetails.cardExpiryMonth,
+        cardExpiryYear: cardDetails.cardExpiryYear,
+        brand: cardDetails.brand,
+      },
       });
       // Save the order to the database
       const orderData = await order.save();
+
+ 
 
       // const purchasedSmartAccessory = new PurchasedSmartAccessoryModal({
       //   company: userId === 'Guest' ? null : user.companyID,
@@ -1322,11 +1340,11 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 // const purchased_smartAccessoryData = await purchasedSmartAccessory.save();
 // console.log(purchased_smartAccessoryData, "purchased_smartAccessoryData............")
 
-      const company = await Company_informationModel.findById({ _id :orderData.company})
+      // const company = await Company_informationModel.findById({ _id :orderData.company})
 
-      company.smartAccessories.push(...smartAccessories);
+      // company.smartAccessories.push(...smartAccessories);
 
-      const companyData = company.save();
+      // const companyData = company.save();
       console.log("orderData")
       console.log(orderData)
       console.log("orderData")
@@ -1353,6 +1371,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         success: true,
         message: 'Order created successfully',
         order,
+        userInformationData,
         clientSecret: paymentIntent.client_secret
       });
       await sendpurchaseOrderconfirmationEmail(email, shippingAddress, smartAccessories, order);
