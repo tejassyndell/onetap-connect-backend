@@ -113,7 +113,7 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
           country: user.billing_address.country,
           postal_code: user.billing_address.postal_code,
         },
-        test_clock: "clock_1OPjF0HsjFNmmZSibAMwHQqh",
+        // test_clock: "clock_1OPjF0HsjFNmmZSibAMwHQqh",
         shipping: {
           name: `${user.first_name} ${user.last_name}`,
           address: {
@@ -1133,6 +1133,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       selectedEditAddress,
       email,
       sumTotalWeights,
+      totalShipping,
     } = req.body;
 
     if (userId === "Guest") {
@@ -1299,6 +1300,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         shippingAddress,
         billingAddress,
         sumTotalWeights: sumTotalWeights,
+        totalShipping: totalShipping,
         isGuest: userId === 'Guest' ? true : false,
        userShippingOrderNote : userData.userShippingOrderNote ,
        referredby: userData.referredby,
