@@ -70,17 +70,18 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.mockdata = catchAsyncErrors(async (req, res, next) => {
+  
   const { email } = req.params;
   const user = await User.findOne({ email });
 
   // Check if user and user.card_temp exist
-  if (user && user.card_temp && user.card_temp.content && user.card_temp.content.length > 0) {
+  if (user && user.card_temp[0] && user.card_temp[0].content && user.card_temp[0].content.length > 0) {
     // Assuming there is only one item in the content array
     const modifiedData = {
       "/": {
-        "content": user.card_temp.content,
-        "root": user.card_temp.root,
-        "zones": user.card_temp.zones
+        "content": user.card_temp[0].content,
+        "root": user.card_temp[0].root,
+        "zones": user.card_temp[0].zones
       }
     };
     res.send(modifiedData);
@@ -95,8 +96,9 @@ exports.updateCard = catchAsyncErrors(async (req, res, next) => {
   try {
       const { email } = req.params;
       const user = await User.findOne({ email: email }).exec();
-      console.log('user:::::::::', req.body.cardData)
       const { cardData } = req.body;
+      
+      console.log('user:::::::::', req.body.cardData)
       user.card_temp = cardData;
       user.save();
       res.send(user.card_temp);
