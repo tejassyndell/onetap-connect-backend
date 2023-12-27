@@ -31,6 +31,7 @@ const user_shipping_addressesModel = require("../../../models/NewSchemas/user_sh
 const Company_information = require("../../../models/NewSchemas/Company_informationModel.js");
 const Otc_Adminteams = require("../../../models/Otc_AdminModels/Otc_Adminteams.js");
 const json = require("body-parser/lib/types/json.js");
+const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1993,7 +1994,7 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
       },
       tls: { rejectUnauthorized: false },
     });
- 
+
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
@@ -2075,7 +2076,7 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
 });
 //create password
 exports.createPassword = catchAsyncErrors(async (req, res, next) => {
-  const { token,password } = req.body;
+  const { token, password } = req.body;
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
   const email = decodedData.email;
   try {
@@ -2092,7 +2093,7 @@ exports.createPassword = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Password created successfully',
-      user 
+      user
     });
   } catch (error) {
     return next(error);
@@ -2213,7 +2214,7 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
 
 exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds } = req.body;
-console.log('....................................',orderIds)
+  console.log('....................................', orderIds)
   try {
     const result = await Order.deleteMany({ _id: { $in: orderIds } });
     if (result.deletedCount > 0) {
@@ -3306,18 +3307,15 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
           <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
           <p>Subscription Details:</p>
           <ul>
-            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${
-              invoiceOrderData.planType
-            }</li>
-            <li><b>Duration:</b>&nbsp;&nbsp;${
-              invoiceOrderData.billing_cycle
-            }</li>
+            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${invoiceOrderData.planType
+        }</li>
+            <li><b>Duration:</b>&nbsp;&nbsp;${invoiceOrderData.billing_cycle
+        }</li>
             <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(
-              invoiceOrderData.renewal_date
-            ).toLocaleDateString()}</li>
-            <li><b>Amount:</b>&nbsp;&nbsp;$ ${
-              invoiceOrderData.total_amount
-            }</li>
+          invoiceOrderData.renewal_date
+        ).toLocaleDateString()}</li>
+            <li><b>Amount:</b>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount
+        }</li>
           </ul>
 
           <!-- Invoice Table -->
@@ -3335,9 +3333,8 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
             <tbody>
                 <!-- Add your invoice items dynamically here -->
                 <tr>
-                    <td>${invoiceOrderData.planType}-${
-        invoiceOrderData.billing_cycle
-      }</td>
+                    <td>${invoiceOrderData.planType}-${invoiceOrderData.billing_cycle
+        }</td>
                     <!-- <td>Description of Your Item</td> -->
                     <!-- <td></td> -->
                     <td style="text-align: center;">&nbsp;&nbsp;1</td>
@@ -3476,7 +3473,7 @@ exports.getAdminTeam = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.deleteAdminTeam = catchAsyncErrors(async (req, res, next) => {
-  const { teamId } = req.body; 
+  const { teamId } = req.body;
 
   // Find and delete the team by its ID
   const deletedTeam = await Otc_Adminteams.findByIdAndDelete(teamId);
@@ -3548,9 +3545,45 @@ exports.removeUserTeam = catchAsyncErrors(async (req, res, next) => {
         .json({ message: `User not found with ID: ${userId}` });
     }
 
-    user.team = null; 
+    user.team = null;
     await user.save();
   }
 
   res.status(200).json({ message: "Team removed from users successfully" });
+});
+
+exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { count, prefix, year } = req.body;
+
+    // Helper function to generate a random 5-digit ID
+    const generateRandomId = () => Math.floor(10000 + Math.random() * 90000).toString();
+
+    // Array to store generated strings
+    const strings = [];
+
+    // Generate strings with 5-digit ID that doesn't already exist in SmartAccessoriesModal's uniqueId field
+    for (let i = 0; i < count; i++) {
+      let isUnique = false;
+      let generatedString = '';
+
+      // Keep generating until a unique string is found
+      while (!isUnique) {
+        generatedString = `${prefix}-${year}-${generateRandomId()}`;
+        const existingAccessory = await SmartAccessoriesModal.findOne({ uniqueId: generatedString });
+
+        // Check if the generated string already exists
+        if (!existingAccessory) {
+          isUnique = true;
+        }
+      }
+
+      strings.push(generatedString);
+    }
+
+    // Return the updated accessories details
+    res.status(200).json({ strings, success: true });
+  } catch (error) {
+    next(error);
+  }
 });

@@ -165,6 +165,7 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    prefix: { type: String },
   },
   { timestamps: true }
 );
