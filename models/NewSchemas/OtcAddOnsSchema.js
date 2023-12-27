@@ -41,6 +41,7 @@ const Adminaddonsschema = new mongoose.Schema(
       type: String,
     },
     Addonspaymentdata: {
+      issynchronize: { type: Boolean },
       yearlysku: {
         type: String,
         unique: true,
