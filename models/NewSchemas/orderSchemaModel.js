@@ -28,7 +28,7 @@ const order_Schema = new mongoose.Schema(
     contact: { type: Number, default: null },
     status: {
       type: String,
-      default: "On Hold"
+      default: "Processing"
     },
     fulfillment: {
       type: String,
@@ -92,7 +92,7 @@ const order_Schema = new mongoose.Schema(
     },
     card_details: {
       nameOnCard: { type: String },
-      cardNumber: { type: Number},
+      cardNumber: { type: Number },
       cardExpiryMonth: { type: Number },
       cardExpiryYear: { type: Number },
       CVV: { type: String },
