@@ -9,6 +9,7 @@ const {
   getGuestUsers,
   updateCard,
   addCompanyCard,
+  fetchPlan,
   getAllComparisionData } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
@@ -21,6 +22,7 @@ const { otcImageUpload, deleteimageupload } = require("../../middleware/OtcImage
 router.get("/admin/mockdata/:email", mockdata);
 router.post("/admin/updateCard/:email", updateCard);
 router.post("/admin/addCompanyCard/:email", addCompanyCard);
+router.get("/admin/fetchPlan/:email", fetchPlan);
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
 router.get("/admin/allclients", isOtcAdminAuthenticatedUser, getordersclient);

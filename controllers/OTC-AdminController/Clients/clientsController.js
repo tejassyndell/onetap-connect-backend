@@ -73,6 +73,39 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
 });
 
 
+exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
+  
+  // Extract email from request parameters
+  const { email } = req.params;
+ 
+  // Find the user by email
+  const user = await User.findOne({ email });
+ 
+  // Check if the user exists
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+ 
+  // Access user ID safely
+  const userID = user._id;
+ 
+  // Find user information by user ID
+  const userInfo = await UserInformation.findOne({ user_id: userID });
+ 
+  // Check if user information exists
+  if (!userInfo) {
+    return res.status(404).json({ message: 'User information not found' });
+  }
+ 
+  // Extract plan name from subscription details
+  const planName = userInfo.subscription_details.plan;
+ 
+  // Send the response
+  res.status(200).json({ message: 'Fetch Plan Successfully', planName });
+ });
+ 
+
+
 exports.mockdata = catchAsyncErrors(async (req, res, next) => {
 
   const { email } = req.params;
