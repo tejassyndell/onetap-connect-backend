@@ -1315,7 +1315,7 @@ const userInformationData = await userInformation.save();
        referredby: userData?.referredby === undefined ? '' : userData?.referredby,
        referredName: userData.referredName,
        card_details: {
-        nameOnCard: cardDetails.cardName,
+        // nameOnCard: cardDetails.cardName,
         cardNumber: cardDetails.cardNumber,
         cardExpiryMonth: cardDetails.cardExpiryMonth,
         cardExpiryYear: cardDetails.cardExpiryYear,
@@ -2767,3 +2767,78 @@ exports.createAdminSmartAccOrder = catchAsyncErrors(async (req, res, next) => {
 
 
 })
+
+
+
+exports.canceledSubscription = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.body)
+  try {
+    const { subId, currentPlan , userid , companyid} = req.body
+    if (!subId) {
+      return res.status(500).json({ success: false, error: 'No Subscription Id found' });
+    }
+
+    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+      invoice_now: true,
+      prorate: true
+    });
+    console.log(canceledSubscription);
+    console.log('canceledSubscription');
+
+    if (!canceledSubscription) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    const updatedUserInfo = await UserInformation.findOneAndUpdate(
+      { 'subscription_details.customer_id': canceledSubscription.customer },
+      {
+        $set: {
+          'subscription_details.subscription_id': null,
+          'subscription_details.addones': [],
+          'subscription_details.total_amount': null,
+          'subscription_details.billing_cycle': null,
+          'subscription_details.endDate': null,
+          'subscription_details.plan': currentPlan,
+          'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
+          'subscription_details.recurring_amount': null,
+          'subscription_details.renewal_date': null,
+          'subscription_details.auto_renewal': null,
+          'subscription_details.taxRate': null,
+        }
+      },
+      { new: true }
+
+    );
+    if (!updatedUserInfo) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    const updatedUser = await UserModel.updateOne(
+      { _id: userid },
+      {
+        $set: { Account_status: 'is_Deactivated' },
+        
+      },
+      { new: true }
+    );
+    const companyUsers = await UserModel.updateMany(
+      {
+        companyID: companyid,
+        role: { $in: ["administrator", "teammember", "manager"] },
+        status: { $in: ['active'] }
+      },
+      {
+        $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
+      },
+    );
+
+    console.log(updatedUserInfo)
+    console.log("updatedUserInfo")
+
+    res.status(200).json({ success: true, delete: "Subscription Canceled successfully", companyUsers, updatedUser });
+    // res.status(200).json({ success: true, message: canceledSubscription });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
