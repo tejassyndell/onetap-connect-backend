@@ -6410,3 +6410,40 @@ exports.getuniqueslug = catchAsyncErrors(async (req, res, next) => {
   });
 })
 
+
+
+exports.checkuserslugavailiblity = catchAsyncErrors(async (req, res, next) => {
+  const {  userurlslug , userid } = req.body;
+  console.log(userid, "MMM")
+  // Check if userurlslug is already taken by the current user
+  const currentUserUrlSlug = await parmalinkSlug.findOne({
+    user_id: userid,
+    "unique_slugs.value": userurlslug,
+  });
+
+  if (currentUserUrlSlug) {
+    return res.status(400).json({ message: "already active." });
+  }
+
+  // Check if userurlslug is already taken globally
+  const existinguserurlslug = await parmalinkSlug.findOne({
+    user_id: { $ne: userid },
+    "unique_slugs.value": userurlslug,
+  });
+
+  if (existinguserurlslug) {
+    return res.status(400).json({ message: "userurlslug is already taken." });
+  }
+
+  // Check case-sensitive duplicates
+  const caseSensitiveuserurlslug = await parmalinkSlug.findOne({
+    user_id: { $ne: userid }, // Exclude the current company by ID
+    "unique_slugs.value": new RegExp(`^${userurlslug}$`, "i"),
+  });
+
+  if (caseSensitiveuserurlslug) {
+    return res.status(400).json({ message: "userurlslug is already taken." });
+  }
+
+  return res.status(200).json({ message: "companyurlslug is available." });
+});
