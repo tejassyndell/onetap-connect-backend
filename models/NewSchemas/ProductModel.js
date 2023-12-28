@@ -159,6 +159,7 @@ const productSchema = new mongoose.Schema(
         CustomPermalink: {
           type: String,
         },
+        prefix: { type: String },
       },
     ],
     isActive: {

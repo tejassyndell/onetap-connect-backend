@@ -34,6 +34,7 @@ const json = require("body-parser/lib/types/json.js");
 const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
 const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
 const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
+const OtcPlanComparisonModel = require("../../../models/NewSchemas/OtcPlanComparisonModel.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -73,7 +74,7 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.mockdata = catchAsyncErrors(async (req, res, next) => {
-  
+
   const { email } = req.params;
   const user = await User.findOne({ email }).populate("companyID");
   const role = user.role
@@ -86,7 +87,7 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
         "zones": user.card_temp[0].zones
       }
     };
-    res.send({modifiedData, role});
+    res.send({ modifiedData, role });
   } else {
     //getting company templates 
     const modifiedData = {
@@ -138,10 +139,10 @@ exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ email: email }).populate('companyID').exec();
-    const companies = await  Company_informationModel.findOne({_id:user.companyID}).exec();
+    const companies = await Company_informationModel.findOne({ _id: user.companyID }).exec();
 
     // res.send(companies);
-  
+
     // Combine NEW DATA and ALREADY EXISTS into an array
     const combined = [
       req.body.cardData,
@@ -3613,21 +3614,34 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
   try {
     const { count, prefix, year, productName, productId, variationId } = req.body;
 
-    // Helper function to generate a random 5-digit ID
-    const generateRandomId = () => Math.floor(10000 + Math.random() * 90000).toString();
+    // Helper function to generate a random alphanumeric string
+    const generateRandomId = (length) => {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    };
 
     // Array to store generated strings
     const strings = [];
 
-    // Generate strings with 5-digit ID that doesn't already exist in SmartAccessoriesModal's uniqueId field
+    // Generate strings with alphanumeric characters that don't already exist in SmartAccessoriesModal's uniqueId field
     for (let i = 0; i < count; i++) {
       let isUnique = false;
       let generatedString = ''; // Declare inside the loop
 
       // Keep generating until a unique string is found
       while (!isUnique) {
-        generatedString = `${prefix}-${year}-${generateRandomId()}`;
+        // Generate a 5-character alphanumeric string initially
+        generatedString = `${prefix}-${year}-${generateRandomId(5)}`;
         const existingAccessory = await SmartAccessoriesModal.findOne({ uniqueId: generatedString });
+
+        // If all possible 5-digit combinations are exhausted, switch to 6 digits
+        if (i >= 90000) {
+          generatedString = `${prefix}-${year}-${generateRandomId(6)}`;
+        }
 
         // Check if the generated string already exists
         if (!existingAccessory) {
@@ -3657,26 +3671,69 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+
 exports.updatePrefixOfProduct = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { id, prefix } = req.body;
-
+    const { id, prefix, variationId } = req.body;
     const item = await ProductModel.findById(id)
-    item.prefix = prefix;
+    const variation = item?.variations?.find((e) => e._id.toString() === variationId.toString())
+    if (variation) {
+      variation.prefix = prefix.toUpperCase();
+    } else {
+      item.prefix = prefix.toUpperCase();
+    }
     await item.save();
     // Return the updated accessories details
     res.status(200).json({ item, success: true });
   } catch (error) {
     next(error);
-  }})
-
-exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
-    const guestUsers = await GuestCustomer.find();
-    if (!guestUsers) {
-      return res
-        .status(404)
-        .json({ message: `guest users not found.` });
-    }
-  res.status(200).json({guestUsers , success: true });
+  }
 })
 
+exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
+  const guestUsers = await GuestCustomer.find();
+  if (!guestUsers) {
+    return res
+      .status(404)
+      .json({ message: `guest users not found.` });
+  }
+  res.status(200).json({ guestUsers, success: true });
+})
+
+
+exports.getAllComparisionData = catchAsyncErrors((async (req, res, next) => {
+  const feature = await OtcPlanComparisonModel.find();
+  console.log(feature, '.........................................')
+  console.log(feature, '.........................................')
+  console.log(feature, '.........................................')
+  if (!feature) {
+    return next(new ErrorHandler("No feature", 400))
+  }
+
+  res.status(201).json({
+    success: true,
+    feature
+
+  })
+}))
+
+exports.updateComparisionData = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { id, featureData } = req.body;
+
+    //if id exists update else create
+
+    // if (id) {
+    //   const item = await OtcPlanComparisonModel.findById(id)
+    // } else {
+    //   const item = await OtcPlanComparisonModel.create({ featureData });
+    // }
+    const item = await OtcPlanComparisonModel.create({ featureData });
+    await item.save();
+
+    // Return the updated details
+    res.status(200).json({ item, success: true });
+  } catch (error) {
+    next(error);
+  }
+})
