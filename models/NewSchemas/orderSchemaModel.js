@@ -184,6 +184,7 @@ const order_Schema = new mongoose.Schema(
     tracking_number: { type: String },
     sumTotalWeights: { type: String },
     totalShipping: { type: String },
+    serviceCode: { type: String },
     discount: { type: Number }, //when admin creates order, special discount on order is given (subtract this amount from total)
   },
   
