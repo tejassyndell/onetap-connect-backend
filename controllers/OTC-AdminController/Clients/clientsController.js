@@ -75,11 +75,10 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
 exports.mockdata = catchAsyncErrors(async (req, res, next) => {
   
   const { email } = req.params;
-  const user = await User.findOne({ email });
-const role = user.role
+  const user = await User.findOne({ email }).populate("companyID");
+  const role = user.role
   // Check if user and user.card_temp exist
   if (user && user.card_temp[0] && user.card_temp[0].content && user.card_temp[0].content.length > 0) {
-    // Assuming there is only one item in the content array
     const modifiedData = {
       "/": {
         "content": user.card_temp[0].content,
@@ -89,7 +88,16 @@ const role = user.role
     };
     res.send({modifiedData, role});
   } else {
-    // Handle the case where user or user.card_temp is not present or does not have the expected structure
+    //getting company templates 
+    const modifiedData = {
+      "/": {
+        "content": user.companyID.card_temp[0].content,
+        "root": user.companyID.card_temp[0].root,
+        "zones": user.companyID.card_temp[0].zones
+      }
+    };
+    res.send({modifiedData, role});
+
     res.status(404).send({ error: "Data not found or has unexpected structure" });
   }
 });
