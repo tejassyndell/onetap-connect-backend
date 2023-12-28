@@ -92,7 +92,7 @@ const order_Schema = new mongoose.Schema(
     },
     card_details: {
       nameOnCard: { type: String },
-      cardNumber: { type: Number, required: true },
+      cardNumber: { type: Number},
       cardExpiryMonth: { type: Number },
       cardExpiryYear: { type: Number },
       CVV: { type: String },
