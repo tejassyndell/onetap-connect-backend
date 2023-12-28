@@ -17,7 +17,7 @@ router.get("/product/test", testAPI);
 router.get("/products", getProducts);
 // router.get("/product/:id", getProductsInfo);
 // router.get("/product/:name", getProductsInfo);
-router.get("/:id", getProductsInfo);
+router.get("/product/getproduct/:id", getProductsInfo);
 router.post("/product/cart", getCartProducts);
 router.post("/cart/update" ,updateCartProducts);
 router.post("/cart/removeproduct" ,updateCart);
