@@ -4,8 +4,14 @@ const {
   testAPIS, getClients, Signup, OtcLogin, Otclogout, getOtcAdminProfile, getordersclient, getallusers, getallusersofcompany, getcompanyuserstatus, updateAddons, getAddons, createPlan, getPlans, createCategories, getCategories, getOrderssofcompany, updateTeamofuser, updateStatusofuser, updateStatusofcompany, updateClientCompanyInformation, showClientCompanyCardDetails, createCoupon, getCoupon, getUser, otcUpdateUserDetails, otc_getcompanies_share_referral_data, updateRedirectLink, GetSubscriptionDetailsForAdmin, getsubscriptiondetails, AdmininviteTeamMemberByCSV, AdmininviteTeamMember, inviteTeamMembermanuallybyadmin, getinvitedUsersbyadmin, resendemailinvitationbyadmin, getCompanyDetailsforAdmin, checkcompanyurlslugavailiblityAdminside, UpdateCompanySlugFromAdmin, UpdateCompanySettings, getsharereferalSettingsAdmin, UpdateLeadCaptureSettings, getAllOrders, updateOrders, deleteOrders, getSingleOrder, updateOrder
   , createClient, getActiveUsersOfCompany, getTeamofCompany, updateTeamNamebyAdmin, removeTeamFromUsersByadmin, deleteteamofselectedcompany, renameteamofselectedcompany, createNewteamofselectedcompany, getAllShippingAddressofcompany, createShippingAddressofcompany, removeShippingAddressofcompany, editShippingAddressofcompany, updateuserroleofcompanyusers, updateuserplanonrolechangeofcompany, fetchbillingaddressofcompany, updateBillingAddressofcompany, getallcompanynames, otcadminusers, addAdminUser, updateAdminUser, getcompanyorders, GetorderByCompanyIDandOrderNumber, saveclientTags, getclienttags
   , sendOrderInvoice, createPassword, addreferer, getreferer, getauser, createAdminTeam, getAdminTeam, deleteAdminTeam, adminRenameTeam, addUserTeam, removeUserTeam, mockdata,
-  updateCard, generateSmartAccessoryIds, updatePrefixOfProduct, getGuestUsers} = require("../../controllers/OTC-AdminController/Clients/clientsController");
-const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth"); 
+  generateSmartAccessoryIds,
+  updatePrefixOfProduct,
+  getGuestUsers,
+  updateCard,
+  addCompanyCard,
+  fetchPlan,
+  getAllComparisionData } = require("../../controllers/OTC-AdminController/Clients/clientsController");
+const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
 
@@ -15,6 +21,8 @@ const { otcImageUpload, deleteimageupload } = require("../../middleware/OtcImage
 
 router.get("/admin/mockdata/:email", mockdata);
 router.post("/admin/updateCard/:email", updateCard);
+router.post("/admin/addCompanyCard/:email", addCompanyCard);
+router.get("/admin/fetchPlan/:email", fetchPlan);
 router.get("/admin/test", testAPIS);
 router.get("/admin/clients", getClients);
 router.get("/admin/allclients", isOtcAdminAuthenticatedUser, getordersclient);
@@ -182,8 +190,7 @@ router.post("/admin/adduser-team", addUserTeam);
 router.post("/admin/remove-user-team", removeUserTeam);
 router.delete('/admin/imagedelete/:filename', deleteimageupload);
 router.post('/admin/createPassword', createPassword);
-
-
+router.get('/admin/featureData', getAllComparisionData);
 
 router.post('/admin/generateSmartAccessoryIds', generateSmartAccessoryIds);
 router.post('/admin/updatePrefixOfProduct', updatePrefixOfProduct);

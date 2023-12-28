@@ -207,6 +207,7 @@ const Company_information = new mongoose.Schema(
         type : String,
         default:null
       },
+      card_temp: [{type: Object}],
       unq_compnany_id: {
         type: Number,
         default: 1,

@@ -792,6 +792,7 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
       customerIp,
       orderedBy,
       discount,
+      couponData
     } = req.body;
 
 
@@ -890,6 +891,19 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
         discount,
       });
 
+      if (couponData !== null && Object.keys(couponData).length !== 0) {
+        order.isCouponUsed = true;
+        order.coupons = {
+          code: couponData.appliedCouponCode,
+          value: couponData.discountValue
+        };
+        const logCoupons = await UserCouponAssociation.findOneAndUpdate(
+          { userId: userId, couponCode: couponData.appliedCouponCode },
+          { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        )
+        console.log(logCoupons);
+      }
       // Save the order to the database
       const newOrder = await order.save();
       console.log(newOrder, "newOrder")
@@ -1004,6 +1018,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
         order: updatedOrder,
       });
       orderNumber = updatedOrder.orderNumber;
+      orderidtoredirect = updatedOrder._id
     } else {
 
       // Create a new order linked to the specific user
@@ -1037,6 +1052,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
         order,
       });
       orderNumber = newOrder.orderNumber;
+      orderidtoredirect = newOrder._id;
     }
 
 
@@ -1079,7 +1095,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
-                <a href="${process.env.FRONTEND_URL}/ordersummary/${orderNumber}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
+                <a href="${process.env.FRONTEND_URL}/ordersummary/${orderidtoredirect}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
             </div>
             
         </div> <br/>
@@ -1138,6 +1154,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       email,
       sumTotalWeights,
       totalShipping,
+      serviceCode,
     } = req.body;
 console.log(userId, "user id guest or not....")
 
@@ -1310,12 +1327,13 @@ const userInformationData = await userInformation.save();
         billingAddress,
         sumTotalWeights: sumTotalWeights,
         totalShipping: totalShipping,
+        serviceCode:serviceCode,
         isGuest: userId === 'Guest' ? true : false,
        userShippingOrderNote : userData?.userShippingOrderNote === undefined ? '' : userData?.userShippingOrderNote  ,
        referredby: userData?.referredby === undefined ? '' : userData?.referredby,
        referredName: userData.referredName,
        card_details: {
-        nameOnCard: cardDetails.cardName,
+        // nameOnCard: cardDetails.cardName,
         cardNumber: cardDetails.cardNumber,
         cardExpiryMonth: cardDetails.cardExpiryMonth,
         cardExpiryYear: cardDetails.cardExpiryYear,
@@ -2767,3 +2785,78 @@ exports.createAdminSmartAccOrder = catchAsyncErrors(async (req, res, next) => {
 
 
 })
+
+
+
+exports.canceledSubscription = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.body)
+  try {
+    const { subId, currentPlan , userid , companyid} = req.body
+    if (!subId) {
+      return res.status(500).json({ success: false, error: 'No Subscription Id found' });
+    }
+
+    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+      invoice_now: true,
+      prorate: true
+    });
+    console.log(canceledSubscription);
+    console.log('canceledSubscription');
+
+    if (!canceledSubscription) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    const updatedUserInfo = await UserInformation.findOneAndUpdate(
+      { 'subscription_details.customer_id': canceledSubscription.customer },
+      {
+        $set: {
+          'subscription_details.subscription_id': null,
+          'subscription_details.addones': [],
+          'subscription_details.total_amount': null,
+          'subscription_details.billing_cycle': null,
+          'subscription_details.endDate': null,
+          'subscription_details.plan': currentPlan,
+          'subscription_details.total_user': [{ 'baseUser': 1, 'additionalUser': 0 }],
+          'subscription_details.recurring_amount': null,
+          'subscription_details.renewal_date': null,
+          'subscription_details.auto_renewal': null,
+          'subscription_details.taxRate': null,
+        }
+      },
+      { new: true }
+
+    );
+    if (!updatedUserInfo) {
+      return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
+    }
+
+    const updatedUser = await UserModel.updateOne(
+      { _id: userid },
+      {
+        $set: { Account_status: 'is_Deactivated' },
+        
+      },
+      { new: true }
+    );
+    const companyUsers = await UserModel.updateMany(
+      {
+        companyID: companyid,
+        role: { $in: ["administrator", "teammember", "manager"] },
+        status: { $in: ['active'] }
+      },
+      {
+        $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
+      },
+    );
+
+    console.log(updatedUserInfo)
+    console.log("updatedUserInfo")
+
+    res.status(200).json({ success: true, delete: "Subscription Canceled successfully", companyUsers, updatedUser });
+    // res.status(200).json({ success: true, message: canceledSubscription });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});

@@ -27,6 +27,7 @@ const {
   createAdminPlanOrder,
   createAdminAddonOrder,
   createAdminSmartAccOrder,
+  canceledSubscription,
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -41,6 +42,7 @@ router.post('/payment/change-plan', switchPlan)
 router.get('/payment/isactive', isAuthenticatedUser, isActive)
 router.post('/payment/test', addonPurchase)
 router.post('/payment/cancelSubscription', cancelPlan)
+router.post('/payment/cancel-Subscription', canceledSubscription)
 router.post('/payment/cancelSubscription/deactivateaccount', cancelPlandeactivateaccount)
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card', isAuthenticatedUser, updateCards)
