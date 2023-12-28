@@ -70,7 +70,7 @@ const order_Schema = new mongoose.Schema(
         quantity: { type: Number },
         price: { type: Number }, // final price
         status: { type: String, default: 'N/A' },
-
+        discountAmount: { type: Number, default: 0 }
       },
     ],
     addaddons: [

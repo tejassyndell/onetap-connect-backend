@@ -789,6 +789,7 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
       customerIp,
       orderedBy,
       discount,
+      couponData
     } = req.body;
 
 
@@ -887,6 +888,19 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
         discount,
       });
 
+      if (couponData !== null && Object.keys(couponData).length !== 0) {
+        order.isCouponUsed = true;
+        order.coupons = {
+          code: couponData.appliedCouponCode,
+          value: couponData.discountValue
+        };
+        const logCoupons = await UserCouponAssociation.findOneAndUpdate(
+          { userId: userId, couponCode: couponData.appliedCouponCode },
+          { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        )
+        console.log(logCoupons);
+      }
       // Save the order to the database
       const newOrder = await order.save();
       console.log(newOrder, "newOrder")
@@ -1000,7 +1014,8 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
         message: 'Order updated successfully',
         order: updatedOrder,
       });
-      orderNumber = updatedOrder._id;
+      orderNumber = updatedOrder.orderNumber;
+      orderidtoredirect = updatedOrder._id
     } else {
 
       // Create a new order linked to the specific user
@@ -1034,6 +1049,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
         order,
       });
       orderNumber = newOrder.orderNumber;
+      orderidtoredirect = newOrder._id;
     }
 
 
@@ -1076,7 +1092,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
           <!-- <div><button>Accept invitation</button><button>Reject</button></div> -->
           <div style="display: flex; justify-content: space-evenly; gap: 25px; margin-top: 25px;">
             <div style="flex: 1; border-radius: 4px; overflow: hidden; background-color: #e65925; justify-content: center; display: flex; width:30%; margin: 0 12%;">
-                <a href="${process.env.FRONTEND_URL}/ordersummary/${orderNumber}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
+                <a href="${process.env.FRONTEND_URL}/ordersummary/${orderidtoredirect}" style="display: inline-block; width: 83%; padding: 10px 20px; font-weight: 600; color: #fff; text-align: center; text-decoration: none;">View invoice</a>
             </div>
             
         </div> <br/>
