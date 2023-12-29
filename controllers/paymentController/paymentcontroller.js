@@ -2796,6 +2796,29 @@ exports.canceledSubscription = catchAsyncErrors(async (req, res, next) => {
       return res.status(500).json({ success: false, error: 'No Subscription Id found' });
     }
 
+    const updatedUser = await UserModel.updateOne(
+      { _id: userid },
+      {
+        $set: { Account_status: 'is_Deactivated' },
+        
+      },
+      { new: true }
+    );
+    const companyUsers = await UserModel.updateMany(
+      {
+        companyID: companyid,
+        role: { $in: ["administrator", "teammember", "manager"] },
+        status: { $in: ['active'] }
+      },
+      {
+        $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
+      },
+    );
+    
+console.log("?????????????????????????????????????????-?????-")
+    console.log(companyUsers, "company user data")
+    console.log("?????????????????????????????????????????-?????-")
+
     const canceledSubscription = await stripe.subscriptions.cancel(subId, {
       invoice_now: true,
       prorate: true
@@ -2831,24 +2854,6 @@ exports.canceledSubscription = catchAsyncErrors(async (req, res, next) => {
       return res.status(500).json({ success: false, error: 'Error while canceling subscription' });
     }
 
-    const updatedUser = await UserModel.updateOne(
-      { _id: userid },
-      {
-        $set: { Account_status: 'is_Deactivated' },
-        
-      },
-      { new: true }
-    );
-    const companyUsers = await UserModel.updateMany(
-      {
-        companyID: companyid,
-        role: { $in: ["administrator", "teammember", "manager"] },
-        status: { $in: ['active'] }
-      },
-      {
-        $set: { status: 'Deactivate', Account_status: 'is_Deactivated' },
-      },
-    );
 
     console.log(updatedUserInfo)
     console.log("updatedUserInfo")

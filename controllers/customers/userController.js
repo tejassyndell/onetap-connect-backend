@@ -6281,7 +6281,7 @@ exports.assignSmartAccessroiesToUser = catchAsyncErrors(async (req, res, next) =
     // Update the userId for multiple uniqueIds
     const updatedAccessories = await SmartAccessoriesModal.updateMany(
       { uniqueId: { $in: uniqueIds } },
-      { $set: { userId: userId , companyId: companyId} },
+      { $set: { userId: userId , companyId: companyId, status: "Activate"} },
       { new: true }
     );
 
