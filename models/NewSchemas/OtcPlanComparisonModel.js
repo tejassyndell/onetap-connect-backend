@@ -12,6 +12,11 @@ const planComparisonSchema = new mongoose.Schema({
         type: String,
         default: 'Published', // Set your default status value here
     },
+    visibility: {
+        type: String,
+        default: 'Public',
+    },
+    publishedBy: String,
 
 },
     { timestamps: true }
