@@ -803,13 +803,13 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
             }
           ],
           start_date : subscriptionSchedule.phases[0].start_date,
-          end_date : parseInt(currentDate),
+          end_date : parseInt(currentDate) + 1000,
         },
           {
           items: [{
             price: price.id
           }],
-          start_date : parseInt(currentDate) ,
+          start_date : parseInt(currentDate) + 1000 ,
         },
       ],
         proration_behavior : "create_prorations",
@@ -825,13 +825,13 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
             }
           ],
           start_date : subscriptionSchedule.phases[0].start_date,
-          end_date : parseInt(currentDate),
+          end_date : parseInt(currentDate) + 1000,
         },
           {
           items: [{
             price: price.id
           }],
-          start_date : parseInt(currentDate) ,
+          start_date : parseInt(currentDate) + 1000,
         },
       ],
         proration_behavior : "create_prorations",
@@ -848,13 +848,13 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
             }
           ],
           start_date : subscriptionSchedule.phases[0].start_date,
-          end_date : parseInt(currentDate),
+          end_date : parseInt(currentDate) + 1000,
         },
           {
           items: [{
             price: price.id
           }],
-          start_date : parseInt(currentDate) ,
+          start_date : parseInt(currentDate) + 1000,
         },
       ],
         proration_behavior : "create_prorations",
@@ -868,7 +868,7 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     console.log("myPayment");
     console.log(myPayment);
     console.log("myPayment");
-    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.current_period_end });
+    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.phases[1].end_date});
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
