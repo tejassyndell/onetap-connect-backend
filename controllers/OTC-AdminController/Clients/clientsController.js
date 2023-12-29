@@ -107,7 +107,7 @@ exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
  
 
 
-exports.mockdata = catchAsyncErrors(async (req, res, next) => {
+ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
 
   const { email } = req.params;
   const user = await User.findOne({ email }).populate("companyID");
@@ -126,17 +126,36 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
     //getting company templates 
     const modifiedData = {
       "/": {
-        "content": user.companyID.card_temp[0].content,
-        "root": user.companyID.card_temp[0].root,
-        "zones": user.companyID.card_temp[0].zones
+        "content": user.companyID.card_temp[3].content,
+        "root": user.companyID.card_temp[3].root,
+        "zones": user.companyID.card_temp[3].zones
       }
     };
+
+    // Function to remove properties from Card type objects
+    function removePropertiesFromCard(card) {
+      delete card.props.Name;
+      delete card.props.Designations;
+    }
+
+    // Iterate through the content array and remove properties for Card type
+    if (modifiedData['/'] && modifiedData['/'].content) {
+      modifiedData['/'].content.forEach(item => {
+        if (item.type === 'Card') {
+          removePropertiesFromCard(item);
+        }
+      });
+    }
+
+
+
+    console.log(':::::::::::::lll::::::::::::::', modifiedData)
+
     res.send({modifiedData, role});
 
     res.status(404).send({ error: "Data not found or has unexpected structure" });
   }
   res.send({role});
-
 });
 
 
@@ -175,7 +194,7 @@ exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ email: email }).populate('companyID').exec();
-    const companies = await Company_informationModel.findOne({ _id: user.companyID }).exec();
+    const companies = await Company_information.findOne({ _id: user.companyID }).exec();
 
     // res.send(companies);
 
