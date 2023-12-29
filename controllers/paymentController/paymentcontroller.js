@@ -130,15 +130,20 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
         expand: ['tax']
       });
       console.log(customer)
-      fetchCustomerID = await UserModel.findOne({ 'email': user.email })
+      if (user._id !== "Guest") {
+        fetchCustomerID = await UserModel.findOne({ 'email': user.email })
+        console.log("fetchCustomerID")
+        console.log(fetchCustomerID)
+        console.log("fetchCustomerID")
 
-      const updatedUserInfo = await UserInformation.findOneAndUpdate(
-        { user_id: fetchCustomerID._id },
-        { $set: { 'subscription_details.customer_id': customer.id } },
-        { new: true }
-      );
-      if (!updatedUserInfo) {
-        return next(new ErrorHandler("Internal server Error", 501));
+        const updatedUserInfo = await UserInformation.findOneAndUpdate(
+          { user_id: fetchCustomerID._id },
+          { $set: { 'subscription_details.customer_id': customer.id } },
+          { new: true }
+        );
+        if (!updatedUserInfo) {
+          return next(new ErrorHandler("Internal server Error", 501));
+        }
       }
       res.status(200).json({ success: true, customer });
     }
@@ -1323,12 +1328,13 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       totalShipping,
       serviceCode,
     } = req.body;
-console.log(userId, "user id guest or not....")
+    console.log(userId, "user id guest or not....")
 
-let userInformation = await UserInformation.findOne({ user_id: userId });
-userInformation.subscription_details.customer_id = orderData.customerID
-const userInformationData = await userInformation.save();
-
+    if (userId !== 'Guest') {
+      let userInformation = await UserInformation.findOne({ user_id: userId });
+      userInformation.subscription_details.customer_id = orderData.customerID
+      const userInformationData = await userInformation.save();
+    }
     if (userId === "Guest") {
       isGuest = true;
     }
@@ -1494,23 +1500,23 @@ const userInformationData = await userInformation.save();
         billingAddress,
         sumTotalWeights: sumTotalWeights,
         totalShipping: totalShipping,
-        serviceCode:serviceCode,
+        serviceCode: serviceCode,
         isGuest: userId === 'Guest' ? true : false,
-       userShippingOrderNote : userData?.userShippingOrderNote === undefined ? '' : userData?.userShippingOrderNote  ,
-       referredby: userData?.referredby === undefined ? '' : userData?.referredby,
-       referredName: userData.referredName,
-       card_details: {
-        // nameOnCard: cardDetails.cardName,
-        cardNumber: cardDetails.cardNumber,
-        cardExpiryMonth: cardDetails.cardExpiryMonth,
-        cardExpiryYear: cardDetails.cardExpiryYear,
-        brand: cardDetails.brand,
-      },
+        userShippingOrderNote: userData?.userShippingOrderNote === undefined ? '' : userData?.userShippingOrderNote,
+        referredby: userData?.referredby === undefined ? '' : userData?.referredby,
+        referredName: userData.referredName,
+        card_details: {
+          // nameOnCard: cardDetails.cardName,
+          cardNumber: cardDetails.cardNumber,
+          cardExpiryMonth: cardDetails.cardExpiryMonth,
+          cardExpiryYear: cardDetails.cardExpiryYear,
+          brand: cardDetails.brand,
+        },
       });
       // Save the order to the database
       const orderData = await order.save();
 
- 
+
 
       // const purchasedSmartAccessory = new PurchasedSmartAccessoryModal({
       //   company: userId === 'Guest' ? null : user.companyID,
@@ -1524,8 +1530,8 @@ const userInformationData = await userInformation.save();
       //   status:  smartAccessories.status  ,
       //   uniqueId:  smartAccessories.uniqueId  ,
       // })
-// const purchased_smartAccessoryData = await purchasedSmartAccessory.save();
-// console.log(purchased_smartAccessoryData, "purchased_smartAccessoryData............")
+      // const purchased_smartAccessoryData = await purchasedSmartAccessory.save();
+      // console.log(purchased_smartAccessoryData, "purchased_smartAccessoryData............")
 
       // const company = await Company_informationModel.findById({ _id :orderData.company})
 
@@ -1558,10 +1564,9 @@ const userInformationData = await userInformation.save();
         success: true,
         message: 'Order created successfully',
         order,
-        userInformationData,
         clientSecret: paymentIntent.client_secret
       });
-      await sendpurchaseOrderconfirmationEmail(email, shippingAddress, smartAccessories, order);
+      await sendpurchaseOrderconfirmationEmail(userId === 'Guest' ? userData.email : user.email, shippingAddress, smartAccessories, order);
     } else {
       // Payment confirmation failed
       res.status(400).json({
@@ -1574,6 +1579,8 @@ const userInformationData = await userInformation.save();
     res.status(500).json({ message: error });
   }
 });
+
+
 async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress, smartAccessories, order) {
   try {
     const transporter = nodemailer.createTransport({
