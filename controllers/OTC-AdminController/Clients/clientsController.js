@@ -74,39 +74,40 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
-  
+
   // Extract email from request parameters
   const { email } = req.params;
- 
+
   // Find the user by email
   const user = await User.findOne({ email });
- 
+
   // Check if the user exists
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
   }
- 
+
   // Access user ID safely
   const userID = user._id;
- 
+
   // Find user information by user ID
   const userInfo = await UserInformation.findOne({ user_id: userID });
- 
+
   // Check if user information exists
   if (!userInfo) {
     return res.status(404).json({ message: 'User information not found' });
   }
- 
+
   // Extract plan name from subscription details
   const planName = userInfo.subscription_details.plan;
  
+  const role =  user.role;
   // Send the response
-  res.status(200).json({ message: 'Fetch Plan Successfully', planName });
+  res.status(200).json({ message: 'Fetch Plan Successfully', planName, role });
  });
  
 
 
-exports.mockdata = catchAsyncErrors(async (req, res, next) => {
+ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
 
   const { email } = req.params;
   const user = await User.findOne({ email }).populate("companyID");
@@ -121,19 +122,40 @@ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
       }
     };
     res.send({ modifiedData, role });
-  } else {
+  } else if(user && user.companyID.card_temp[0] && user.companyID.card_temp[0].content && user.companyID.card_temp[0].content.length > 0) {
     //getting company templates 
     const modifiedData = {
       "/": {
-        "content": user.companyID.card_temp[0].content,
-        "root": user.companyID.card_temp[0].root,
-        "zones": user.companyID.card_temp[0].zones
+        "content": user.companyID.card_temp[3].content,
+        "root": user.companyID.card_temp[3].root,
+        "zones": user.companyID.card_temp[3].zones
       }
     };
+
+    // Function to remove properties from Card type objects
+    function removePropertiesFromCard(card) {
+      delete card.props.Name;
+      delete card.props.Designations;
+    }
+
+    // Iterate through the content array and remove properties for Card type
+    if (modifiedData['/'] && modifiedData['/'].content) {
+      modifiedData['/'].content.forEach(item => {
+        if (item.type === 'Card') {
+          removePropertiesFromCard(item);
+        }
+      });
+    }
+
+
+
+    console.log(':::::::::::::lll::::::::::::::', modifiedData)
+
     res.send({modifiedData, role});
 
     res.status(404).send({ error: "Data not found or has unexpected structure" });
   }
+  res.send({role});
 });
 
 
@@ -172,7 +194,7 @@ exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ email: email }).populate('companyID').exec();
-    const companies = await Company_informationModel.findOne({ _id: user.companyID }).exec();
+    const companies = await Company_information.findOne({ _id: user.companyID }).exec();
 
     // res.send(companies);
 
@@ -187,6 +209,70 @@ exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
     // Do something with the combined data, e.g., update the user
     companies.card_temp = combined;
     await companies.save();
+
+    // Respond with the updated data or a success message
+    res.status(200).json({ message: 'Card data updated successfully', data: combined });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
+
+exports.publishUpdateCard = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).exec();
+    const { cardData } = req.body;
+
+    console.log('NEW DATA:::::::::', req.body.cardData)
+    console.log('ALREADY EXISTS:::::::::', user.card_temp[0])
+
+    // Combine NEW DATA and ALREADY EXISTS into an array
+    const combined = [
+      req.body.cardData,
+      ...user.card_temp
+    ];
+
+    console.log('COMBINED:::::::::', combined);
+
+    // Do something with the combined data, e.g., update the user
+    user.card_temp = combined;
+    user.publish_card_temp = cardData;
+    await user.save();
+
+    // Respond with the updated data or a success message
+    res.status(200).json({ message: 'Card data updated successfully', data: combined });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
+
+exports.publishAddCompanyCard = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).populate('companyID').exec();
+    const companies = await Company_information.findOne({ _id: user.companyID }).exec();
+
+    // res.send(companies);
+
+    // Combine NEW DATA and ALREADY EXISTS into an array
+    const combined = [
+      req.body.cardData,
+      ...companies.card_temp
+    ];
+
+    console.log('COMBINED:::::::::', combined);
+
+    // Do something with the combined data, e.g., update the user
+    companies.card_temp = combined;
+    user.publish_card_temp = req.body.cardData;
+    await companies.save();
+    await user.save();
 
     // Respond with the updated data or a success message
     res.status(200).json({ message: 'Card data updated successfully', data: combined });
@@ -3755,7 +3841,7 @@ exports.updateComparisionData = catchAsyncErrors(async (req, res, next) => {
     const { id, featureData } = req.body;
 
     //if id exists update else create
-
+    let item;
     if (id) {
       item = await OtcPlanComparisonModel.findByIdAndUpdate(
         id,
@@ -3763,7 +3849,7 @@ exports.updateComparisionData = catchAsyncErrors(async (req, res, next) => {
         { new: true } // Return the updated document
       );
     } else {
-      const item = await OtcPlanComparisonModel.create(featureData);
+      item = await OtcPlanComparisonModel.create(featureData);
     }
 
     await item.save();
