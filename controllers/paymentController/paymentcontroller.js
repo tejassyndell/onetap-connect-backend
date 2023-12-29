@@ -58,7 +58,6 @@ const Onetime_Addons = process.env.Onetime_Addons
 exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
   const { user } = req.body;
   try {
-
     const existingCustomer = await stripe.customers.list({
       email: user.email,
       limit: 1,
@@ -132,9 +131,6 @@ exports.createCustomer = catchAsyncErrors(async (req, res, next) => {
       });
       console.log(customer)
       fetchCustomerID = await UserModel.findOne({ 'email': user.email })
-      console.log("fetchCustomerID")
-      console.log(fetchCustomerID)
-      console.log("fetchCustomerID")
 
       const updatedUserInfo = await UserInformation.findOneAndUpdate(
         { user_id: fetchCustomerID._id },
@@ -184,27 +180,32 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
+  const paymentToken = req.body.paymentToken;
+  const customerID = req.body.customerID;
+  const Address = req.body.billingAddress;
+ const totalAddons_value = req.body.totalAddons_value;
+ const selectedCard = req.body.selectedCard;
+ const newUser = req.body.newUser;
+ const primary_card = req.body.primary_card;
+ const initialSetupCharge = req.body.initialSetupCharge;
+ const isCouponApplied = req.body.isCouponApplied;
+ const couponData = req.body.appliedCouponData;
+ const addonsData = req.body.addonsData;
+ const plandata = req.body.plandata;
+ let planCoupon = null;
+ let addonsCoupon = [];
+
+ let initialChargeInvoice ;
+ let productsInvoice ;
+ let onetimeAddonsInvoice ;
+ let invoiceItem = {}
+ let addonPrices = []
+ let coupon = {}
+ let myPayment = {}
  try {
   
-   const paymentToken = req.body.paymentToken;
-   const customerID = req.body.customerID;
-   const Address = req.body.billingAddress;
-  const totalAddons_value = req.body.totalAddons_value;
-  const selectedCard = req.body.selectedCard;
-  const newUser = req.body.newUser;
-  const primary_card = req.body.primary_card;
-  const initialSetupCharge = req.body.initialSetupCharge;
-  const isCouponApplied = req.body.couponApplied;
-  const couponData = req.body.couponData;
-  let invoiceItem = {}
-  let coupon = {}
-  let myPayment = {}
-  const typess = "yearly"
   
-  console.log("..........")
   console.log(primary_card)
-  console.log("..........")
-  const taxID = req.body.taxId;
 
   // console.log(req.body)
   const { type, planName } = req.body.plandata;
@@ -217,208 +218,368 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
       customer: customerID,
     });
   }
-  console.log(attachedPaymentMethod)
-  const price = await stripe.prices.create({
-        currency: 'usd', 
-        unit_amount: req.body.amount * 100, 
-        product: productID, 
-        tax_behavior: 'exclusive',
-        recurring : {
-        interval : type === "monthly" ? "month" : "year" ,
-        interval_count : 1
-  },
-});
- 
-  if (initialSetupCharge) {
-    invoiceItem = await stripe.invoiceItems.create({
-      customer: customerID,
-      amount: initialSetupCharge * 100,  // need to pass charge amount
-      currency: 'usd',
-      description: 'Initial setup fee',
-    });
-  }
 
-if (isCouponApplied) {
-  const couponOptions = {
-    duration: 'repeating',
-    duration_in_months: typess === 'monthly' ? couponData.xpayments : couponData.xpayments * 12,
-    applies_to: {
-      products: [productID],
-    },
+  let oneTimeAddons = []; 
+  let subscriptionBaseAddons = [] ;
+
+  if(addonsData){
+    addonsData.forEach(item => {
+  if(item.addonType === 'subscription'){
+      subscriptionBaseAddons.push(item)
+    }else{
+        oneTimeAddons.push(item)
+    }
+})
+}
+
+
+async function createInvoiceItems(items, customerID, itemType, taxcode) {
+  try {
+    const createdInvoiceItems = [];
+    for (const item of items) {
+      const invoiceItem = await stripe.invoiceItems.create({
+        customer: customerID,
+        unit_amount: item.price * 100,
+        quantity: itemType === 'product' ? item.quantity : 1,
+        currency: 'usd',
+        description: `Invoice Item for ${itemType} ${item.addonId}`,
+        tax_code: taxcode,
+      });
+      createdInvoiceItems.push(invoiceItem);
+    }
+    return createdInvoiceItems;
+  } catch (error) {
+    console.error(`Error creating ${itemType} invoice items:`, error);
+    throw error;
+  }
+}
+console.log("called 2")
+
+if (initialSetupCharge) {
+  console.log("called 2")
+  initialChargeInvoice = await stripe.invoiceItems.create({
+    customer: customerID,
+    amount: initialSetupCharge * 100,  // need to pass charge amount
     currency: 'usd',
-    metadata: {
-      customer_id: customerID,
+    description: 'Initial setup fee',
+  });
+}
+console.log("2")
+
+
+// create invoice item for ontetime purchase addons
+if(oneTimeAddons.length > 0){
+  const validAddons = oneTimeAddons.filter(addon => addon.price > 0)
+  onetimeAddonsInvoice = await createInvoiceItems(validAddons, customerID, 'addon')
+  if(!onetimeAddonsInvoice){
+    return // need to show error 
+  }
+  console.log("onetimeAddonsInvoice")
+  console.log(onetimeAddonsInvoice)
+  console.log("onetimeAddonsInvoice")
+}
+  
+console.log("4")
+
+// create price for plan
+planPrice = await stripe.prices.create({
+  currency: 'usd', 
+  unit_amount: plandata.price * plandata.usersCount * 100, 
+  product: productID, 
+  recurring : {
+  interval : plandata.type === 'monthly' ? "month" : "year",
+  interval_count : 1
+},
+});
+console.log("5")
+
+// create coupon for plan // if coupon applied
+if(isCouponApplied){
+
+  console.log("coupon applied")
+
+  const couponOptions = {
+  duration: 'repeating',
+  duration_in_months : couponData.xPaymentValue * (plandata.type === 'monthly' ? 1 : 12),
+  applies_to: {
+    products: [productID],
+  },
+  currency: 'usd',
+  metadata: {
+    customer_id: customerID,
+    id : plandata.planId,
+  },
+  percent_off : (couponData.perUserDiscountPrice * plandata.usersCount)
+};
+planCoupon = await stripe.coupons.create(couponOptions);
+
+console.log("planCoupon")
+console.log(planCoupon)
+console.log("planCoupon")
+
+// filter discountable addons
+const validAddons = subscriptionBaseAddons.filter(addon => addon.price > 0);
+if(validAddons.length > 0){
+  for(const addon of validAddons){
+    const couponOptions = {
+      duration: 'once',
+      currency: 'usd',
+      metadata: {
+        customer_id: customerID,
+        id: addon.addonId,
+      },
+      percent_off: addon.addonDiscountPrice
+    };
+
+    const addonCoupon = await stripe.coupons.create(couponOptions);
+    addonsCoupon.push(addonCoupon)
+  }
+}
+}
+console.log("addonsCoupon")
+console.log(addonsCoupon)
+console.log("addonsCoupon")
+
+let addonItems = []
+
+for (const addon of subscriptionBaseAddons) {
+  const priceOptions = {
+    currency: 'usd',
+    unit_amount: addon.price * 100,
+    product: Subscription_Addons, 
+    recurring: {
+      interval: plandata.type === 'monthly' ? "month" : "year",
+      interval_count: 1
     },
   };
   
-  if (couponData.discountType === '$') {
-    couponOptions.amount_off = couponData.couponprice * 100;
-  } else {
-    couponOptions.percent_off = couponData.couponprice;
-  }
-  
-  coupon = await stripe.coupons.create(couponOptions);
-}
 
-const phases = [
-  {
-    items: [{ price: price.id }],
-    collection_method: 'charge_automatically',
-    default_payment_method: selectedCard ? paymentToken : attachedPaymentMethod.id,
-    automatic_tax: {
-      enabled: true,
+  const createdPrice = await stripe.prices.create(priceOptions);
+  addonPrices.push(createdPrice);
+
+  const addonItem = {
+    price: createdPrice.id,
+    quantity: 1,
+    metadata: {
+      id: addon.addonId,
+      type: 'addon',
     },
-    billing_cycle_anchor: 'automatic',
-    description: 'Dummy Subscription Schedule',
-  },
-];
+  };
 
-if (isCouponApplied) {
-  phases[0].iterations = isCouponApplied ? couponData.xpayments : 3;
-  phases[0].coupon = coupon.id;
+  addonItems.push(addonItem);
 }
+console.log("6")
+console.log(subscriptionBaseAddons)
+console.log("6")
 
-if (isCouponApplied && !selectedCard) {
-  phases.push({
-    items: [{ price: price.id }],
-    collection_method: 'charge_automatically',
-    default_payment_method: attachedPaymentMethod.id,
-    automatic_tax: {
-      enabled: true,
-    },
-    billing_cycle_anchor: 'automatic',
-    description: 'Dummy Subscription Schedule',
-  });
-}
+// create coupon for plan if applied
 
-const subscriptionDetails = {
+console.log(addonItems)
+
+const myPaymentsubscription = await stripe.subscriptionSchedules.create({
   customer: customerID,
-  metadata: {
-    company: req.body.company_name,
-    primary_card: selectedCard ? primary_card : attachedPaymentMethod.id,
-  },
-  start_date: 'now',
-  phases,
-  end_behavior: 'release',
-};
-
-myPayment = await stripe.subscriptionSchedules.create(subscriptionDetails);
-
-if(newUser === true){
-  await stripe.customers.update(customerID, {
-    invoice_settings: {
-      // default_payment_method: paymentMethodID,
-      default_payment_method: paymentToken,
-    },
-  });
-}
-////
-console.log("Address")
-console.log(Address)
-console.log("Address")
-let paymentIntent;
-if(totalAddons_value > 0){
-  
-  const calculation = await stripe.tax.calculations.create({
-    currency: 'usd',
-    customer_details: {
-      address: {
-      line1: Address.Bstreet1,
-      line2: Address.Bstreet2,
-      postal_code: Address.BpostalCode,
-      state: Address.Bstate,
-      country: Address.Bcountry,
-    },
-    address_source: 'shipping',
-  },
-  line_items: [
+  start_date: 'now', 
+  end_behavior: 'release', 
+  phases: [
     {
-      amount: totalAddons_value * 100,
-      reference: 'addonref',
+      items: [
+        {
+          price: planPrice.id,
+          quantity: 1,
+          metadata: {
+            id: plandata.planID,
+            type: 'plan',
+          },
+        },
+        addonItems[0]
+      ],
+      default_payment_method : attachedPaymentMethod.id,
+      collection_method: 'charge_automatically',
+      billing_cycle_anchor: 'automatic',
+      description: 'Dummy combined Subscription Schedule',
+      ...(planCoupon && {coupon : planCoupon.id})
     },
   ],
 });
 
-
-if(selectedCard){
-  paymentIntent = await stripe.paymentIntents.create({
-  amount: calculation.amount_total,
-  currency: 'usd',
-  automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-  customer: customerID,
-  description: "Addon purchase",
-  payment_method: paymentToken,
-});
-}else{
-  paymentIntent = await stripe.paymentIntents.create({
-    amount:calculation.amount_total,
-    currency: 'usd',
-    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-    customer: customerID,
-    description: "Addon purchase",
-    payment_method: attachedPaymentMethod.id,
-  });
+if(!myPaymentsubscription){
+  throw new Error("subcription creation failed")
 }
-console.log("paymentIntent")
-console.log(paymentIntent)
-console.log("paymentIntent")
 
-if(!paymentIntent){
-throw new Error('addon purchase creation failed'); 
-}
-const transaction = await stripe.tax.transactions.createFromCalculation({
-calculation: calculation.id,
-reference: paymentIntent.id,
-});
 
-const paymentIntentUpdate = await stripe.paymentIntents.update(
-  paymentIntent.id,
-  {
-    metadata: {
-      tax_transaction: transaction.id,
+const subscription = await stripe.subscriptions.retrieve(
+  myPaymentsubscription.subscription
+  );
+
+const invoice = await stripe.invoices.retrieve(subscription.latest_invoice);
+
+if(isCouponApplied){
+  const separatedItems = subscription.items.data.reduce(
+    (accumulator, currentItem) => {
+      if (currentItem.metadata.type === "addon") {
+        accumulator.addon.push(currentItem);
+      }
+      return accumulator;
     },
-  }
-  );     
-  
-  if(!myPayment || !paymentIntent){
-    throw new Error('Subscription creation failed'); 
-  }
-}
-
-if(!myPayment){
-  throw new Error('Subscription creation failed'); 
-}
-console.log(myPayment)
-const subscription = await stripe.subscriptions.retrieve(myPayment.subscription);
-console.log("subscription")
-console.log(subscription)
-console.log("subscription")
-const invoice = await stripe.invoices.finalizeInvoice(subscription.latest_invoice);
-console.log("invoice")
-console.log(invoice)
-console.log("invoice")
-
-const latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice);
-console.log(latestInvoice)
-if(latestInvoice.payment_intent){
-  const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
-    latestInvoice.payment_intent
+    { addon: [] }
     );
+    console.log("separatedItems")
+    console.log("separatedItems")
     
-    
-    // Save payment ID and user details in your database after successful payment
-    return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : subscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, addonClient_secret : paymentIntent && paymentIntent.client_secret, addonstatus : paymentIntent && paymentIntent.status});
-    
-  }
+    function matchCouponsWithItems(coupons, separatedItems) {
+      const matchedCoupons = {
+        addon: []
+  };
+
+  separatedItems.addon.forEach(addonItem => {
+    console.log("coupon.metadata")
+    console.log(coupon)
+    console.log("coupon.metadata")
+
+    coupons.forEach(coupon => {
+      const metadataId = addonItem.metadata.id;
+      if (coupon.metadata.id === metadataId) {
+        matchedCoupons.addon.push({
+          id: metadataId,
+          itemID: addonItem.id,
+          couponID: coupon.id
+        });
+      }
+    });
+  });
+
+  separatedItems.addon.forEach(addonItem => {
+    coupons.forEach(coupon => {
+      const metadataId = addonItem.metadata.id;
+      if (coupon.metadata.id === metadataId) {
+        matchedCoupons.addon.push({
+          id: metadataId,
+          itemID: addonItem.id,
+          couponID: coupon.id
+        });
+      }
+    });
+  });
+  return matchedCoupons;
+}
+
+
+const matchedCouponsData = matchCouponsWithItems(addonsCoupon,separatedItems )
+
+
+function matchItemIDWithLineItems(matchedItems, lineItems) {
+  const matchedCodes = {
+    addon: []
+  };
   
-  return res.status(200).json({ success: true, client_secret: 'switch-plan', subscriptionID : myPayment.id, status : 'active', endDate : myPayment.current_period_end, addonClient_secret : paymentIntent && paymentIntent.client_secret, addonstatus : paymentIntent && paymentIntent.status });
+  matchedItems.addon.forEach(addonItem => {
+    lineItems.forEach(lineItem => {
+      if (lineItem.subscription_item === addonItem.itemID) {
+        matchedCodes.addon.push({
+          id: lineItem.id,
+          itemID: addonItem.itemID,
+          couponID: addonItem.couponID
+        });
+      }
+    });
+  });
+
+  matchedItems.addon.forEach(addonItem => {
+    lineItems.forEach(lineItem => {
+      if (lineItem.subscription_item === addonItem.itemID) {
+        matchedCodes.addon.push({
+          id: lineItem.id,
+          itemID: addonItem.itemID,
+          couponID: addonItem.couponID
+        });
+      }
+    });
+  });
+
+  return matchedCodes;
+}
+
+const matchedCodes = matchItemIDWithLineItems(matchedCouponsData, invoice.lines.data);
+
+
+// Function to apply discounts to respective invoice items
+async function applyDiscounts(matchedCodes) {
+  for (const key in matchedCodes) {
+    for (const item of matchedCodes[key]) {
+      try {
+        const applyDiscount = await stripe.invoiceItems.update(item.id, {
+          discounts: [
+            {
+              coupon: item.couponID,
+            },
+          ],
+        });
+        console.log(`Discount applied for item ${item.id}`);
+        // You can add additional handling or logging here
+      } catch (error) {
+        console.error(`Error applying discount for item ${item.id}:`, error);
+        // Handle errors if necessary
+      }
+    }
+  }
+}
+
+applyDiscounts(matchedCodes);
+}else{
+  // res.send(myPaymentsubscription)
+}
+
+const finalizeInvoice = await stripe.invoices.finalizeInvoice(subscription.latest_invoice);
+
+console.log(invoice)
+if(finalizeInvoice.payment_intent){
+  const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
+    finalizeInvoice.payment_intent
+  );
+    // Save payment ID and user details in your database after successful payment
+    return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : subscription.id,  subscriptionScheduleID : myPaymentsubscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscriptionDetails : subscription.items.data});
+  }
+  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, status :subscription.status, endDate : subscription.current_period_end, subscription : subscription });
+
+
 } catch (error) {
   console.error(error);
    // handle subscription failure
    try {
+
+    // function to delete invoice items
+    async function deleteInvoiceItems(items) {
+      try {
+        const deletedItems = [];
+        for (const item of items) {
+          await stripe.invoiceItems.del(item.id);
+        }
+        return deletedItems;
+      } catch (error) {
+        console.error('Error deleting invoice items:', error);
+        throw error;
+      }
+    }
+    async function deactivatePrices(priceIDs) {
+      try {
+        for (const priceID of priceIDs) {
+          const price = await stripe.prices.update(priceID, {
+            active: false
+          });
+        }
+      } catch (error) {
+        console.error('Error deactivating prices:', error);
+        throw error;
+      }
+    }
+
     const deleteCustomer = customerID && await stripe.customers.del(customerID);
     const deletedInvoiceItem =
-      invoiceItem && invoiceItem.id && (await stripe.invoiceItems.del(invoiceItem.id));
+    initialChargeInvoice && initialChargeInvoice.id && (await stripe.invoiceItems.del(invoiceItem.id));
+    await deleteInvoiceItems(productsInvoice)
+    await deleteInvoiceItems(onetimeAddonsInvoice)
+    await deactivatePrices([planPrice])
+    await deactivatePrices(addonPrices)
     const detachPT =
       attachedPaymentMethod &&
       attachedPaymentMethod.id &&
@@ -431,18 +592,20 @@ if(latestInvoice.payment_intent){
     );
 
     console.error(
-      'Cleanup perform  ed after failure:',
+      'Cleanup performed after failure:',
       deleteCustomer,
       deletedInvoiceItem,
       detachPT,
       deletePrice
     );
   } catch (cleanupError) {
+    res.status(500).json({ success: false, error: cleanupError.message });
     console.error('Error during cleanup:', cleanupError);
   }
   res.status(500).json({ success: false, error: error.message });
 } 
-});
+}
+);
 
 exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
   const { subscription_id, userId, type } = req.body.userData
@@ -588,34 +751,9 @@ exports.cancelPlandeactivateaccount = catchAsyncErrors(async (req, res, next) =>
 
 
 exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
-  // const subscription = await stripe.subscriptions.retrieve("sub_1NxkyOHsjFNmmZSijLOO4bk1");
-  // const price = await stripe.prices.create({
-  //       currency: 'usd',
-  //       unit_amount: 1200 * 100,
-  //       product: "prod_OkshJOVc9kLQNr",
-  //       recurring: {
-  //         interval: "year",
-  //         interval_count: 1
-  //       },
-  //     });
-
-  // const items = [{
-  //   id: subscription.items.data[0].id,
-  //   price: price.id, 
-  // }];
-  // const invoice = await stripe.invoices.retrieveUpcoming({
-  //   subscription: 'sub_1Ny8rmHsjFNmmZSiEt08fWBz',
-  //   subscription_items: items,
-  //   subscription_proration_date: proration_date,
-  // });
-  // const invoice22 = await stripe.invoices.retrieve(
-  //   invoice.lines.data[0].proration_details.credited_items.invoice
-  // );
-  // res.status(200).json({ success: true, message: invoice22});
-
   try {
     const proration_date = Math.floor(Date.now() / 1000);
-    const { paymentToken, customerID, subscriptionId, plandata, selectedCard, existingcard } = req.body;
+    const { paymentToken, customerID, subscriptionId,subscriptionScheduleID, sub_shed_itemId, plandata, selectedCard, existingcard } = req.body;
     const { type, planName } = plandata;
 
     const productID = type === 'monthly'
@@ -641,68 +779,97 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     console.log(price)
 
     console.log("called0")
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    // const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     console.log("called1")
-
+    const subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
+      subscriptionScheduleID
+    );
+    console.log("subscriptionSchedule")
+    console.log(subscriptionSchedule.phases[0].items)
+    console.log(subscriptionSchedule.phases)
+    console.log("subscriptionSchedule")
+    const currentDate = Math.floor(Date.now() / 1000).toString();
+    console.log(currentDate)
+   
     // Add the new item to the subscription
     let myPayment;
     if (selectedCard) {
-      myPayment = await stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: subscription.items.data[0].id,
-          price: price.id
-        }],
-        default_payment_method: paymentToken,
-        proration_date: proration_date,
-        cancel_at_period_end: false
+      myPayment = await stripe.subscriptionSchedules.update(subscriptionScheduleID, {
+        end_behavior: "release",
+        phases : [
+          {
+            items: [
+              {
+              price: price.id
+            }
+          ],
+          start_date : subscriptionSchedule.phases[0].start_date,
+          end_date : parseInt(currentDate) + 1000,
+        },
+          {
+          items: [{
+            price: price.id
+          }],
+          start_date : parseInt(currentDate) + 1000 ,
+        },
+      ],
+        proration_behavior : "create_prorations",
       });
     } else if (existingcard) {
-      myPayment = await stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: subscription.items.data[0].id,
-          price: price.id
-        }],
-        default_payment_method: paymentToken,
-        proration_date: proration_date,
-        cancel_at_period_end: false
+      myPayment = await stripe.subscriptionSchedules.update(subscriptionScheduleID, {
+        end_behavior: "release",
+        phases : [
+          {
+            items: [
+              {
+              price: price.id
+            }
+          ],
+          start_date : subscriptionSchedule.phases[0].start_date,
+          end_date : parseInt(currentDate) + 1000,
+        },
+          {
+          items: [{
+            price: price.id
+          }],
+          start_date : parseInt(currentDate) + 1000,
+        },
+      ],
+        proration_behavior : "create_prorations",
       });
     }
     else {
-      myPayment = await stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: subscription.items.data[0].id,
-          price: price.id
-        }],
-        default_payment_method: attachedPaymentMethod.id,
-        proration_date: proration_date,
-        cancel_at_period_end: false
+      myPayment = await stripe.subscriptionSchedules.update(subscriptionScheduleID, {
+        end_behavior: "release",
+        phases : [
+          {
+            items: [
+              {
+              price: price.id
+            }
+          ],
+          start_date : subscriptionSchedule.phases[0].start_date,
+          end_date : parseInt(currentDate) + 1000,
+        },
+          {
+          items: [{
+            price: price.id
+          }],
+          start_date : parseInt(currentDate) + 1000,
+        },
+      ],
+        proration_behavior : "create_prorations",
       });
 
 
       console.log("myPayment");
       console.log(myPayment);
       console.log("myPayment");
-      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-      // const paymentIntent = await stripe.paymentIntents.retrieve(
-      //   latestInvoice.payment_intent
-      // );
-
-
-
-
-      // // Remove the existing item from the subscription
-      // console.log(myPayment);
-      // const latestInvoice = await stripe.invoices.retrieve(myPayment.latest_invoice);
-      // const paymentIntent = await stripe.paymentIntents.retrieve(
-      //   latestInvoice.payment_intent
-      // );
-
-      // Save payment ID and user details in your database after successful payment
     }
     console.log("myPayment");
     console.log(myPayment);
     console.log("myPayment");
-    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.current_period_end });
+    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.phases[1].end_date});
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
@@ -710,8 +877,8 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-const TAX_CODE = 'txcd_99999999';
 exports.createTax = catchAsyncErrors(async (req, res, next) => {
+  const TAX_CODE = 'txcd_99999999';
   const { shippingAddress } = req.body;
 
   console.log(shippingAddress);
@@ -2363,19 +2530,21 @@ console.log(currentSubscription)
 });
 
 exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
-  try {
   const { addOns, amount, billingAddress, customerID, name, paymentToken, plandata, smartAccessories, userID} = req.body
     let initialChargeInvoice ;
     let productsInvoice ;
     let onetimeAddonsInvoice ;
     let subscriptionPriceIds ;
+    let addonPrices = []
+    let planPrice = []
     let isCouponApplied = false;
-
-
     let attachedPaymentMethod;
       attachedPaymentMethod = await stripe.paymentMethods.attach(paymentToken, {
       customer: customerID,
     });
+  try {
+
+
 
     let oneTimeAddons = []; 
     let subscriptionBaseAddons = [] ;
@@ -2387,12 +2556,10 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
             oneTimeAddons.push(item)
         }
     })
-    
     console.log(subscriptionBaseAddons)
 }
 
 // function to create invoice items
-
 async function createInvoiceItems(items, customerID, itemType, taxcode) {
   try {
     const createdInvoiceItems = [];
@@ -2428,7 +2595,7 @@ if (plandata.InitialSetupFee) {
 if(smartAccessories.length > 0){
   productsInvoice = await createInvoiceItems(smartAccessories, customerID, "product", "txcd_99999999")
   if(!productsInvoice){
-    return 
+    return  // show error
   }
 }
 
@@ -2445,7 +2612,7 @@ if(oneTimeAddons.length > 0){
 
 // create subscription schedule for plan
 //create price for plan
-const planPrice = await stripe.prices.create({
+ planPrice = await stripe.prices.create({
   currency: 'usd', 
   unit_amount: plandata.recurring_amount * 100, 
   product: "prod_OksgjkrpVgwSUG", 
@@ -2465,14 +2632,13 @@ const planPrice = await stripe.prices.create({
 //   interval_count : 1
 // },
 // });
-let addonPrices = []
 let addonItems = []
 
 for (const addon of subscriptionBaseAddons) {
   const priceOptions = {
     currency: 'usd',
     unit_amount: addon.price * 100,
-    product: 'prod_PDRmQDn9Pft8Ex', // Replace with your actual product ID
+    product: 'prod_PDRmQDn9Pft8Ex',
     recurring: {
       interval: 'month',
       interval_count: 1
@@ -2546,19 +2712,10 @@ const myPaymentsubscription = await stripe.subscriptionSchedules.create({
           },
         },
         addonItems[0]
-        // {
-        //   price: addonPrice.id,
-        //   quantity: 1,
-        //   metadata: {
-        //     id: subscriptionBaseAddons[0].addonId,
-        //     type: 'addon',
-        //   },
-        // },
-
       ],
       collection_method: 'charge_automatically',
       billing_cycle_anchor: 'automatic',
-      description: 'Dummy Subscription Schedule22222222222',
+      description: 'Dummy combined Subscription Schedule',
       // coupon : coupon.id
     },
   ],
@@ -2566,12 +2723,20 @@ const myPaymentsubscription = await stripe.subscriptionSchedules.create({
   end_behavior: 'release',
 });
 
+if(!myPaymentsubscription){
+  throw new Error("subcription creation failed")
+}
+
+
 const subscription = await stripe.subscriptions.retrieve(
   myPaymentsubscription.subscription
   );
   // console.log("myPaymentsubscription")
   // console.log(subscription.items)
   // console.log("myPaymentsubscription")
+  const invoice = await stripe.invoices.retrieve(subscription.latest_invoice);
+
+
 if(isCouponApplied){
 
   const separatedItems = subscription.items.data.reduce(
@@ -2624,26 +2789,6 @@ if(isCouponApplied){
 }
 
 const matchedCouponsData = matchCouponsWithItems([coupon2],separatedItems )
-
-const invoice = await stripe.invoices.retrieve(subscription.latest_invoice);
-// const applyDiscount = await stripe.invoiceItems.update(
-  //   myPaymentsubscription.latest_invoice,
-  //   {
-//     discounts : [
-//       {
-//         coupon: coupon.id
-//       },
-//       {
-  //         coupon: "36lHeWe6"
-  //       },
-  
-//     ],
-//   }
-// )
-
-// console.log("invoice---------------------------------")
-// console.log(invoice.lines)
-// console.log("invoice")
 
 
 function matchItemIDWithLineItems(matchedItems, lineItems) {
@@ -2708,64 +2853,84 @@ applyDiscounts(matchedCodes);
   res.send(myPaymentsubscription)
 }
 
-} catch (error) {
-  console.log(error)
+const finalizeInvoice = await stripe.invoices.finalizeInvoice(subscription.latest_invoice);
+
+console.log(invoice)
+if(invoice.payment_intent){
+  const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
+    invoice.payment_intent
+  );
+    // Save payment ID and user details in your database after successful payment
+    return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : subscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscription : subscription});
   }
-  
+  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscription : subscription });
+
+} catch (error) {
+  console.error(error);
+   // handle subscription failure
+   try {
+
+    // function to delete invoice items
+    async function deleteInvoiceItems(items) {
+      try {
+        const deletedItems = [];
+        for (const item of items) {
+          await stripe.invoiceItems.del(item.id);
+        }
+        return deletedItems;
+      } catch (error) {
+        console.error('Error deleting invoice items:', error);
+        throw error;
+      }
+    }
+    async function deactivatePrices(priceIDs) {
+      try {
+        for (const priceID of priceIDs) {
+          const price = await stripe.prices.update(priceID, {
+            active: false
+          });
+        }
+      } catch (error) {
+        console.error('Error deactivating prices:', error);
+        throw error;
+      }
+    }
+
+    const deleteCustomer = customerID && await stripe.customers.del(customerID);
+    const deletedInvoiceItem =
+    initialChargeInvoice && initialChargeInvoice.id && (await stripe.invoiceItems.del(invoiceItem.id));
+    await deleteInvoiceItems(productsInvoice)
+    await deleteInvoiceItems(onetimeAddonsInvoice)
+    await deactivatePrices([planPrice])
+    await deactivatePrices(addonPrices)
+    const detachPT =
+      attachedPaymentMethod &&
+      attachedPaymentMethod.id &&
+      (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
+    const deletePrice = price && await stripe.prices.update(
+      price.id,
+      {
+        active : false
+      }
+    );
+
+    console.error(
+      'Cleanup performed after failure:',
+      deleteCustomer,
+      deletedInvoiceItem,
+      detachPT,
+      deletePrice
+    );
+  } catch (cleanupError) {
+    console.error('Error during cleanup:', cleanupError);
+  }
+  res.status(500).json({ success: false, error: error.message });
+} 
 })
 
-
-// function to create prices for plans 
-async function createInvoiceProductItems(products, customerID) {
-  try {
-    const createdInvoiceItems = [];
-
-    for (const product of products) {
-      const invoiceItem = await stripe.invoiceItems.create({
-        customer: customerID, // Replace with the customer ID
-        unit_amount: product.price * 100, // Convert price to cents
-        quantity: product.quantity, // Quantity of units for the invoice item
-        currency: 'usd', // Replace with your desired currency code
-        description: `Invoice Item for Product ${product.productId}`, // Description for tracking
-        tax_code : 'txcd_10000000'
-      });
-
-      createdInvoiceItems.push(invoiceItem);
-    }
-    return createdInvoiceItems;
-  } catch (error) {
-    console.error('Error creating invoice items:', error);
-    throw error;
-  }
-}
-
 // function to create prices for plans 
 
-async function createInvoiceAddonItems(addons, customerID) {
-  try {
-    const createdInvoiceItems = [];
 
-    for (const product of addons) {
-      const invoiceItem = await stripe.invoiceItems.create({
-        customer: customerID, 
-        unit_amount: product.price * 100, 
-        quantity: 1, 
-        currency: 'usd',
-        description: `Invoice Item for addon ${product.addonId}`, 
-        tax_code : 'txcd_10000000'
-      });
-
-      createdInvoiceItems.push(invoiceItem);
-    }
-
-    return createdInvoiceItems;
-
-
-  } catch (error) {
-    console.error('Error creating invoice items:', error);
-    throw error;
-  }
-}
 //----------------------------
 exports.createAdminAddonOrder = catchAsyncErrors(async (req, res, next) => {
   try {
