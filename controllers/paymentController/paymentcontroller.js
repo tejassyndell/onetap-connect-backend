@@ -1070,7 +1070,7 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
     const message = {
       from: "OneTapConnect:otcdevelopers@gmail.com",
       to: email,
-      subject: `Please confirm your email`,
+      subject: `Welcome to OneTapConnect! Your Subscription is Pending`,
       html: `
   <!DOCTYPE html>
   <html>
