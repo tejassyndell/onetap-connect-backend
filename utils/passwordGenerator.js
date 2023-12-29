@@ -1,26 +1,25 @@
-
 function generatePassword() {
-  const specialCharacters = '!@#$%^&*()_-+=<>?/[]{}|';
-  const lowercaseLetters = 'abcdefghijklmnopqrstuvwxyz';
-  const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const numbers = '0123456789';
+  const specialCharacters = "!@#$%^&*()_-+=<>?/[]{}|";
+  const lowercaseLetters = "abcdefghijklmnopqrstuvwxyz";
+  const uppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const numbers = "0123456789";
 
-  const allCharacters = specialCharacters + lowercaseLetters + uppercaseLetters + numbers;
+  const allCharacters =
+    specialCharacters + lowercaseLetters + uppercaseLetters + numbers;
 
-  let password = '';
+  let password = "";
 
   // Ensure at least one character from each category
   password += getRandomChar(specialCharacters);
   password += getRandomChar(lowercaseLetters);
   password += getRandomChar(uppercaseLetters);
-  password += getRandomChar(numbers)
-;
+  password += getRandomChar(numbers);
 
   // Generate the rest of the password
   const minLength = 8;
   const maxLength = 15;
   const remainingLength = getRandomInt(minLength - 4, maxLength - 4);
-  for (let i = 0; i < remainingLength  + 4; i++) {
+  for (let i = 0; i < remainingLength + 4; i++) {
     password += getRandomChar(allCharacters);
   }
 
@@ -40,15 +39,11 @@ function getRandomInt(min, max) {
 }
 
 function shuffleString(str) {
-  const array = str.split('');
+  const array = str.split("");
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
-  return array.join('');
+  return array.join("");
 }
-
-// Usage example:
-
-
-module.exports = generatePassword
+module.exports = generatePassword;

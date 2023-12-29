@@ -1,6 +1,6 @@
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const ErrorHandler = require("../../utils/errorHandler.js");
-const Industry = require('../../models/Admin/IndustriesModel.js')
+const Industry = require('../../models/NewSchemas/IndustriesModel.js')
 
 
 exports.createIndustries = catchAsyncErrors(async (req, res, next) => {

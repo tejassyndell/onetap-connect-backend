@@ -21,19 +21,6 @@ const userSchema = new mongoose.Schema(
       require: false,
       set: (v) => (v === "" ? null : v),
     },
-    // team: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   default: null,
-    //   validate: {
-    //     validator: function(value) {
-    //       if (value === null || value === "") {
-    //         return true; // Allow null or empty string
-    //       }
-    //       return typeof value === "string" && validator.isMongoId(value);
-    //     },
-    //     message: "Team must be a valid ObjectId, null, or an empty string",
-    //   },
-    // },
     first_login: {
       type: Boolean,
       default: true,
@@ -48,7 +35,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       set: function (email) {
         return email.toLowerCase();
-      }
+      },
     },
     businessemail: {
       type: String,
@@ -163,7 +150,7 @@ const userSchema = new mongoose.Schema(
       ref: "companies_information",
       default: null,
     },
-    card_temp: [{type: Object}],
+    card_temp: [{ type: Object }],
     otptoken: { type: String, default: null },
     personlize_company_name: { type: String, default: "" },
     personlize_primary_office_number: { type: Number, default: null },
@@ -171,7 +158,6 @@ const userSchema = new mongoose.Schema(
     personlize_Primary_activities: { type: String, default: null },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-
 
     dealOwner: {
       type: String,
@@ -191,31 +177,30 @@ const userSchema = new mongoose.Schema(
     },
     Account_status: {
       type: String,
-      default: 'is_Activated'
-    }
+      default: "is_Activated",
+    },
   },
-  
+
   { timestamps: true }
 );
-
 
 userSchema.pre("save", async function (next) {
   // Increment userID only if it's a new document
   if (this.isNew && this.userID) {
-    const highestOrder = await this.constructor.findOne({}, {}, { sort: { userID: -1 } });
+    const highestOrder = await this.constructor.findOne(
+      {},
+      {},
+      { sort: { userID: -1 } }
+    );
     this.userID = highestOrder ? highestOrder.userID + 1 : 1;
   }
   next();
 });
 
-
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    console.log("ADSFD")
     next();
   }
-  console.log(this);
-  console.log(this.password);
   this.password = await bcrypt.hash(this.password, 10);
 });
 
@@ -226,7 +211,6 @@ userSchema.methods.getJWTToken = function () {
 };
 
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  console.log(enteredPassword, this);
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

@@ -45,13 +45,10 @@ adminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
   }
-  console.log(this);
-  console.log(this.password);
   this.password = await bcrypt.hash(this.password, 10);
 });
 
 adminSchema.methods.comparePassword = async function (enteredPassword) {
-  console.log(enteredPassword, this.password);
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

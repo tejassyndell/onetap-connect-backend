@@ -25,8 +25,6 @@ const {
   manualRenewSubscription,
   cancelPlandeactivateaccount,
   createAdminPlanOrder,
-  createAdminAddonOrder,
-  createAdminSmartAccOrder,
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
@@ -57,6 +55,4 @@ router.post('/admin/create-order-without-Payment', createOrderWithoutPayment)
 router.post('/admin/create-order-and-send-invoice', createOrderWithoutPaymentAndSendInvoice)
 router.post('/admin/payment/switchToManualRenewal', switchToManualRenewalforOtcAdminPanel)
 router.post('/admin/payment/plan-purchase', createAdminPlanOrder) // route to purchase plan
-router.post('/admin/payment/addon-purchase', createAdminAddonOrder) // route to purchase addon
-router.post('/admin/payment/smart-accessories-purchase', createAdminSmartAccOrder) // route to smart accessories
 module.exports = router;

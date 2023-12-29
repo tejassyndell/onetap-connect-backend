@@ -1,11 +1,8 @@
 const ErrorHandler = require("../utils/errorHandler");
 
-
 const errorMiddleware = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.message = err.message || "Internal Server Error";
-
-  console.log(err)
 
   // Wrong Mongodb Id error
   if (err.name === "CastError") {
@@ -30,18 +27,16 @@ const errorMiddleware = (err, req, res, next) => {
     err = new ErrorHandler(message, 400);
   }
 
-  if(err.code === "ENOENT"){
-    const message = "Image not found"
+  if (err.code === "ENOENT") {
+    const message = "Image not found";
     err = new ErrorHandler(message, 404);
-
   }
 
-
-// Other error handlers
+  // Other error handlers
   res.status(err.statusCode).json({
     success: false,
     message: err.message,
   });
 };
 
-module.exports =  errorMiddleware
+module.exports = errorMiddleware;

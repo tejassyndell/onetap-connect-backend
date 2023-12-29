@@ -2,14 +2,13 @@ const mongoose = require("mongoose");
 
 const order_Schema = new mongoose.Schema(
   {
-
     orderNumber: {
       type: Number,
       default: 1,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'user',
+      ref: "user",
       default: null,
     },
     isGuest: {
@@ -28,33 +27,33 @@ const order_Schema = new mongoose.Schema(
     contact: { type: Number, default: null },
     status: {
       type: String,
-      default: "On Hold"
+      default: "On Hold",
     },
     fulfillment: {
       type: String,
-      default: "In Progress"
+      default: "In Progress",
     },
     referredby: String,
-    referredName:String,
+    referredName: String,
     userShippingOrderNote: String,
     addOnStatus: String,
     addOnsNote: String,
     addOnsActivityLog: String,
     shippingNotes: {
       type: String,
-      default: ""
+      default: "",
     },
     customPrintingNotes: {
       type: String,
-      default: ""
+      default: "",
     },
     orderNotes: {
       type: String,
-      default: ""
+      default: "",
     },
     activityLog: {
       type: String,
-      default: ""
+      default: "",
     },
     company: {
       type: mongoose.Schema.Types.ObjectId,
@@ -69,23 +68,21 @@ const order_Schema = new mongoose.Schema(
         subtotal: { type: Number },
         quantity: { type: Number },
         price: { type: Number }, // final price
-        status: { type: String, default: 'N/A' },
-
+        status: { type: String, default: "N/A" },
       },
     ],
     addaddons: [
       {
         addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
-        status: { type: String, default: 'N/A' },
-        assignTo: { type: String, default: '' },
+        status: { type: String, default: "N/A" },
+        assignTo: { type: String, default: "" },
         price: { type: Number, default: 0 },
-        addonDiscountPrice: { type: Number, default: 0 }
+        addonDiscountPrice: { type: Number, default: 0 },
       },
     ],
-    addusers:
-    {
+    addusers: {
       addusercount: { type: Number },
-      status: { type: String, default: 'N/A' },
+      status: { type: String, default: "N/A" },
       price: { type: Number },
       plan: { type: String },
       billing_cycle: { type: String },
@@ -97,20 +94,20 @@ const order_Schema = new mongoose.Schema(
       cardExpiryYear: { type: Number },
       CVV: { type: String },
       brand: { type: String },
-  },
+    },
     subscription_details: {
       planID: { type: mongoose.Schema.Types.ObjectId, ref: "otc_plans" },
       discountedPrice: { type: Number },
-      addOnsWithPlan: [],  // addon included in plan
+      addOnsWithPlan: [], // addon included in plan
       smartAccessoriesWithPlan: [], // products included in plan
       addones: [
         {
           addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
-          status: { type: String, default: 'N/A' },
-          assignTo: { type: String, default: '' },
+          status: { type: String, default: "N/A" },
+          assignTo: { type: String, default: "" },
           price: { type: Number, default: 0 },
-          addonDiscountPrice: { type: Number, default: 0 }
-        }
+          addonDiscountPrice: { type: Number, default: 0 },
+        },
       ],
       // addones: [{ type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"}],
       userCount: { type: Number },
@@ -128,7 +125,7 @@ const order_Schema = new mongoose.Schema(
       auto_renewal: { type: Boolean, default: true },
       taxRate: { type: String },
       InitialSetupFee: { type: Number, default: 0 },
-      perUserDiscountPrice: { type: Number, default: '' },
+      perUserDiscountPrice: { type: Number, default: "" },
       perUser_price: { type: Number, default: 0 },
     },
     subscriptionPlan: {
@@ -147,7 +144,7 @@ const order_Schema = new mongoose.Schema(
     isCouponUsed: { type: Boolean, default: false },
     coupons: {
       code: { type: String, default: null },
-      value: { type: Number, default: null }
+      value: { type: Number, default: null },
     },
     shippingAddress: [
       {
@@ -177,24 +174,29 @@ const order_Schema = new mongoose.Schema(
         postal_code: { type: String, default: null },
       },
     ],
-    shipping_method: [{
-      type: { type: String },
-      price: { type: Number }
-    }],
+    shipping_method: [
+      {
+        type: { type: String },
+        price: { type: Number },
+      },
+    ],
     tracking_number: { type: String },
     sumTotalWeights: { type: String },
     totalShipping: { type: String },
     discount: { type: Number }, //when admin creates order, special discount on order is given (subtract this amount from total)
   },
-  
+
   { timestamps: true }
 );
 
 //middleware to autoincrement value
 order_Schema.pre("save", async function (next) {
-  console.log("Middleware called");
   if (this.orderNumber) {
-    const highestOrder = await this.constructor.findOne({}, {}, { sort: { orderNumber: -1 } });
+    const highestOrder = await this.constructor.findOne(
+      {},
+      {},
+      { sort: { orderNumber: -1 } }
+    );
     this.orderNumber = highestOrder ? highestOrder.orderNumber + 1 : 1;
   }
   next();

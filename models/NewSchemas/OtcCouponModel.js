@@ -1,212 +1,214 @@
 const mongoose = require("mongoose");
 
-const CouponSchema = new mongoose.Schema({
+const CouponSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     customPermaLink: {
-        type: String,
-        // required: true,
+      type: String,
     },
     code: {
-        type: String,
-        unique: true,
-        required: true,
+      type: String,
+      unique: true,
+      required: true,
     },
     description: {
-        type: String,
+      type: String,
     },
     discountType: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     discountAmount: {
-        type: Number,
-        // required: true,
+      type: Number,
     },
-    planDiscount: [{
+    planDiscount: [
+      {
         plan_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'otc_plans',
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "otc_plans",
         },
         monthly: {
-            usageLimit: {
-                type: Number,
-                default: null,
-            },
-            // discountValue: {
-            //     type: Number,
-            //     default: null,
-            // },
-            discountedPrice: {
-                type: Number,
-                default: null,
-            },
+          usageLimit: {
+            type: Number,
+            default: null,
+          },
+          discountedPrice: {
+            type: Number,
+            default: null,
+          },
         },
         yearly: {
-            usageLimit: {
-                type: Number,
-                default: null,
-            },
-            // discountValue: {
-            //     type: Number,
-            //     default: null,
-            // },
-            discountedPrice: {
-                type: Number,
-                default: null,
-            },
-        },
-    }],
-    productDiscount: [{
-        product_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'product',
-        },
-        discountedPrice: {
+          usageLimit: {
             type: Number,
             default: null,
+          },
+          discountedPrice: {
+            type: Number,
+            default: null,
+          },
         },
-        variations: [{
+      },
+    ],
+    productDiscount: [
+      {
+        product_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "product",
+        },
+        discountedPrice: {
+          type: Number,
+          default: null,
+        },
+        variations: [
+          {
             variation_id: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'product',
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "product",
             },
             variationDiscountedPrice: {
-                type: Number,
-                default: null,
+              type: Number,
+              default: null,
             },
-        }],
-    },],
-    addonDiscount: [{
+          },
+        ],
+      },
+    ],
+    addonDiscount: [
+      {
         addon_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'otc_addons',
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "otc_addons",
         },
         type: {
-            type: String,
-            default: null,
+          type: String,
+          default: null,
         },
         discountedPrice: {
-            type: Number,
-            default: null,
+          type: Number,
+          default: null,
         },
 
         monthlyDiscountedPrice: {
-            type: Number,
-            default: null,
+          type: Number,
+          default: null,
         },
         yearlyDiscountedPrice: {
-            type: Number,
-            default: null,
+          type: Number,
+          default: null,
         },
-
-    },],
+      },
+    ],
     status: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     visibility: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     publishedBy: {
-        type: String,
-        // required: true,
+      type: String,
     },
     categories: [String],
     startDate: {
-        type: Date,
-        default: Date.now,
-        validate: {
-            validator: function (value) {
-                return value <= this.expiryDate;
-            },
-            message: "Start date must be before or equal to expiry date.",
+      type: Date,
+      default: Date.now,
+      validate: {
+        validator: function (value) {
+          return value <= this.expiryDate;
         },
+        message: "Start date must be before or equal to expiry date.",
+      },
     },
     expiryDate: {
-        type: Date,
-        validate: {
-            validator: function (value) {
-                return value >= this.startDate;
-            },
-            message: "Expiry date must be after or equal to start date.",
+      type: Date,
+      validate: {
+        validator: function (value) {
+          return value >= this.startDate;
         },
+        message: "Expiry date must be after or equal to start date.",
+      },
     },
     usageLimit: {
-        type: Number,
+      type: Number,
     },
     usageLimitPerUser: {
-        type: Number,
+      type: Number,
     },
     autoApply: {
-        type: Boolean,
+      type: Boolean,
     },
     restrictions: {
-        allowMultipleCoupons: {
-            type: Boolean,
-        },
-        forClients: {
-            type: Boolean,
-        },
+      allowMultipleCoupons: {
+        type: Boolean,
+      },
+      forClients: {
+        type: Boolean,
+      },
     },
-    plan_restrictions: [{
+    plan_restrictions: [
+      {
         plan_id: {
-            type: String,
-            required: true,
+          type: String,
+          required: true,
         },
         plan_name: {
-            type: String,
-            required: true,
+          type: String,
+          required: true,
         },
-    },],
+      },
+    ],
     teamPlanUsage: {
-        minUsers: {
-            type: Number,
-        },
-        maxUsers: {
-            type: Number,
-        },
-    }
-    ,
+      minUsers: {
+        type: Number,
+      },
+      maxUsers: {
+        type: Number,
+      },
+    },
     freeShipping: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     minimumOrderPrice: {
-        type: Number,
+      type: Number,
     },
-    freeShipCountries: [{
+    freeShipCountries: [
+      {
         countryName: {
-            type: String,
+          type: String,
         },
         countryCode: {
-            type: String,
+          type: String,
         },
-    },],
-}, { timestamps: true });
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
 CouponSchema.pre("validate", function (next) {
-    if (!this.freeShipping) {
-        this.minimumOrderPrice = undefined;
-        this.freeShipCountries = [];
-    }
-    next();
+  if (!this.freeShipping) {
+    this.minimumOrderPrice = undefined;
+    this.freeShipCountries = [];
+  }
+  next();
 });
-CouponSchema.pre('save', function (next) {
-    if (this.type === 'test') {
-        this.price = this.value;
-        this.monthly = undefined;
-        this.yearly = undefined;
-    } else if (this.type === 'test1') {
-        this.value = undefined;
-    }
-    next();
+CouponSchema.pre("save", function (next) {
+  if (this.type === "test") {
+    this.price = this.value;
+    this.monthly = undefined;
+    this.yearly = undefined;
+  } else if (this.type === "test1") {
+    this.value = undefined;
+  }
+  next();
 });
 
 const Coupons =
-    mongoose.models.otc_coupon || mongoose.model("otc_coupon", CouponSchema);
+  mongoose.models.otc_coupon || mongoose.model("otc_coupon", CouponSchema);
 
 module.exports = Coupons;

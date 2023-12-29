@@ -1,21 +1,27 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const UserCouponAssociationSchema = new mongoose.Schema({
+const UserCouponAssociationSchema = new mongoose.Schema(
+  {
     userId: {
-        type: mongoose.Schema.Types.ObjectId, 
-        required: true,
-        ref: 'user',
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "user",
     },
     couponCode: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     usageCount: {
-        type: Number,
-        default: 1,
+      type: Number,
+      default: 1,
     },
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
 
-const UserCouponAssociation = mongoose.model('UserCouponAssociation', UserCouponAssociationSchema);
+const UserCouponAssociation = mongoose.model(
+  "UserCouponAssociation",
+  UserCouponAssociationSchema
+);
 
 module.exports = UserCouponAssociation;

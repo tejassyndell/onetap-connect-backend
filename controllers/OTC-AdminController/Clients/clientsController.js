@@ -12,30 +12,24 @@ const Adminaddons = require("../../../models/NewSchemas/OtcAddOnsSchema.js");
 const Plan = require("../../../models/NewSchemas/OtcPlanSchemaModal.js");
 const Coupon = require("../../../models/NewSchemas/OtcCouponModel.js");
 const Category = require("../../../models/NewSchemas/OtcCategoryModel.js");
-const CompanyShareReferralModel = require("../../../models/Customers/Company_Share_Referral_DataModel.js");
+const CompanyShareReferralModel = require("../../../models/NewSchemas/Company_Share_Referral_DataModel.js");
 const RedirectLinksModal = require("../../../models/NewSchemas/RedirectLinksModal.js");
 const Order = require("../../../models/NewSchemas/orderSchemaModel.js");
 const billingAddress = require("../../../models/NewSchemas/user_billing_addressModel.js");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
 const crypto = require("crypto");
 const path = require("path");
 const usedCodes = new Set();
 const generatePassword = require("../../../utils/passwordGenerator.js");
 const parmalinkSlug = require("../../../models/NewSchemas/parmalink_slug.js");
-const InvitedTeamMemberModel = require("../../../models/Customers/InvitedTeamMemberModel.js");
-const { Types } = require("mongoose");
-const user_billing_addressModel = require("../../../models/NewSchemas/user_billing_addressModel.js");
-const user_shipping_addressesModel = require("../../../models/NewSchemas/user_shipping_addressesModel.js");
+const InvitedTeamMemberModel = require("../../../models/NewSchemas/InvitedTeamMemberModel.js");
 const Company_information = require("../../../models/NewSchemas/Company_informationModel.js");
 const Otc_Adminteams = require("../../../models/Otc_AdminModels/Otc_Adminteams.js");
-const json = require("body-parser/lib/types/json.js");
 const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
 const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
 const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
 function generateUniqueCode() {
-  let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const totalPossibleCodes = Math.pow(alphabetic.length, 6);
 
@@ -67,99 +61,83 @@ function generateCodeWithLength(length) {
   return code;
 }
 
-exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
-  res.send("test called");
-});
-
-
 exports.mockdata = catchAsyncErrors(async (req, res, next) => {
-  
   const { email } = req.params;
   const user = await User.findOne({ email });
-const role = user.role
+  const role = user.role;
   // Check if user and user.card_temp exist
-  if (user && user.card_temp[0] && user.card_temp[0].content && user.card_temp[0].content.length > 0) {
+  if (
+    user &&
+    user.card_temp[0] &&
+    user.card_temp[0].content &&
+    user.card_temp[0].content.length > 0
+  ) {
     // Assuming there is only one item in the content array
     const modifiedData = {
       "/": {
-        "content": user.card_temp[0].content,
-        "root": user.card_temp[0].root,
-        "zones": user.card_temp[0].zones
-      }
+        content: user.card_temp[0].content,
+        root: user.card_temp[0].root,
+        zones: user.card_temp[0].zones,
+      },
     };
-    res.send({modifiedData, role});
+    res.send({ modifiedData, role });
   } else {
     // Handle the case where user or user.card_temp is not present or does not have the expected structure
-    res.status(404).send({ error: "Data not found or has unexpected structure" });
+    res
+      .status(404)
+      .send({ error: "Data not found or has unexpected structure" });
   }
 });
-
 
 exports.updateCard = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ email: email }).exec();
-    const { cardData } = req.body;
-
-    console.log('NEW DATA:::::::::', req.body.cardData)
-    console.log('ALREADY EXISTS:::::::::', user.card_temp[0])
 
     // Combine NEW DATA and ALREADY EXISTS into an array
-    const combined = [
-      req.body.cardData,
-      ...user.card_temp
-    ];
-
-    console.log('COMBINED:::::::::', combined);
+    const combined = [req.body.cardData, ...user.card_temp];
 
     // Do something with the combined data, e.g., update the user
     user.card_temp = combined;
     await user.save();
 
     // Respond with the updated data or a success message
-    res.status(200).json({ message: 'Card data updated successfully', data: combined });
-
+    res
+      .status(200)
+      .json({ message: "Card data updated successfully", data: combined });
   } catch (error) {
-    console.error(error);
     res.status(500).send(error);
   }
 });
 
-
 exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.params;
-    const user = await User.findOne({ email: email }).populate('companyID').exec();
-    const companies = await  Company_informationModel.findOne({_id:user.companyID}).exec();
+    const user = await User.findOne({ email: email })
+      .populate("companyID")
+      .exec();
+    const companies = await Company_informationModel.findOne({
+      _id: user.companyID,
+    }).exec();
 
-    // res.send(companies);
-  
     // Combine NEW DATA and ALREADY EXISTS into an array
-    const combined = [
-      req.body.cardData,
-      ...companies.card_temp
-    ];
-
-    console.log('COMBINED:::::::::', combined);
+    const combined = [req.body.cardData, ...companies.card_temp];
 
     // Do something with the combined data, e.g., update the user
     companies.card_temp = combined;
     await companies.save();
 
-    // Respond with the updated data or a success message
-    res.status(200).json({ message: 'Card data updated successfully', data: combined });
-
+    res
+      .status(200)
+      .json({ message: "Card data updated successfully", data: combined });
   } catch (error) {
-    console.error(error);
     res.status(500).send(error);
   }
 });
 
-
-
 exports.getauser = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.params;
-  const user = await User.findOne({ email }).populate('companyID');
+  const user = await User.findOne({ email }).populate("companyID");
   res.send(user);
 });
 
@@ -182,7 +160,6 @@ exports.getClients = catchAsyncErrors(async (req, res, next) => {
   if (!Clients) {
     return next(new ErrorHandler("No Clients Found.....", 404));
   }
-
   res.status(200).json({
     Clients,
     userInformationWithPlan,
@@ -204,7 +181,6 @@ exports.Signup = catchAsyncErrors(async (req, res, next) => {
     user.save();
     res.status(201).json(user);
   } catch (error) {
-    console.error(error);
     res.status(500).send("Error creating admin");
   }
 });
@@ -218,7 +194,6 @@ exports.OtcLogin = catchAsyncErrors(async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "User not found." });
     }
-    console.log(user);
 
     const isPasswordMatched = await user.comparePassword(password);
     if (!isPasswordMatched) {
@@ -227,7 +202,6 @@ exports.OtcLogin = catchAsyncErrors(async (req, res, next) => {
 
     sendOtcToken(user, 200, res);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -246,11 +220,9 @@ exports.Otclogout = catchAsyncErrors(async (req, res, next) => {
 
 //get profile user
 exports.getOtcAdminProfile = catchAsyncErrors(async (req, res, next) => {
-  console.log(req);
   const { id } = req.adminuser;
 
   // checking if user has given password and email both
-
   const user = await AdminUsers.findById(id);
 
   if (!user) {
@@ -277,24 +249,8 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
         .populate({
           path: "user_id",
           model: "user",
-          // select: "first_name last_name",
         });
-      console.log(userInformationTeamData);
-      // // Create a map to track seen company IDs
-      // const seenCompanyIDs = new Map();
-      // const filteredUserInformationTeamData = [];
 
-      // for (const data of userInformationTeamData) {
-      //   const companyID = data.company_ID._id;
-
-      //   // If the company ID is not in the map, add it to the map and add the data to the filtered array
-      //   if (!seenCompanyIDs.has(companyID)) {
-      //     seenCompanyIDs.set(companyID, true);
-      //     filteredUserInformationTeamData.push(data);
-      //   }
-      // }
-      // const ReverseData = filteredUserInformationTeamData.reverse();
-      // console.log(filteredUserInformationTeamData);
       const filteredUserInformationTeamData = userInformationTeamData.reduce(
         (accumulator, current) => {
           // Check if company_ID is present and has _id property
@@ -318,7 +274,6 @@ exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
         userInformation: userInformationTeamData,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: "An error occurred" });
     }
   }
@@ -331,24 +286,18 @@ exports.getallusers = catchAsyncErrors(async (req, res, next) => {
         .populate({
           path: "company_ID",
           model: "companies_information",
-          // select: "industry company_name",
         })
         .populate({
           path: "user_id",
           model: "user",
-          // select: "first_name last_name",
         });
-      console.log(userInformationTeamData);
 
       const ReverseData = userInformationTeamData.reverse();
-      console.log(userInformationTeamData);
 
       res.status(200).json({
-        // userInformationTeamData
         userInformationTeamData: ReverseData,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: "An error occurred" });
     }
   }
@@ -361,14 +310,11 @@ exports.getUser = catchAsyncErrors(async (req, res, next) => {
         .populate({
           path: "company_ID",
           model: "companies_information",
-          // select: "industry company_name",
         })
         .populate({
           path: "user_id",
           model: "user",
-          // select: "first_name last_name",
         });
-      console.log(user);
 
       const company_id = user[0].company_ID._id;
 
@@ -377,20 +323,14 @@ exports.getUser = catchAsyncErrors(async (req, res, next) => {
       const userTeamData = await User.find({ _id: id }).populate({
         path: "team",
         model: "team",
-        // select: "first_name last_name",
       });
 
-      // const ReverseData = userInformationTeamData.reverse();
-      // console.log(userInformationTeamData);
-
       res.status(200).json({
-        // userInformationTeamData
         user,
         userTeamData,
         allteams,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: "An error occurred" });
     }
   }
@@ -435,7 +375,6 @@ exports.getallusersofcompany = catchAsyncErrors(async (req, res, next) => {
         allteams,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: "An error occurred" });
     }
   }
@@ -482,10 +421,8 @@ exports.getcompanyuserstatus = catchAsyncErrors(async (req, res, next) => {
         Newthismonth: newThisMonthCount,
       });
     }
-
     res.status(200).json({ companies: companyStatusCounts });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -522,7 +459,6 @@ exports.updateAddons = catchAsyncErrors(async (req, res, next) => {
       return res.status(201).json(savedAddon);
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -546,37 +482,7 @@ async function generateAddonUniqueCustomPermalink(basePermalink) {
     counter++;
   }
 }
-// exports.getordersclient = catchAsyncErrors(async (req, res, next) => {
-//   try {
-//     const userInformationData = await UserInformation.find();
 
-//     // Create a map to store unique company_ID values as keys
-//     const companyMap = new Map();
-
-//     // Iterate through the userInformationData and store unique company_ID documents in the map
-//     userInformationData.forEach(userInformation => {
-//       if (!companyMap.has(userInformation.company_ID)) {
-//         companyMap.set(userInformation.company_ID, userInformation);
-//       }
-//     });
-
-//     // Convert the map values (which are unique userInformation documents) to an array
-//     const uniqueUserInformation = Array.from(companyMap.values());
-
-//     // Populate companyInformation and user data
-//     for (const userInformation of uniqueUserInformation) {
-//       await userInformation.populate('company_ID');
-//       await userInformation.populate('user_id');
-//     }
-
-//     res.status(200).json({
-//       userInformationTeamData: uniqueUserInformation
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'An error occurred' });
-//   }
-// });
 exports.getAddons = catchAsyncErrors(async (req, res, next) => {
   const Addons = await Adminaddons.find();
 
@@ -595,7 +501,6 @@ exports.createPlan = catchAsyncErrors(async (req, res, next) => {
 
     const CustomPermalinkSlug = planFormData.CustomPermalink;
     let CustomPermalink = CustomPermalinkSlug;
-    // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
 
     const {
       InternalPlanName,
@@ -755,8 +660,6 @@ exports.createCategories = catchAsyncErrors(async (req, res, next) => {
     const { productcategoryImage, id } = req.body;
     const CustomPermalinkSlug = productcategoryImage.CustomPermalink;
     let CustomPermalink = CustomPermalinkSlug;
-    // let CustomPermalink = `https://onetapconnect.com/` + CustomPermalinkSlug;
-
     const {
       name,
       isActive,
@@ -877,9 +780,9 @@ exports.getCategories = catchAsyncErrors(async (req, res, next) => {
 exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
   try {
     const { id, couponData, name } = req.body;
-    console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee", couponData);
+
     let customPermaLink = couponData.customPermaLink;
-    console.log("hereeeeeeeeeeeeeeeeeeeeeeeeee", customPermaLink);
+
     if (id) {
       // If ID is provided, update the existing Coupon
       const existingCoupon = await Coupon.findByIdAndUpdate(id, couponData, {
@@ -903,7 +806,6 @@ exports.createCoupon = catchAsyncErrors(async (req, res, next) => {
       res.status(201).json({ success: true, coupons: savedCoupon });
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -941,7 +843,7 @@ exports.getCoupon = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-  console.log(id, req.body, "===============================================");
+
   {
     try {
       const Orderssofcompany = await Order.find({
@@ -956,7 +858,6 @@ exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
         Orderssofcompany,
       });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: "An error occurred" });
     }
   }
@@ -965,7 +866,7 @@ exports.getOrderssofcompany = catchAsyncErrors(async (req, res, next) => {
 // update user team
 exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
   const { users, team } = req.body;
-  console.log(req.body);
+
   // Loop through the array of user IDs
   for (let i = 0; i < users.length; i++) {
     const user = await User.findById(users[i]);
@@ -973,10 +874,6 @@ exports.updateTeamofuser = catchAsyncErrors(async (req, res, next) => {
     if (!user) {
       return next(new ErrorHandler(`No user found with ID: ${users[i]}`, 404));
     }
-
-    // Update the user's team based on the corresponding team value
-    // user.team = teams[i].value;
-    //comment above line because this time we only select one team not multiple
     user.team = team;
     await user.save(); // Save the changes to the user
   }
@@ -1057,7 +954,6 @@ exports.updateClientCompanyInformation = catchAsyncErrors(
   async (req, res, next) => {
     const { id } = req.body;
     const { companyDetails } = req.body;
-    console.log(id, companyDetails);
 
     const company = await Company.findById(id);
 
@@ -1101,25 +997,9 @@ exports.otcUpdateUserDetails = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("User not found", 404));
     }
 
-    // if (user.companyID.toString() !== req.user.companyID.toString()) {
-    //   return next(
-    //     new ErrorHandler("You are not authorized to update this user", 401)
-    //   );
-    // }
-
     // Update the user details
     user.set(updatedUserDetails);
     await user.save();
-
-    // const userurlslug = user.userurlslug;
-    // await parmalinkSlug.updateOne(
-    //   { user_id: id },
-    //   { $push: { unique_slugs: { $each: [{ value: userurlslug }] } } },
-    // );
-    // await parmalinkSlug.updateOne(
-    //   { user_id: id },
-    //   { userurlslug: userurlslug }
-    // );
 
     res.status(200).json({
       success: true,
@@ -1136,8 +1016,6 @@ exports.otc_getcompanies_share_referral_data = catchAsyncErrors(
     const { id } = req.params;
     const user = await UserInformation.find({ user_id: id });
     const company_id = user[0].company_ID._id;
-    // const { companyID } = req.user;
-    // console.log(companyID);
     const companyShareReferData = await CompanyShareReferralModel.findOne({
       companyID: company_id,
     });
@@ -1180,7 +1058,6 @@ exports.updateRedirectLink = catchAsyncErrors(async (req, res, next) => {
       .status(201)
       .json({ message: "Redirect link created/updated successfully" });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -1197,17 +1074,15 @@ exports.GetSubscriptionDetailsForAdmin = async (req, res, next) => {
       orderNumber: 1,
     });
 
-    // Do something with the retrieved subscriptions
     res.status(200).json(subscriptions);
   } catch (error) {
-    console.error("Error fetching subscription details:", error);
     res.status(500).send("Internal Server Error");
   }
 };
 
 exports.getsubscriptiondetails = async (req, res, next) => {
   const { id } = req.body;
-  console.log(id, "idd");
+
   try {
     const subscriptions = await Order.findById(id);
     res.json(subscriptions);
@@ -1218,9 +1093,6 @@ exports.getsubscriptiondetails = async (req, res, next) => {
 
 exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
   const { memberData, companyID, manager_firstname, manager_email } = req.body;
-  // const { companyID } = req.user;
-  // console.log(manage_superadmin, "*****************************")
-
   // Check if CSVMemberData is an array and contains data
   if (!Array.isArray(memberData) || memberData.length === 0) {
     return next(new ErrorHandler("No user data provided", 400));
@@ -1332,11 +1204,7 @@ exports.AdmininviteTeamMember = catchAsyncErrors(async (req, res, next) => {
     };
 
     transporter.sendMail(message, (err, info) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(info.response);
-      }
+      // do something
     });
 
     await InvitedTeamMemberModel.create({
@@ -1360,7 +1228,6 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(
   async (req, res, next) => {
     const { CSVMemberData, id } = req.body;
     // const { companyID, id } = req.user;
-    console.log(CSVMemberData);
 
     // Check if CSVMemberData is an array and contains data
     if (!Array.isArray(CSVMemberData) || CSVMemberData.length === 0) {
@@ -1392,9 +1259,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(
             existingMails.push(item);
             item.emailAlreadyUsed = true;
           }
-        } catch (error) {
-          console.error("Error:", error);
-        }
+        } catch (error) {}
       }
 
       return { existingMails };
@@ -1464,12 +1329,8 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(
             
             ${company.company_name}
         </div>
-    
     </body>
-    
     </html>
-    
-    
   `,
           attachments: [
             {
@@ -1482,9 +1343,7 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(
 
         transporter.sendMail(message, (err, info) => {
           if (err) {
-            console.log(`Error sending email to ${email}: ${err}`);
           } else {
-            console.log(`Email sent to ${email}: ${info.response}`);
           }
         });
 
@@ -1519,7 +1378,6 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(
         });
 
         const userId = userRecord.id;
-        // console.log(userId,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         const userinfocreate = await UserInformation.create({
           user_id: userId,
           company_ID: id,
@@ -1538,19 +1396,12 @@ exports.AdmininviteTeamMemberByCSV = catchAsyncErrors(
         await user_parmalink.save();
         await userinfocreate.save();
 
-        // const userplan = planData.plan;
-        // console.log(userplan, "))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
         let slug = null;
-        // let companyslug = null;
         const username = firstName;
         const userlastname = lastName;
-        // const companyName = company_name;
-        // console.log(userlastname, username, "---------------------------------------------------")
-
         const first_Name = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
         const last_Name = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
         slug = `${first_Name}${last_Name}`;
-        // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
 
         if (slug !== null) {
           // Check for duplicates in user_parmalink collection before saving
@@ -1596,7 +1447,6 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
     });
 
     const company = await Company.findById(id);
-    // const userInfo = await User.findById(id);
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
@@ -1617,11 +1467,7 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
       user_state_permission,
       user_postal_code_permission,
     } = formData;
-    // console.log(formData);
 
-    // if (!email || !firstname || !lastname || !contact || !designation || !website_url || !team || !address) {
-    //   return next(new ErrorHandler("Please fill out all user details", 400));
-    // }
     if (!email || !firstname || !lastname) {
       return next(new ErrorHandler("Please fill out all user details", 400));
     }
@@ -1670,10 +1516,7 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
     
     </body>
     
-    </html>
-    
-    
-  `,
+    </html>`,
       attachments: [
         {
           filename: "Logo.png",
@@ -1684,17 +1527,13 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
     };
 
     transporter.sendMail(message, (err, info) => {
-      if (err) {
-        console.log(`Error sending email to ${email}: ${err}`);
-      } else {
-        console.log(`Email sent to ${email}: ${info.response}`);
-      }
+      // do something
     });
 
     const generatedCode = generateUniqueCode();
 
     const userData = await User.create({
-      email: email, // This line is removed to prevent email storage
+      email: email,
       first_name: firstname,
       last_name: lastname,
       contact: contact,
@@ -1720,16 +1559,13 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
       role: "teammember",
       status: "inactive",
     });
-    // console.log("called")
     const userInformationData = {
       user_id: userData._id,
       website_url: website_url,
       company_ID: userData.companyID,
-      // Add other fields from formData if needed
     };
     await UserInformation.create(userInformationData);
 
-    // console.log(userData._id)
     const user_parmalink = await parmalinkSlug.create({
       user_id: userData._id,
       companyID: userData.companyID,
@@ -1738,16 +1574,12 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
     });
     await user_parmalink.save();
 
-    // const userplan = planData.plan;
-    // console.log(userplan,"))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))")
     let slug = null;
     const username = firstname;
     const userlastname = lastname;
-    // console.log(userlastname, username, "---------------------------------------------------")
     const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
     slug = `${firstName}${lastName}`;
-    // console.log(slug, "((((((((((((((((((((((((((((((((((((((((((((((((((((((((")
 
     if (slug !== null) {
       // Check for duplicates in user_parmalink collection before saving
@@ -1764,8 +1596,6 @@ exports.inviteTeamMembermanuallybyadmin = catchAsyncErrors(
         await User.updateOne({ _id: userData._id }, { userurlslug: slug });
       }
     }
-    // User.userurlslug = generatedCode;
-    // await User.save();
 
     res.status(201).json({
       success: true,
@@ -1779,11 +1609,9 @@ exports.resendemailinvitationbyadmin = catchAsyncErrors(
   async (req, res, next) => {
     const { userid, manager_email, manager_firstname, companyID } = req.body;
 
-    console.log(userid);
     for (const id of userid) {
       const user = await InvitedTeamMemberModel.findById(id);
       if (!user) {
-        console.log(`User with ID ${id} not found`);
         continue; // Continue to the next iteration if user is not found
       }
 
@@ -1805,8 +1633,6 @@ exports.resendemailinvitationbyadmin = catchAsyncErrors(
       // Calculate the expiry date by adding 5 days
       const expiryDate = new Date(currentDate);
       expiryDate.setDate(currentDate.getDate() + 5);
-      // console.log(expiryDate, "===============================================================================")
-      // Update the user object with the new fields
       user.invitationToken = invitationToken;
       user.invitationExpiry = expiryDate;
       user.status = "pending";
@@ -1868,14 +1694,8 @@ exports.resendemailinvitationbyadmin = catchAsyncErrors(
       };
 
       transporter.sendMail(message, (err, info) => {
-        if (err) {
-          console.log(err);
-        } else {
-          console.log(info.response);
-        }
+        // do something
       });
-
-      console.log(user);
     }
 
     res.status(200).json({ message: "Email Sent" });
@@ -1883,15 +1703,12 @@ exports.resendemailinvitationbyadmin = catchAsyncErrors(
 );
 exports.getinvitedUsersbyadmin = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-  console.log(id, "====================", req.body);
+
   try {
     // Fetch invited users based on companyID
     const invitedusers = await InvitedTeamMemberModel.find({
       companyId: id,
     });
-
-    // console.log(invitedusers, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-
     if (invitedusers.length === 0) {
       return next(new ErrorHandler("No invited users found", 404));
     }
@@ -1944,13 +1761,10 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
           .replace(/\s+/g, " ")
           .toLowerCase();
         return trimmedExistingName === trimedString;
-        return
+        return;
       });
 
       if (companyExists) {
-        console.log(
-          "Company already exists xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        );
         return next(new ErrorHandler("Company Already Exists.", 400));
       }
     }
@@ -2026,12 +1840,11 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
     });
     await user_parmalink.save();
 
-
     const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
     const date = new Date();
-    console.log(date);
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -2048,7 +1861,7 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
+      from: "`OneTapConnect:${process.env.NODMAILER_EMAIL}`",
       to: email,
       subject: `Please confirm your email`,
       html: `
@@ -2099,19 +1912,19 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
 
     transporter.sendMail(message, (err, info) => {
       if (err) {
-        console.log("error", err);
         return next(
-          new ErrorHandler("The email was not sent. Please try again later.", 500)
+          new ErrorHandler(
+            "The email was not sent. Please try again later.",
+            500
+          )
         );
       } else {
-        console.log(info);
         res.status(200).json({
           success: true,
           message: "Email sent successfully.",
         });
       }
     });
-
 
     res.status(200).json({
       success: true,
@@ -2133,7 +1946,9 @@ exports.createPassword = catchAsyncErrors(async (req, res, next) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
     // Set the password for the found user
     user.password = password;
@@ -2141,13 +1956,13 @@ exports.createPassword = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password created successfully',
-      user
+      message: "Password created successfully",
+      user,
     });
   } catch (error) {
     return next(error);
   }
-})
+});
 exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
   try {
     // Find all companies
@@ -2180,7 +1995,6 @@ exports.getActiveUsersOfCompany = catchAsyncErrors(async (req, res, next) => {
 
     res.json(result);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -2195,45 +2009,9 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({ success: true, allOrders: orders });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
-// exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
-//   const { orderIds, orderData } = req.body;
-//   try {
-//     // Loop through the array of order IDs
-//     for (let i = 0; i < orderIds.length; i++) {
-//       const orderId = orderIds[i];
-//       const updatedData = orderData[i];
-
-//       const order = await Order.findById(orderId);
-
-//       console.log(order);
-
-//       if (!order) {
-//         return res.status(404).json({
-//           success: false,
-//           message: `No order found with ID: ${orderId}`,
-//         });
-//       }
-
-//       // Update the order based on the orderData
-//       // You might need to adjust this depending on your orderData structure
-//       Object.assign(order, updatedData);
-
-//       await order.save(); // Save the changes to the order
-//       console.log(order, "order updated data");
-//       res
-//         .status(200)
-//         .json({ success: true, message: "Orders updated successfully", order });
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// });
 
 exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds, orderData } = req.body;
@@ -2243,7 +2021,10 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
       const orderId = orderIds[i];
       const updatedData = orderData[i];
 
-      const result = await Order.updateOne({ _id: orderId }, { $set: updatedData });
+      const result = await Order.updateOne(
+        { _id: orderId },
+        { $set: updatedData }
+      );
 
       if (result.n === 0) {
         return res.status(404).json({
@@ -2252,18 +2033,18 @@ exports.updateOrders = catchAsyncErrors(async (req, res, next) => {
         });
       }
 
-      res.status(200).json({ success: true, message: "Orders updated successfully" });
+      res
+        .status(200)
+        .json({ success: true, message: "Orders updated successfully" });
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-
 exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
   const { orderIds } = req.body;
-  console.log('....................................', orderIds)
+
   try {
     const result = await Order.deleteMany({ _id: { $in: orderIds } });
     if (result.deletedCount > 0) {
@@ -2277,7 +2058,6 @@ exports.deleteOrders = catchAsyncErrors(async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -2306,8 +2086,6 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
     });
     const companydata = await Company.findOne({ _id: order.company });
 
-    // const userdata = { avatar: user?.avatar || '', first_name: user?.first_name || '-', last_name: user?.last_name || '-'}
-    // const companydata = { companyName : company.company_name }
     const orderWithUserData = {
       ...order.toObject(),
       userdata,
@@ -2317,7 +2095,6 @@ exports.getSingleOrder = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({ success: true, order: orderWithUserData });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -2364,12 +2141,6 @@ exports.checkcompanyurlslugavailiblityAdminside = catchAsyncErrors(
   async (req, res, next) => {
     const { companyurlslug } = req.body;
     const { companyID } = req.body;
-
-    //     console.log(companyurlslug);
-    // console.log(req.user.companyID);
-    console.log("check is hit");
-    console.log(companyurlslug);
-    console.log(companyID);
 
     // Assuming you have access to the current company's ID
     const currentCompanyId = companyID; // Modify this line based on how you store the current company's ID in your application
@@ -2436,7 +2207,6 @@ exports.UpdateCompanySlugFromAdmin = catchAsyncErrors(
 exports.UpdateCompanySettings = catchAsyncErrors(async (req, res, next) => {
   try {
     const { companyID, user_profile_edit_permission } = req.body;
-    console.log(companyID, user_profile_edit_permission, "body", req.body);
 
     // Validate if companyID is provided
     if (!companyID) {
@@ -2467,7 +2237,6 @@ exports.getsharereferalSettingsAdmin = catchAsyncErrors(
   async (req, res, next) => {
     try {
       const { companyID } = req.body;
-      console.log(companyID, "body");
 
       // Validate if companyID is provided
       if (!companyID) {
@@ -2498,7 +2267,6 @@ exports.getsharereferalSettingsAdmin = catchAsyncErrors(
 exports.UpdateLeadCaptureSettings = catchAsyncErrors(async (req, res, next) => {
   try {
     const { companyID, updateValues } = req.body;
-    console.log(updateValues, "bodydyy");
 
     // Validate if companyID and updateValues are provided
     if (!companyID || !updateValues) {
@@ -2531,10 +2299,8 @@ exports.UpdateLeadCaptureSettings = catchAsyncErrors(async (req, res, next) => {
 });
 exports.getTeamofCompany = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-  console.log(id, "sadadas");
 
   const team = await Team.find({ companyID: id });
-  // console.log(team ,"teamname")
   res.status(200).json({ message: "Users updated successfully", team });
 });
 
@@ -2637,16 +2403,8 @@ exports.renameteamofselectedcompany = catchAsyncErrors(
       team.team_name = newTeamName;
       await team.save();
 
-      // Update user's team name
-      // const usersToUpdate = await User.find({ team: teamId }); // Find users belonging to the old team
-      // for (const user of usersToUpdate) {
-      //   user.team = newTeamName;
-      //   await user.save();
-      // }
-
       res.status(200).json({ message: "Team renamed successfully", team });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ message: "Internal Server Error" });
     }
   }
@@ -2654,13 +2412,8 @@ exports.renameteamofselectedcompany = catchAsyncErrors(
 
 exports.createNewteamofselectedcompany = catchAsyncErrors(
   async (req, res, next) => {
-    console.log("team");
-    // console.log(req.user,"wdsafeg")
-    // const companyID = req.user.companyID;
-    // const userID = req.user._id;
     const { team_name, companyID } = req.body;
-    console.log(companyID);
-    console.log(team_name);
+
     const teamData = {
       team_name: team_name,
       companyID: companyID,
@@ -2668,27 +2421,10 @@ exports.createNewteamofselectedcompany = catchAsyncErrors(
 
     const team = await Team.create(teamData);
     const latestTeamId = team._id;
-    // console.log(userID);
-
-    console.log("Updated User Informationhg", team);
 
     if (!team) {
       return res.status(404).json({ message: "Team not created" });
     }
-
-    // const company = await Company.findOne(companyID).populate("primary_account"); // Replace with proper query
-    // const company = await team.findOne() // Replace with proper query
-
-    // if (!company) {
-    //   return res.status(404).json({ message: "Company not found" });
-    // }
-
-    // if (company.teams?.includes(team_name)) {
-    //   return res.status(400).json({ message: "This team already exists" });
-    // }
-
-    // company.team?.push(team_name);
-    // await company.save();
 
     res.status(201).json({ message: "Team created successfully", team });
   }
@@ -2697,7 +2433,7 @@ exports.createNewteamofselectedcompany = catchAsyncErrors(
 exports.getAllShippingAddressofcompany = catchAsyncErrors(
   async (req, res, next) => {
     const { id } = req.body;
-    console.log(id, req.body, "alalalal");
+
     try {
       const shippingAddresses = await shippingAddress.find({ userId: id });
 
@@ -2715,23 +2451,20 @@ exports.removeShippingAddressofcompany = catchAsyncErrors(
   async (req, res, next) => {
     const { id } = req.body;
     const { addressId } = req.params;
-    console.log(addressId, id, " address id");
 
     try {
       const userShippingAddress = await shippingAddress.findOne({ userId: id });
-      console.log(userShippingAddress, "userShippingAddress");
 
       if (!userShippingAddress) {
         return next(new ErrorHandler("User shipping address not found", 404));
       }
 
       const { shipping_address } = userShippingAddress;
-      console.log(shipping_address, "shipping address");
+
       // Find the index of the shipping address to remove
       const addressIndex = shipping_address.findIndex(
         (address) => address._id == addressId
       );
-      console.log(addressIndex, "address indexx");
 
       if (addressIndex === -1) {
         return next(new ErrorHandler("Shipping address not found", 404));
@@ -2768,8 +2501,6 @@ exports.createShippingAddressofcompany = catchAsyncErrors(
       postal_code,
       id,
     } = req.body;
-
-    console.log(req.body, "olaolaoala", id);
 
     const user = await User.findById(id);
 
@@ -2819,12 +2550,9 @@ exports.createShippingAddressofcompany = catchAsyncErrors(
 
 exports.editShippingAddressofcompany = catchAsyncErrors(
   async (req, res, next) => {
-    // console.log("edit called")
-    // alert("alert")
     const { editAddressId } = req.params;
-    console.log(editAddressId, "id"); // Get the address ID from the request URL
+    // Get the address ID from the request URL
     const { shippingAddressData, id } = req.body;
-    console.log(req.body, "yjos body");
 
     const completeShippingAddressData = {
       _id: editAddressId,
@@ -2833,29 +2561,23 @@ exports.editShippingAddressofcompany = catchAsyncErrors(
 
     try {
       const userShippingAddress = await shippingAddress.findOne({ userId: id });
-      // console.log(userShippingAddress, "userShippingAddress")
 
       if (!userShippingAddress) {
         return next(new ErrorHandler("User shipping address not found", 404));
       }
 
       const { shipping_address } = userShippingAddress;
-      // console.log(shipping_address, "shipping address")
 
       // Find the index of the shipping address to edit
       const addressIndex = shipping_address.findIndex(
         (address) => address._id == editAddressId
       );
-      console.log(addressIndex, "address index");
 
       if (addressIndex === -1) {
         return next(new ErrorHandler("Shipping address not found", 404));
       }
-
       // Update the shipping address data
       shipping_address[addressIndex] = completeShippingAddressData;
-
-      console.log(shipping_address, "Shipping");
 
       // Save the updated document
       await userShippingAddress.save();
@@ -2903,7 +2625,6 @@ exports.updateuserroleofcompanyusers = catchAsyncErrors(
         success: true,
       });
     } catch (error) {
-      console.error("Error updating user roles:", error);
       res.status(500).json({
         success: false,
         error: "Error updating user roles",
@@ -2931,7 +2652,6 @@ exports.updateuserplanonrolechangeofcompany = catchAsyncErrors(
         data: updatedUser,
       });
     } catch (error) {
-      console.error("Error updating subscription details:", error);
       res.status(500).json({
         success: false,
         error: "Error updating subscription details",
@@ -2962,7 +2682,7 @@ exports.fetchbillingaddressofcompany = catchAsyncErrors(
 
 exports.getallcompanynames = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.body;
-  console.log(id);
+
   const companies = await Company.find({ _id: { $ne: id } }, "company_name");
 
   if (!companies) {
@@ -2988,7 +2708,6 @@ exports.updateBillingAddressofcompany = catchAsyncErrors(
       first_name: firstName,
       last_name: lastName,
     };
-    console.log(superAdminUserid, userData);
 
     const BillingAddressData = {
       billing_address: billing_address,
@@ -3020,16 +2739,14 @@ exports.updateBillingAddressofcompany = catchAsyncErrors(
 );
 
 // For fetch all OTC_Adminusers
-
 exports.otcadminusers = catchAsyncErrors(async (req, res, next) => {
   try {
     // Retrieve all admin users from the database
     const allUsers = await AdminUsers.find({}, { password: 0 }).populate({
       path: "team",
       model: "Otc_Adminteams",
-      select: "team_name"
+      select: "team_name",
     });
-
 
     // Respond with the retrieved users
     res.status(200).json(allUsers);
@@ -3039,7 +2756,6 @@ exports.otcadminusers = catchAsyncErrors(async (req, res, next) => {
 });
 
 // For ADD new OTC_Adminusers
-
 exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
   try {
     const {
@@ -3136,23 +2852,16 @@ exports.addAdminUser = catchAsyncErrors(async (req, res, next) => {
     };
 
     transporter.sendMail(mailmsg, (error, info) => {
-      if (error) {
-        console.error("Error sending email:", error);
-        // Handle error, show a message, etc.
-      } else {
-        console.log("Email sent: " + info.response);
-      }
+      // do something here
     });
 
     res.status(200).json(newFormData);
   } catch (error) {
-    console.error("Error adding new user:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // For UPDATE OTC_Adminusers
-
 exports.updateAdminUser = catchAsyncErrors(async (req, res, next) => {
   try {
     const {
@@ -3187,14 +2896,13 @@ exports.updateAdminUser = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json(updatedUser);
   } catch (error) {
-    console.error("Error updating user data:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 exports.getcompanyorders = catchAsyncErrors(async (req, res, next) => {
   const { companyId } = req.body;
-  console.log(companyId, "compnay");
+
   try {
     // Find orders by user ID
     const orders = await Order.find({ company: companyId })
@@ -3206,10 +2914,9 @@ exports.getcompanyorders = catchAsyncErrors(async (req, res, next) => {
         path: "user",
         modal: "user",
       });
-    console.log(orders, "aaaaaaaaaaaa");
+
     res.status(200).json({ success: true, orders: orders });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -3228,7 +2935,6 @@ exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(
         res.status(404).json({ error: "Order not found" });
       }
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   }
@@ -3236,7 +2942,6 @@ exports.GetorderByCompanyIDandOrderNumber = catchAsyncErrors(
 
 exports.saveclientTags = catchAsyncErrors(async (req, res, next) => {
   const { TagData, compID, removedTag } = req.body;
-  console.log(TagData, compID, "zzzzzzzzzzzzzzz");
 
   try {
     // Find the document with the given compID
@@ -3255,13 +2960,11 @@ exports.saveclientTags = catchAsyncErrors(async (req, res, next) => {
 
     const clientTags = existingDoc.client_Tags;
     const clientTagValues = clientTags.map((tag) => tag.value);
-    console.log(clientTagValues);
 
     // Use filter to get values in TagData not present in clientTagValues
     const uniqueTagData = TagData.filter(
       (tag) => !clientTagValues.includes(tag)
     );
-    console.log(uniqueTagData, "Unique tags to add");
 
     // Convert uniqueTagData to an array of objects with the "value" field
     const tagValues = uniqueTagData.map((value) => ({ value }));
@@ -3277,8 +2980,6 @@ exports.saveclientTags = catchAsyncErrors(async (req, res, next) => {
       .status(200)
       .json({ success: true, message: "Array updated/created successfully" });
   } catch (error) {
-    // Handle errors
-    console.error("Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
@@ -3295,7 +2996,6 @@ exports.getclienttags = catchAsyncErrors(async (req, res, next) => {
 
     const clientTags = existingDoc.client_Tags;
     const clientTagValues = clientTags.map((tag) => tag.value);
-    console.log(clientTagValues);
 
     // Send a response, if needed
     res.status(200).json({
@@ -3304,18 +3004,11 @@ exports.getclienttags = catchAsyncErrors(async (req, res, next) => {
       message: "Array updated/created successfully",
     });
   } catch (error) {
-    // Handle errors
-    console.error("Error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
-  console.log("????????????????????????????????????????????????????????");
-  console.log(req.body);
   const { invoiceOrderData } = req.body;
-
-  console.log(invoiceOrderData, "invoice order data");
-  // const { planData } = req.body
   try {
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -3331,9 +3024,7 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
     const mailOptions = {
       from: "OneTapConnect:otcdevelopers@gmail.com", // Replace with your email
       to: invoiceOrderData.email,
-      // to: "tarun.syndell@gmail.com",
       subject: "Welcome to OneTapConnect! Your Subscription is Confirmed",
-      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
       html: `
       <!DOCTYPE html>
   <html>
@@ -3356,17 +3047,19 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
           <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
           <p>Subscription Details:</p>
           <ul>
-            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${invoiceOrderData.planType
-        }</li>
-            <li><b>Duration:</b>&nbsp;&nbsp;${invoiceOrderData.billing_cycle
-        }</li>
+            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${
+              invoiceOrderData.planType
+            }</li>
+            <li><b>Duration:</b>&nbsp;&nbsp;${
+              invoiceOrderData.billing_cycle
+            }</li>
             <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(
-          invoiceOrderData.renewal_date
-        ).toLocaleDateString()}</li>
-            <li><b>Amount:</b>&nbsp;&nbsp;$ ${invoiceOrderData.total_amount
-        }</li>
+              invoiceOrderData.renewal_date
+            ).toLocaleDateString()}</li>
+            <li><b>Amount:</b>&nbsp;&nbsp;$ ${
+              invoiceOrderData.total_amount
+            }</li>
           </ul>
-
           <!-- Invoice Table -->
           <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
             <thead>
@@ -3382,8 +3075,9 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
             <tbody>
                 <!-- Add your invoice items dynamically here -->
                 <tr>
-                    <td>${invoiceOrderData.planType}-${invoiceOrderData.billing_cycle
-        }</td>
+                    <td>${invoiceOrderData.planType}-${
+        invoiceOrderData.billing_cycle
+      }</td>
                     <!-- <td>Description of Your Item</td> -->
                     <!-- <td></td> -->
                     <td style="text-align: center;">&nbsp;&nbsp;1</td>
@@ -3421,16 +3115,13 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
                 <!-- Add more rows as needed -->
             </tbody>
         </table><br/>
-
           <p>Please keep this email for your records.</p>
           <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
         </div> 
           <h3>Technical issue?</h3>
           <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
       </div>
-  
   </body>
-  
   </html>
 `,
       attachments: [
@@ -3443,14 +3134,11 @@ exports.sendOrderInvoice = catchAsyncErrors(async (req, res, next) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("Order confirmation email sent successfully");
     res.status(200).json({
       invoiceOrderData,
       message: "Order confirmation email sent successfully ",
     });
-  } catch (error) {
-    console.error("Error sending order confirmation email:", error);
-  }
+  } catch (error) {}
 });
 
 exports.addreferer = catchAsyncErrors(async (req, res, next) => {
@@ -3458,7 +3146,6 @@ exports.addreferer = catchAsyncErrors(async (req, res, next) => {
   try {
     // Find the document by ID
     const company = await Company_information.findById(companyId);
-
     // If the document is found, update the referrer field
     if (company) {
       company.referer = referrer;
@@ -3474,7 +3161,6 @@ exports.addreferer = catchAsyncErrors(async (req, res, next) => {
         .json({ success: false, message: "Company not found" });
     }
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ success: false, message: "Internal Server Error" });
@@ -3494,19 +3180,16 @@ exports.getreferer = catchAsyncErrors(async (req, res, next) => {
       message: "Referer not found for the given company ID",
     });
   }
-
   res.status(200).json({ success: true, referer });
 });
 
 exports.createAdminTeam = catchAsyncErrors(async (req, res, next) => {
   const { team_name } = req.body;
-
   try {
     const newTeam = new Otc_Adminteams({ team_name });
     await newTeam.save();
     res.status(201).json({ message: "Admin Team added successfully" });
   } catch (error) {
-    console.error("Error adding team:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -3519,7 +3202,6 @@ exports.getAdminTeam = catchAsyncErrors(async (req, res, next) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 exports.deleteAdminTeam = catchAsyncErrors(async (req, res, next) => {
   const { teamId } = req.body;
@@ -3556,7 +3238,6 @@ exports.adminRenameTeam = catchAsyncErrors(async (req, res, next) => {
       res.status(200).json({ message: "Team updated successfully" });
     }
   } catch (error) {
-    console.error("Error updating team:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -3603,10 +3284,12 @@ exports.removeUserTeam = catchAsyncErrors(async (req, res, next) => {
 
 exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { count, prefix, year, productName, productId, variationId } = req.body;
+    const { count, prefix, year, productName, productId, variationId } =
+      req.body;
 
     // Helper function to generate a random 5-digit ID
-    const generateRandomId = () => Math.floor(10000 + Math.random() * 90000).toString();
+    const generateRandomId = () =>
+      Math.floor(10000 + Math.random() * 90000).toString();
 
     // Array to store generated strings
     const strings = [];
@@ -3614,12 +3297,14 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
     // Generate strings with 5-digit ID that doesn't already exist in SmartAccessoriesModal's uniqueId field
     for (let i = 0; i < count; i++) {
       let isUnique = false;
-      let generatedString = ''; // Declare inside the loop
+      let generatedString = ""; // Declare inside the loop
 
       // Keep generating until a unique string is found
       while (!isUnique) {
         generatedString = `${prefix}-${year}-${generateRandomId()}`;
-        const existingAccessory = await SmartAccessoriesModal.findOne({ uniqueId: generatedString });
+        const existingAccessory = await SmartAccessoriesModal.findOne({
+          uniqueId: generatedString,
+        });
 
         // Check if the generated string already exists
         if (!existingAccessory) {
@@ -3635,7 +3320,7 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
         productId,
         variationId,
         productName,
-        status: 'N/A',
+        status: "N/A",
       };
 
       // Save the new admin document to the database
@@ -3653,22 +3338,20 @@ exports.updatePrefixOfProduct = catchAsyncErrors(async (req, res, next) => {
   try {
     const { id, prefix } = req.body;
 
-    const item = await ProductModel.findById(id)
+    const item = await ProductModel.findById(id);
     item.prefix = prefix;
     await item.save();
     // Return the updated accessories details
     res.status(200).json({ item, success: true });
   } catch (error) {
     next(error);
-  }})
+  }
+});
 
 exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
-    const guestUsers = await GuestCustomer.find();
-    if (!guestUsers) {
-      return res
-        .status(404)
-        .json({ message: `guest users not found.` });
-    }
-  res.status(200).json({guestUsers , success: true });
-})
-
+  const guestUsers = await GuestCustomer.find();
+  if (!guestUsers) {
+    return res.status(404).json({ message: `guest users not found.` });
+  }
+  res.status(200).json({ guestUsers, success: true });
+});

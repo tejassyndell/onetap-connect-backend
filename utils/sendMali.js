@@ -3,7 +3,6 @@ const nodemailer = require("nodemailer");
 // Send verification email
 const sendMail = (email, data, invitationToken) => {
   // Create nodemailer transporter
-  console.log("usercradentionalnd",email, data,invitationToken);
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     port: 587,
@@ -12,10 +11,6 @@ const sendMail = (email, data, invitationToken) => {
       pass: process.env.NODEMAILER_PASS,
     },
   });
-  // Create email message
-
-  // onclick="handleClick('accept')
-  // onclick="handleClick('decline')"
 
   const message = {
     from: "otcdevelopers@gmail.com",
@@ -28,20 +23,13 @@ const sendMail = (email, data, invitationToken) => {
     <p>Please click the buttons below to accept or decline the invitation:</p>
     <p></p><a href="http://localhost:3000/invitation/${invitationToken}">Click me</a> to open invitation page</p>
     
-  `
-    
+  `,
   };
-
-  
 
   // Send email
   transporter.sendMail(message, (err, info) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(info);
-    }
+  // DO SOMETHING
   });
 };
 
-module.exports = sendMail
+module.exports = sendMail;

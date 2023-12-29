@@ -7,11 +7,13 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     status: { type: String },
-    image: [{
-      url: String,
-      alt: String,
-      name: String
-    }],
+    image: [
+      {
+        url: String,
+        alt: String,
+        name: String,
+      },
+    ],
     media: [{ type: String }],
     sku: {
       type: String,
@@ -41,7 +43,7 @@ const productSchema = new mongoose.Schema(
     weight: {
       type: Number,
     },
-    unit: { type: String, default: 'oz' },
+    unit: { type: String, default: "oz" },
     price: {
       type: Number,
       // required: true,
@@ -100,16 +102,17 @@ const productSchema = new mongoose.Schema(
     },
     variations: [
       {
-
         Type: {
           type: String,
           required: true,
         },
-        image: [{
-          url: String,
-          alt: String,
-          name: String
-        }],
+        image: [
+          {
+            url: String,
+            alt: String,
+            name: String,
+          },
+        ],
         stockStatus: {
           type: String,
           enum: ["In Stock", "Backorder", null], // You can customize the options
@@ -155,7 +158,7 @@ const productSchema = new mongoose.Schema(
         weight: {
           type: Number,
         },
-        unit: { type: String, default: 'oz' },
+        unit: { type: String, default: "oz" },
         CustomPermalink: {
           type: String,
         },
