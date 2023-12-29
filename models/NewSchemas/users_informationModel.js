@@ -108,12 +108,15 @@ const users_information = new mongoose.Schema(
             // },
             planID: { type: mongoose.Schema.Types.ObjectId , ref: "otc_plans"},
             subscription_id : {type : String , default : null},
+            subscription_schedules_id : {type : String , default : null},
+            sub_shed_itemId : {type : String , default : null},
             customer_id : {type : String , default : null},
             // addones: [{type: mongoose.Schema.Types.ObjectId}],
             addones: [
               { 
                addonId : { type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"},
                status: { type: String , default: 'N/A' },
+               itemId : {type : String , default : null},
                assignTo: { type: String , default: '' },
                price: {type: Number, default: 0}
              }
