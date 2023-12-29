@@ -123,7 +123,6 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
             </div>
         </div>
     </div>
-    <a href="https://www.OneTapConnect.com" style="text-align: center; font-size: 12px; color: #e65925; margin-top: 30px; text-decoration: none;margin-left: 40%;">OneTapConnect.com</a>
 </div>
 
 </body>
