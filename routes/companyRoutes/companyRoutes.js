@@ -106,6 +106,7 @@ const {
   updateSmartAccessoryStatus,
   removeUserFromSmartAccessories,
   getuniqueslug,
+  updateUserSlug,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -287,6 +288,7 @@ router.post('/updateSmartAccessoryStatus', updateSmartAccessoryStatus)
 router.post('/removeUserFromSmartAccessories', removeUserFromSmartAccessories)
 router.get('/getUserAssignSmartAccessoriesForCompany', getUserAssignSmartAccessoriesForCompany)
 router.post('/getuniqueslugs',getuniqueslug)
+router.post('/updateUserSlug',updateUserSlug)
 
 
 // router.post('/testapii' ,Testapidummy)
