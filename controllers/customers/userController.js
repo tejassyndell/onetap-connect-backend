@@ -6410,3 +6410,30 @@ exports.getuniqueslug = catchAsyncErrors(async (req, res, next) => {
   });
 })
 
+
+
+exports.updateUserSlug = catchAsyncErrors(async (req, res, next) => {
+  const { userurlslug , userID } = req.body;
+  console.log(req.body , "pppppppppppppppppppp")
+  if (!userurlslug) {
+    return res.status(400).json({ error: 'userurlslug is required in the request body' });
+  }
+
+  const trimslug = userurlslug.trim();
+  const uniqueuserSlug = { value: trimslug, timestamp: Date.now() };
+
+  try {
+
+    const result = await parmalinkSlug.updateOne(
+      { user_id: userID },
+      { $addToSet: { unique_slugs: uniqueuserSlug }, userurlslug: trimslug },
+    );
+    if (result) {
+      res.status(200).json({ message: 'User slug updated successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found or no changes made' });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
