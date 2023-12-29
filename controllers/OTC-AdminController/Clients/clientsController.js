@@ -3756,12 +3756,16 @@ exports.updateComparisionData = catchAsyncErrors(async (req, res, next) => {
 
     //if id exists update else create
 
-    // if (id) {
-    //   const item = await OtcPlanComparisonModel.findById(id)
-    // } else {
-    //   const item = await OtcPlanComparisonModel.create({ featureData });
-    // }
-    const item = await OtcPlanComparisonModel.create({ featureData });
+    if (id) {
+      item = await OtcPlanComparisonModel.findByIdAndUpdate(
+        id,
+        { $set: featureData }, // Assuming featureData has the complete data
+        { new: true } // Return the updated document
+      );
+    } else {
+      const item = await OtcPlanComparisonModel.create(featureData);
+    }
+
     await item.save();
 
     // Return the updated details

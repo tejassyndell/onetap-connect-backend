@@ -54,7 +54,7 @@ const Adminaddonsschema = new mongoose.Schema(
         unique: true,
         sparse: true,
       },
-      isuserbased: { type: Boolean },
+      isuserbased: { type: Boolean , default: true },
       numofuser: { type: Number, when: "isuserbased" },
       yearlyuserprice: { type: Number, when: "isuserbased" },
       monthlyuserprice: { type: Number, when: "isuserbased" },

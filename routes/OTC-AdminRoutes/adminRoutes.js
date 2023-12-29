@@ -10,7 +10,8 @@ const {
   updateCard,
   addCompanyCard,
   fetchPlan,
-  getAllComparisionData } = require("../../controllers/OTC-AdminController/Clients/clientsController");
+  getAllComparisionData,
+  updateComparisionData  } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -189,10 +190,9 @@ router.post("/admin/adduser-team", addUserTeam);
 router.post("/admin/remove-user-team", removeUserTeam);
 router.delete('/admin/imagedelete/:filename', deleteimageupload);
 router.post('/admin/createPassword', createPassword);
-router.get('/admin/featureData', getAllComparisionData);
-
 router.post('/admin/generateSmartAccessoryIds', generateSmartAccessoryIds);
 router.post('/admin/updatePrefixOfProduct', updatePrefixOfProduct);
-
+router.post('/admin/updateComparisionData', updateComparisionData);
+router.get('/admin/featureData', getAllComparisionData);
 router.get('/admin/guest-users', getGuestUsers);
 module.exports = router;
