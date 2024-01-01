@@ -164,6 +164,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     card_temp: [{type: Object}],
+    publish_card_temp: [{type: Object}],
     otptoken: { type: String, default: null },
     personlize_company_name: { type: String, default: "" },
     personlize_primary_office_number: { type: Number, default: null },

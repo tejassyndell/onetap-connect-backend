@@ -106,7 +106,7 @@ const {
   updateSmartAccessoryStatus,
   removeUserFromSmartAccessories,
   getuniqueslug,
-  checkuserslugavailiblity,
+  updateUserSlug,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -201,11 +201,6 @@ router.post(
   isAuthenticatedUser,
   checkurlslugavailiblity
 );
-router.post(
-  "/settings/checkslug-userslugavailability",
-  isAuthenticatedUser,
-  checkuserslugavailiblity,
-);
 router.post("/update-AutoRenewal", isAuthenticatedUser, updateAutoRenewal);
 router.post("/invite/userByCSV", isAuthenticatedUser, inviteTeamMemberByCSV);
 
@@ -293,6 +288,7 @@ router.post('/updateSmartAccessoryStatus', updateSmartAccessoryStatus)
 router.post('/removeUserFromSmartAccessories', removeUserFromSmartAccessories)
 router.get('/getUserAssignSmartAccessoriesForCompany', getUserAssignSmartAccessoriesForCompany)
 router.post('/getuniqueslugs',getuniqueslug)
+router.post('/updateUserSlug',updateUserSlug)
 
 
 // router.post('/testapii' ,Testapidummy)

@@ -34,6 +34,7 @@ const json = require("body-parser/lib/types/json.js");
 const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
 const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
 const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
+const OtcPlanComparisonModel = require("../../../models/NewSchemas/OtcPlanComparisonModel.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -72,14 +73,47 @@ exports.testAPIS = catchAsyncErrors(async (req, res, next) => {
 });
 
 
-exports.mockdata = catchAsyncErrors(async (req, res, next) => {
-  
+exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
+
+  // Extract email from request parameters
   const { email } = req.params;
+
+  // Find the user by email
   const user = await User.findOne({ email });
-const role = user.role
+
+  // Check if the user exists
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Access user ID safely
+  const userID = user._id;
+
+  // Find user information by user ID
+  const userInfo = await UserInformation.findOne({ user_id: userID });
+
+  // Check if user information exists
+  if (!userInfo) {
+    return res.status(404).json({ message: 'User information not found' });
+  }
+
+  // Extract plan name from subscription details
+  const planName = userInfo.subscription_details.plan;
+ 
+  const role =  user.role;
+  // Send the response
+  res.status(200).json({ message: 'Fetch Plan Successfully', planName, role });
+ });
+ 
+
+
+ exports.mockdata = catchAsyncErrors(async (req, res, next) => {
+
+  const { email } = req.params;
+  const user = await User.findOne({ email }).populate("companyID");
+  const role = user.role
   // Check if user and user.card_temp exist
   if (user && user.card_temp[0] && user.card_temp[0].content && user.card_temp[0].content.length > 0) {
-    // Assuming there is only one item in the content array
     const modifiedData = {
       "/": {
         "content": user.card_temp[0].content,
@@ -87,11 +121,41 @@ const role = user.role
         "zones": user.card_temp[0].zones
       }
     };
+    res.send({ modifiedData, role });
+  } else if(user && user.companyID.card_temp[0] && user.companyID.card_temp[0].content && user.companyID.card_temp[0].content.length > 0) {
+    //getting company templates 
+    const modifiedData = {
+      "/": {
+        "content": user.companyID.card_temp[3].content,
+        "root": user.companyID.card_temp[3].root,
+        "zones": user.companyID.card_temp[3].zones
+      }
+    };
+
+    // Function to remove properties from Card type objects
+    function removePropertiesFromCard(card) {
+      delete card.props.Name;
+      delete card.props.Designations;
+    }
+
+    // Iterate through the content array and remove properties for Card type
+    if (modifiedData['/'] && modifiedData['/'].content) {
+      modifiedData['/'].content.forEach(item => {
+        if (item.type === 'Card') {
+          removePropertiesFromCard(item);
+        }
+      });
+    }
+
+
+
+    console.log(':::::::::::::lll::::::::::::::', modifiedData)
+
     res.send({modifiedData, role});
-  } else {
-    // Handle the case where user or user.card_temp is not present or does not have the expected structure
+
     res.status(404).send({ error: "Data not found or has unexpected structure" });
   }
+  res.send({role});
 });
 
 
@@ -130,10 +194,10 @@ exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ email: email }).populate('companyID').exec();
-    const companies = await  Company_informationModel.findOne({_id:user.companyID}).exec();
+    const companies = await Company_information.findOne({ _id: user.companyID }).exec();
 
     // res.send(companies);
-  
+
     // Combine NEW DATA and ALREADY EXISTS into an array
     const combined = [
       req.body.cardData,
@@ -145,6 +209,70 @@ exports.addCompanyCard = catchAsyncErrors(async (req, res, next) => {
     // Do something with the combined data, e.g., update the user
     companies.card_temp = combined;
     await companies.save();
+
+    // Respond with the updated data or a success message
+    res.status(200).json({ message: 'Card data updated successfully', data: combined });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
+
+exports.publishUpdateCard = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).exec();
+    const { cardData } = req.body;
+
+    console.log('NEW DATA:::::::::', req.body.cardData)
+    console.log('ALREADY EXISTS:::::::::', user.card_temp[0])
+
+    // Combine NEW DATA and ALREADY EXISTS into an array
+    const combined = [
+      req.body.cardData,
+      ...user.card_temp
+    ];
+
+    console.log('COMBINED:::::::::', combined);
+
+    // Do something with the combined data, e.g., update the user
+    user.card_temp = combined;
+    user.publish_card_temp = cardData;
+    await user.save();
+
+    // Respond with the updated data or a success message
+    res.status(200).json({ message: 'Card data updated successfully', data: combined });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
+
+exports.publishAddCompanyCard = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email: email }).populate('companyID').exec();
+    const companies = await Company_information.findOne({ _id: user.companyID }).exec();
+
+    // res.send(companies);
+
+    // Combine NEW DATA and ALREADY EXISTS into an array
+    const combined = [
+      req.body.cardData,
+      ...companies.card_temp
+    ];
+
+    console.log('COMBINED:::::::::', combined);
+
+    // Do something with the combined data, e.g., update the user
+    companies.card_temp = combined;
+    user.publish_card_temp = req.body.cardData;
+    await companies.save();
+    await user.save();
 
     // Respond with the updated data or a success message
     res.status(200).json({ message: 'Card data updated successfully', data: combined });
@@ -3605,21 +3733,34 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
   try {
     const { count, prefix, year, productName, productId, variationId } = req.body;
 
-    // Helper function to generate a random 5-digit ID
-    const generateRandomId = () => Math.floor(10000 + Math.random() * 90000).toString();
+    // Helper function to generate a random alphanumeric string
+    const generateRandomId = (length) => {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    };
 
     // Array to store generated strings
     const strings = [];
 
-    // Generate strings with 5-digit ID that doesn't already exist in SmartAccessoriesModal's uniqueId field
+    // Generate strings with alphanumeric characters that don't already exist in SmartAccessoriesModal's uniqueId field
     for (let i = 0; i < count; i++) {
       let isUnique = false;
       let generatedString = ''; // Declare inside the loop
 
       // Keep generating until a unique string is found
       while (!isUnique) {
-        generatedString = `${prefix}-${year}-${generateRandomId()}`;
+        // Generate a 5-character alphanumeric string initially
+        generatedString = `${prefix}-${year}-${generateRandomId(5)}`;
         const existingAccessory = await SmartAccessoriesModal.findOne({ uniqueId: generatedString });
+
+        // If all possible 5-digit combinations are exhausted, switch to 6 digits
+        if (i >= 90000) {
+          generatedString = `${prefix}-${year}-${generateRandomId(6)}`;
+        }
 
         // Check if the generated string already exists
         if (!existingAccessory) {
@@ -3649,26 +3790,73 @@ exports.generateSmartAccessoryIds = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+
 exports.updatePrefixOfProduct = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { id, prefix } = req.body;
-
+    const { id, prefix, variationId } = req.body;
     const item = await ProductModel.findById(id)
-    item.prefix = prefix;
+    const variation = item?.variations?.find((e) => e._id.toString() === variationId.toString())
+    if (variation) {
+      variation.prefix = prefix.toUpperCase();
+    } else {
+      item.prefix = prefix.toUpperCase();
+    }
     await item.save();
     // Return the updated accessories details
     res.status(200).json({ item, success: true });
   } catch (error) {
     next(error);
-  }})
-
-exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
-    const guestUsers = await GuestCustomer.find();
-    if (!guestUsers) {
-      return res
-        .status(404)
-        .json({ message: `guest users not found.` });
-    }
-  res.status(200).json({guestUsers , success: true });
+  }
 })
 
+exports.getGuestUsers = catchAsyncErrors(async (req, res, next) => {
+  const guestUsers = await GuestCustomer.find();
+  if (!guestUsers) {
+    return res
+      .status(404)
+      .json({ message: `guest users not found.` });
+  }
+  res.status(200).json({ guestUsers, success: true });
+})
+
+
+exports.getAllComparisionData = catchAsyncErrors((async (req, res, next) => {
+  const feature = await OtcPlanComparisonModel.find();
+  console.log(feature, '.........................................')
+  console.log(feature, '.........................................')
+  console.log(feature, '.........................................')
+  if (!feature) {
+    return next(new ErrorHandler("No feature", 400))
+  }
+
+  res.status(201).json({
+    success: true,
+    feature
+
+  })
+}))
+
+exports.updateComparisionData = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { id, featureData } = req.body;
+
+    //if id exists update else create
+    let item;
+    if (id) {
+      item = await OtcPlanComparisonModel.findByIdAndUpdate(
+        id,
+        { $set: featureData }, // Assuming featureData has the complete data
+        { new: true } // Return the updated document
+      );
+    } else {
+      item = await OtcPlanComparisonModel.create(featureData);
+    }
+
+    await item.save();
+
+    // Return the updated details
+    res.status(200).json({ item, success: true });
+  } catch (error) {
+    next(error);
+  }
+})

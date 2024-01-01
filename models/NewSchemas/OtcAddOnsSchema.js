@@ -41,6 +41,7 @@ const Adminaddonsschema = new mongoose.Schema(
       type: String,
     },
     Addonspaymentdata: {
+      issynchronize: { type: Boolean },
       yearlysku: {
         type: String,
         unique: true,
@@ -53,7 +54,7 @@ const Adminaddonsschema = new mongoose.Schema(
         unique: true,
         sparse: true,
       },
-      isuserbased: { type: Boolean },
+      isuserbased: { type: Boolean , default: true },
       numofuser: { type: Number, when: "isuserbased" },
       yearlyuserprice: { type: Number, when: "isuserbased" },
       monthlyuserprice: { type: Number, when: "isuserbased" },
