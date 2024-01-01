@@ -544,7 +544,7 @@ if(finalizeInvoice.payment_intent){
     // Save payment ID and user details in your database after successful payment
     return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : subscription.id,  subscriptionScheduleID : myPaymentsubscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscriptionDetails : subscription.items.data});
   }
-  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, status :subscription.status, endDate : subscription.current_period_end, subscription : subscription });
+  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, status :subscription.status, endDate : subscription.current_period_end,  subscriptionScheduleID : myPaymentsubscription.id  ,subscriptionDetails : subscription.items.data });
 
 
 } catch (error) {
@@ -617,10 +617,21 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
 
   try {
     if (type === 'cancel') {
-      await stripe.subscriptions.update(subscription_id, {
-        collection_method: 'send_invoice',
-        days_until_due: 7,
-      });
+      // await stripe.subscriptions.update(subscription_id, {
+      //   collection_method: 'send_invoice',
+      //   days_until_due: 7,
+      // });
+      await stripe.subscriptionSchedules.update(
+        subscription_id,
+        {
+          default_settings : {
+            collection_method: 'send_invoice',
+            invoice_settings : {
+              days_until_due : 7
+            }
+          },
+        }
+      );
       const updatedUserInfo = await UserInformation.findOneAndUpdate(
         { user_id: userId },
         { $set: { 'subscription_details.auto_renewal': false } },
@@ -630,9 +641,17 @@ exports.switchToManualRenewal = catchAsyncErrors(async (req, res, next) => {
       res.status(200).json({ success: true, message: 'Switched to manual renewal. Invoices will be sent for manual payment.' });
     }
     else if (type === 'enable') {
-      await stripe.subscriptions.update(subscription_id, {
-        collection_method: 'charge_automatically',
-      });
+      // await stripe.subscriptions.update(subscription_id, {
+      //   collection_method: 'charge_automatically',
+      // });
+      await stripe.subscriptionSchedules.update(
+        subscription_id,
+        {
+          default_settings : {
+            collection_method: 'charge_automatically',
+          },
+        }
+      );
       const updatedUserInfo = await UserInformation.findOneAndUpdate(
         { user_id: userId },
         { $set: { 'subscription_details.auto_renewal': true } },
@@ -656,7 +675,7 @@ exports.cancelPlan = catchAsyncErrors(async (req, res, next) => {
       return res.status(500).json({ success: false, error: 'No Subscription Id found' });
     }
 
-    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+    const canceledSubscription = await stripe.subscriptionSchedules.cancel(subId, {
       invoice_now: true,
       prorate: true
     });
@@ -709,7 +728,7 @@ exports.cancelPlandeactivateaccount = catchAsyncErrors(async (req, res, next) =>
       return res.status(500).json({ success: false, error: 'No Subscription Id found' });
     }
 
-    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+    const canceledSubscription = await stripe.subscriptionSchedules.cancel(subId, {
       invoice_now: true,
       prorate: true
     });
@@ -784,97 +803,148 @@ exports.switchPlan = catchAsyncErrors(async (req, res, next) => {
     console.log(price)
 
     console.log("called0")
-    // const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    let subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+    console.log(subscription.items.data)
+    let matchedPlan ;
+    let remainingPurchase = [] ;
+    subscription.items.data.forEach(item => {
+      if(item.id === sub_shed_itemId){
+        matchedPlan = item
+      }else{
+        remainingPurchase.push({price : item.plan.id})
+      }
+    })
+
+    console.log(matchedPlan)
+    console.log(remainingPurchase)
     console.log("called1")
     const subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
       subscriptionScheduleID
-    );
+      );
+      console.log("subscriptionSchedule")
+      console.log(subscriptionSchedule.phases[0])
+      console.log("subscriptionSchedule")
+      const latestPhaseIndex = subscriptionSchedule.phases.length - 1
+    console.log(subscriptionSchedule.phases.length)
     console.log("subscriptionSchedule")
-    console.log(subscriptionSchedule.phases[0].items)
-    console.log(subscriptionSchedule.phases)
-    console.log("subscriptionSchedule")
-    const currentDate = Math.floor(Date.now() / 1000).toString();
-    console.log(currentDate)
    
     // Add the new item to the subscription
     let myPayment;
     if (selectedCard) {
+      console.log("1")
       myPayment = await stripe.subscriptionSchedules.update(subscriptionScheduleID, {
         end_behavior: "release",
         phases : [
           {
             items: [
               {
-              price: price.id
+                price: matchedPlan.plan.id,
+                metadata: {
+                  id: plandata.planID,
+                  type: 'plan',
+                },
             }
           ],
-          start_date : subscriptionSchedule.phases[0].start_date,
-          end_date : parseInt(currentDate) + 1000,
+          start_date : subscriptionSchedule.phases[latestPhaseIndex].start_date,
+          end_date : 'now',
         },
           {
           items: [{
-            price: price.id
-          }],
-          start_date : parseInt(currentDate) + 1000 ,
+           price: price.id,
+           metadata: {
+            id: plandata.planID,
+            type: 'plan',
+          },
+          },
+          // remainingPurchase[0]
+        ],
+          start_date : 'now' ,
+          default_payment_method: paymentToken,
         },
       ],
         proration_behavior : "create_prorations",
       });
     } else if (existingcard) {
+      console.log("2")
       myPayment = await stripe.subscriptionSchedules.update(subscriptionScheduleID, {
         end_behavior: "release",
         phases : [
           {
             items: [
               {
-              price: price.id
+                price: matchedPlan.plan.id,
+                metadata: {
+                  id: plandata.planID,
+                  type: 'plan',
+                },
             }
           ],
-          start_date : subscriptionSchedule.phases[0].start_date,
-          end_date : parseInt(currentDate) + 1000,
+          start_date : subscriptionSchedule.phases[latestPhaseIndex].start_date,
+          end_date : 'now',
         },
           {
           items: [{
-            price: price.id
-          }],
-          start_date : parseInt(currentDate) + 1000,
+           price: price.id,
+           metadata: {
+            id: plandata.planID,
+            type: 'plan',
+          },
+          },
+          // remainingPurchase[0]
+        ],
+          start_date : 'now' ,
+          default_payment_method: paymentToken,
         },
       ],
         proration_behavior : "create_prorations",
       });
     }
     else {
+      console.log("3")
       myPayment = await stripe.subscriptionSchedules.update(subscriptionScheduleID, {
         end_behavior: "release",
         phases : [
           {
             items: [
               {
-              price: price.id
+                price: matchedPlan.plan.id,
+                metadata: {
+                  id: plandata.planID,
+                  type: 'plan',
+                },
             }
           ],
-          start_date : subscriptionSchedule.phases[0].start_date,
-          end_date : parseInt(currentDate) + 1000,
+          start_date : subscriptionSchedule.phases[latestPhaseIndex].start_date,
+          end_date : 'now',
+          // end_date : parseInt(currentDate) + 1000,
         },
           {
           items: [{
-            price: price.id
-          }],
-          start_date : parseInt(currentDate) + 1000,
+           price: price.id,
+           metadata: {
+            id: plandata.planID,
+            type: 'plan',
+          },
+          },
+          // remainingPurchase[0]
+        ],
+          start_date : 'now' ,
+          default_payment_method : attachedPaymentMethod.id,
         },
       ],
         proration_behavior : "create_prorations",
       });
-
-
-      console.log("myPayment");
-      console.log(myPayment);
-      console.log("myPayment");
     }
     console.log("myPayment");
     console.log(myPayment);
     console.log("myPayment");
-    res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.phases[1].end_date});
+    // fetch updated subscription
+    subscription = await stripe.subscriptions.retrieve(myPayment.subscription);
+    // res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID: myPayment.id, status: "true", endDate: myPayment.phases[1].end_date});
+    console.log({ success: true, client_secret: "switch-plan", subscriptionID : subscription.id, status :myPayment.status, endDate : subscription.current_period_end,  subscriptionScheduleID : myPayment.id  ,subscriptionDetails : subscription.items.data })
+    return res.status(200).json({ success: true, client_secret: "switch-plan", subscriptionID : subscription.id, status :myPayment.status, endDate : subscription.current_period_end,  subscriptionScheduleID : myPayment.id  ,subscriptionDetails : subscription.items.data });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
@@ -2991,7 +3061,7 @@ console.log("?????????????????????????????????????????-?????-")
     console.log(companyUsers, "company user data")
     console.log("?????????????????????????????????????????-?????-")
 
-    const canceledSubscription = await stripe.subscriptions.cancel(subId, {
+    const canceledSubscription = await stripe.subscriptionSchedules.cancel(subId, {
       invoice_now: true,
       prorate: true
     });
