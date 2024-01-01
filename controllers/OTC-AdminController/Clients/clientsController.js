@@ -126,9 +126,9 @@ exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
     //getting company templates 
     const modifiedData = {
       "/": {
-        "content": user.companyID.card_temp[3].content,
-        "root": user.companyID.card_temp[3].root,
-        "zones": user.companyID.card_temp[3].zones
+        "content": user.companyID.card_temp[0].content,
+        "root": user.companyID.card_temp[0].root,
+        "zones": user.companyID.card_temp[0].zones
       }
     };
 

@@ -2439,7 +2439,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     cardDetails,
     saveAddress,
     selectedEditAddress,
-    couponData
+    couponData,
+    serviceCode, 
+    totalShipping,
   } = req.body;
 
 
@@ -2589,6 +2591,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     last_name: user.last_name,
     email: user.email,
     contact: user.contact,
+    totalShipping: totalShipping,
+    serviceCode: serviceCode,
     paymentDate: new Date(),
     type: "Subscription",
     smartAccessories: planData.smartAccessories.map((e) => ({
@@ -2719,7 +2723,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
-  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount);
+  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
   res.status(200).json({
     success: true,
     user,
@@ -2728,7 +2732,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
 }
 );
 
-async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, plandataplan, plandatacycle, plandatarenew, plandataamount, plandatatotal) {
+async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, plandataplan, plandatacycle, plandatarenew, plandataamount, plandatatotal, totalShipping, plandatainitial) {
   try {
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -2807,13 +2811,19 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
                     <td></td>
                     <td></td>
                     <td style="text-align: end;">Initial setup fee</td>
-                    <td>&nbsp;&nbsp;</td>
+                    <td>&nbsp;&nbsp;$ ${plandatainitial}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;">Shipping</td>
+                    <td>&nbsp;&nbsp;$ ${totalShipping}</td>
                 </tr>
                 <tr>
                     <td>addonname</td>
                     <td></td>
                     <td></td>
-                    <td>&nbsp;&nbsp;price</td>
+                    <td>&nbsp;&nbsp;</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #ccc;">
                     <td>Payment Method:</td>
