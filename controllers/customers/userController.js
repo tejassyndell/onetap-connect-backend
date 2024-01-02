@@ -123,7 +123,6 @@ exports.signUP1 = catchAsyncErrors(async (req, res, next) => {
             </div>
         </div>
     </div>
-    <a href="https://www.OneTapConnect.com" style="text-align: center; font-size: 12px; color: #e65925; margin-top: 30px; text-decoration: none;margin-left: 40%;">OneTapConnect.com</a>
 </div>
 
 </body>
@@ -2365,68 +2364,68 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 });
 
 //checkout handler
-// exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
-//   const { id, companyID } = req.user;
-//   const { userData, billingdata, shippingData ,planData, cardDetails, shipping_method } = req.body;
-// console.log(billingdata, " billingdata")
-//   const cardData = {
-//     cardNumber: cardDetails.cardNumber,
-//     brand: cardDetails.brand,
-//     nameOnCard: cardDetails.cardName,
-//     cardExpiryMonth: cardDetails.cardExpiryMonth,
-//     cardExpiryYear: cardDetails.cardExpiryYear,
-//     // CVV: cardDetails.cardCVV
-//   };
+exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
+  const { id, companyID } = req.user;
+  const { userData, billingdata, shippingData ,planData, cardDetails, shipping_method } = req.body;
+console.log(billingdata, " billingdata")
+  const cardData = {
+    cardNumber: cardDetails.cardNumber,
+    brand: cardDetails.brand,
+    nameOnCard: cardDetails.cardName,
+    cardExpiryMonth: cardDetails.cardExpiryMonth,
+    cardExpiryYear: cardDetails.cardExpiryYear,
+    // CVV: cardDetails.cardCVV
+  };
 
-//   console.log(cardData);
+  console.log(cardData);
 
-//   const user = await User.findById(id);
-//   if (!user) {
-//     return next(new ErrorHandler("User not found", 404));
-//   }
-//   const billingAddressFind = new billingAddress({
-//     userId: user._id,
-//     billing_address: billingdata,
-//   });
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  const billingAddressFind = new billingAddress({
+    userId: user._id,
+    billing_address: billingdata,
+  });
 
-//   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
 
-//   if (!shippingAddressFind) {
-//     shippingAddressFind = new shippingAddress({
-//       userId: user._id,
-//       shipping_address: [shippingData],
-//     });
-//   } else {
-//     shippingAddressFind.shipping_address.push(shippingData);
-//   }
-//   const card = await Cards.create(cardData);
-//   card.userID = id;
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      shipping_address: [shippingData],
+    });
+  } else {
+    shippingAddressFind.shipping_address.push(shippingData);
+  }
+  const card = await Cards.create(cardData);
+  card.userID = id;
 
-//   user.isPaidUser = true;
-//   user.first_name = userData.first_name;
-//   user.first_last = userData.first_last;
-//   user.address = billingdata;
-//   // user.billing_address = userData.billing_address;
-//   // user.shipping_address = userData.shipping_address;
-//   user.subscription_details = planData;
-//   user.subscription_details.auto_renewal = true;
-//   user.shipping_method = shipping_method;
+  user.isPaidUser = true;
+  user.first_name = userData.first_name;
+  user.first_last = userData.first_last;
+  user.address = billingdata;
+  // user.billing_address = userData.billing_address;
+  // user.shipping_address = userData.shipping_address;
+  user.subscription_details = planData;
+  user.subscription_details.auto_renewal = true;
+  user.shipping_method = shipping_method;
 
-//   const company = await Company.findById(companyID);
-//   company.address = billingdata;
-//   console.log(company.address, "company address");
+  const company = await Company.findById(companyID);
+  company.address = billingdata;
+  console.log(company.address, "company address");
 
-//   await user.save();
-//   await card.save();
-//   await company.save();
-//   await billingAddressFind.save();
-//   await shippingAddressFind.save();
+  await user.save();
+  await card.save();
+  await company.save();
+  await billingAddressFind.save();
+  await shippingAddressFind.save();
 
-//   res.status(200).json({
-//     success: true,
-//     billingdata
-//   });
-// });
+  res.status(200).json({
+    success: true,
+    billingdata
+  });
+});
 
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
@@ -2440,7 +2439,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     cardDetails,
     saveAddress,
     selectedEditAddress,
-    couponData
+    couponData,
+    serviceCode, 
+    totalShipping,
   } = req.body;
 
 
@@ -2516,11 +2517,14 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         addones: planData.addones.map((addon) => ({
           addonId: addon.addonId,  // Convert addonId to ObjectId
           status: addon.status,
+          itemId: addon.itemId,
           assignTo: addon.assignTo,
           price: addon.price,
           addonDiscountPrice:addon.addonDiscountPrice
         })),
         subscription_id: planData.subscription_id,
+        subscription_schedules_id : planData.subscriptionScheduleID,
+        sub_shed_itemId : planData.sub_shed_itemId,
         total_amount: planData.total_amount,
         plan: planData.plan,
         endDate: planData.endDate,
@@ -2542,11 +2546,14 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       addones: planData.addones && planData.addones.map((addon) => ({
         addonId: addon.addonId,  // Convert addonId to ObjectId
         status: addon.status,
+        itemId: addon.itemId,
         assignTo: addon.assignTo,
         price: addon.price,
         addonDiscountPrice: addon.addonDiscountPrice
       })),
       subscription_id: planData.subscription_id,
+      subscription_schedules_id : planData.subscriptionScheduleID,
+      sub_shed_itemId : planData.sub_shed_itemId,
       total_amount: planData.total_amount,
       plan: planData.plan,
       endDate: planData.endDate,
@@ -2584,6 +2591,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     last_name: user.last_name,
     email: user.email,
     contact: user.contact,
+    totalShipping: totalShipping,
+    serviceCode: serviceCode,
     paymentDate: new Date(),
     type: "Subscription",
     smartAccessories: planData.smartAccessories.map((e) => ({
@@ -2714,14 +2723,16 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
-  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount);
+  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
   res.status(200).json({
     success: true,
     user,
     userInformation,
   });
-});
-async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, plandataplan, plandatacycle, plandatarenew, plandataamount, plandatatotal) {
+}
+);
+
+async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, plandataplan, plandatacycle, plandatarenew, plandataamount, plandatatotal, totalShipping, plandatainitial) {
   try {
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -2800,13 +2811,19 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
                     <td></td>
                     <td></td>
                     <td style="text-align: end;">Initial setup fee</td>
-                    <td>&nbsp;&nbsp;</td>
+                    <td>&nbsp;&nbsp;$ ${plandatainitial}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: end;">Shipping</td>
+                    <td>&nbsp;&nbsp;$ ${totalShipping}</td>
                 </tr>
                 <tr>
                     <td>addonname</td>
                     <td></td>
                     <td></td>
-                    <td>&nbsp;&nbsp;price</td>
+                    <td>&nbsp;&nbsp;</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #ccc;">
                     <td>Payment Method:</td>
@@ -6281,7 +6298,7 @@ exports.assignSmartAccessroiesToUser = catchAsyncErrors(async (req, res, next) =
     // Update the userId for multiple uniqueIds
     const updatedAccessories = await SmartAccessoriesModal.updateMany(
       { uniqueId: { $in: uniqueIds } },
-      { $set: { userId: userId , companyId: companyId} },
+      { $set: { userId: userId , companyId: companyId, status: "Activate"} },
       { new: true }
     );
 
@@ -6410,3 +6427,30 @@ exports.getuniqueslug = catchAsyncErrors(async (req, res, next) => {
   });
 })
 
+
+
+exports.updateUserSlug = catchAsyncErrors(async (req, res, next) => {
+  const { userurlslug , userID } = req.body;
+  console.log(req.body , "pppppppppppppppppppp")
+  if (!userurlslug) {
+    return res.status(400).json({ error: 'userurlslug is required in the request body' });
+  }
+
+  const trimslug = userurlslug.trim();
+  const uniqueuserSlug = { value: trimslug, timestamp: Date.now() };
+
+  try {
+
+    const result = await parmalinkSlug.updateOne(
+      { user_id: userID },
+      { $addToSet: { unique_slugs: uniqueuserSlug }, userurlslug: trimslug },
+    );
+    if (result) {
+      res.status(200).json({ message: 'User slug updated successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found or no changes made' });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
