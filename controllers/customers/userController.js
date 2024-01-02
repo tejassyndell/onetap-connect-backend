@@ -459,6 +459,17 @@ exports.googleSignUP = catchAsyncErrors(async (req, res, next) => {
   const payload = ticket.getPayload();
   const googleId = payload.sub;
 
+  const existingUser = await User.findOne({ email: payload.email });
+
+  if (existingUser) {
+    res.status(200).json({
+      status : 400,
+      success: false,
+      message: "User with the same email already exists.",
+    });
+    return; // Stop execution if the invitation is declined.
+  }
+
   const urlToken = jwt.sign({ email: payload.email }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
