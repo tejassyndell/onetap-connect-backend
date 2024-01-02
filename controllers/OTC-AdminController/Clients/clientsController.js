@@ -3860,3 +3860,171 @@ exports.updateComparisionData = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 })
+
+
+
+exports.forgotPasswordAdmin = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    // Check if you're using the correct SMTP settings
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587, // Use 465 for SSL
+      secure: true, // true for 465, false for other ports
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+      tls: { rejectUnauthorized: false },
+    });
+
+    const user = await AdminUsers.findOne({ email });
+
+    if (!user) {
+      return next(new ErrorHandler("User not found.", 404));
+    }
+
+    if (user.googleId) {
+      return next(
+        new ErrorHandler("This email is associated with a Google account. Please use the Google/Gmail login option to access your account.", 401)
+      );
+    }
+
+    // Generate or retrieve resetToken here
+    const resetToken = user.getResetPasswordToken();
+    const resetPasswordExpire = user.resetPasswordExpire;
+    console.log("resetToken");
+    console.log(resetToken);
+    console.log(resetPasswordExpire);
+    user.resetPasswordToken = resetToken;
+
+    await user.save();
+    await user.save({ validateBeforeSave: false });
+
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+    const message = {
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
+      to: email, // Replace with the recipient's email
+      subject: "Password Recovery Email",
+      // text: `Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}\n\nIf you have not requested this email, please ignore it.`,
+      html: `
+      <!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, width=device-width" />
+</head>
+
+<body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif; background-color: #f2f2f2;">
+
+  <div style=" padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 2px 15px; text-align: center;">
+      <img src="cid:logo">
+    </div>
+    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+      <p>Dear User</p>
+      <p>We received a request to reset the password associated with your account. If you did not initiate this request, please disregard this email.</p>
+
+      <p>To reset your password, please click the link below:</p>
+      <a href="${process.env.FRONTEND_URL}/admin/reset-password/${resetToken}" style="display: inline-block; padding: 10px 20px; background-color: #E65925;margin-top:10px ; margin-bottom:10px ; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+
+      <p>If you're having trouble clicking the link, you can copy and paste the following URL into your browser's address bar:</p>
+
+      <p>Please note that this link is valid for the next 24 hours. After that, you will need to request another password reset.</p>
+
+      <p>If you have any questions or need further assistance, please contact our support team at <a href="mailto:admin@onetapconnect.com">admin@onetapconnect.com</a>.</p>
+
+      <p>Best regards,<br>The One Tap Connect Team</p>
+    </div>
+
+</body>
+
+</html>
+      `,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+    // <div>
+    //   <h3>Dear User</h3>
+    //   <p>We received a request to reset the password associated with your account. If you did not initiate this request, please disregard this email.</p>
+
+    //   <p>To reset your password, please click the link below:</p>
+    //   <a href="${process.env.FRONTEND_URL}/reset-password/${resetToken}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+
+    //   <p>If you're having trouble clicking the link, you can copy and paste the following URL into your browser's address bar:</p>
+
+    //   <p>Please note that this link is valid for the next 24 hours. After that, you will need to request another password reset.</p>
+
+    //   <p>If you have any questions or need further assistance, please contact our support team at <a href="mailto:admin@onetapconnect.com">admin@onetapconnect.com</a>.</p>
+
+    //   <p>Best regards,<br>The One Tap Connect Team</p>
+    //  </div>
+
+    // Attempt to send the email
+    await transporter.sendMail(message);
+
+    // Email sent successfully
+    res.status(200).json({
+      success: true,
+      message: `Email sent to ${email} successfully.`,
+    });
+  } catch (error) {
+    console.error("Error sending email:", error);
+    res.send(error);
+
+    // Handle the error properly
+    return next(new ErrorHandler("Email sending failed", 500));
+  }
+});
+
+
+exports.resetPasswordAdmin = catchAsyncErrors(async (req, res, next) => {
+  console.log(req.params.token);
+  //creating token hash
+  // const resetPasswordToken = crypto
+  //   .createHash("sha256")
+  //   .update(req.params.token)
+  //   .digest("hex");
+  const resetPasswordToken = req.params.token;
+
+  // console.log(token)
+
+  const user = await AdminUsers.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+console.log("????????????????????????????????????????????????????????????????????????????????????????")
+  console.log(user);
+  console.log("????????????????????????????????????????????????????????????????????????????????????????")
+
+  if (!user) {
+    return next(
+      new ErrorHandler(
+        "Reset Password Token is invalid or has been expired",
+        400
+      )
+    );
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  // sendToken(user, 200, res);
+  res.status(200).json({
+    success: true,
+    message: "Password Updated Successfully",
+  });
+});

@@ -694,7 +694,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     if (user.googleId) {
       return next(
-        new ErrorHandler("This email is associated with Gmail.", 401)
+        new ErrorHandler("This email is associated with a Google account. Please use the Google/Gmail login option to access your account.", 401)
       );
     }
 
