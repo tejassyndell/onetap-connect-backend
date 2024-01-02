@@ -2679,47 +2679,7 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
     // function to create invoice items
     async function createInvoiceItems(items, customerID, itemType, taxcode) {
       try {
-        const applyDiscount = await stripe.invoiceItems.update(item.id, {
-          discounts: [
-            {
-              coupon: item.couponID,
-            },
-          ],
-        });
-        console.log(`Discount applied for item ${item.id}`);
-        // You can add additional handling or logging here
-      } catch (error) {
-        console.error(`Error applying discount for item ${item.id}:`, error);
-        // Handle errors if necessary
-      }
-    }
-  }
-}
-
-applyDiscounts(matchedCodes);
-}
-
-const finalizeInvoice = await stripe.invoices.finalizeInvoice(subscription.latest_invoice);
-
-console.log(invoice)
-if(invoice.payment_intent){
-  const subscriptionPaymentIntetn = await stripe.paymentIntents.retrieve(
-    invoice.payment_intent
-  );
-    // Save payment ID and user details in your database after successful payment
-    return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : subscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscription : subscription});
-  }
-  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, endDate : subscription.current_period_end, subscription : subscription });
-
-} catch (error) {
-  console.error(error);
-   // handle subscription failure
-   try {
-
-    // function to delete invoice items
-    async function deleteInvoiceItems(items) {
-      try {
-        const deletedItems = [];
+        const createdInvoiceItems = [];
         for (const item of items) {
           const invoiceItem = await stripe.invoiceItems.create({
             customer: customerID,
@@ -3006,8 +2966,6 @@ if(invoice.payment_intent){
       }
 
       applyDiscounts(matchedCodes);
-    } else {
-      res.send(myPaymentsubscription)
     }
 
     const finalizeInvoice = await stripe.invoices.finalizeInvoice(subscription.latest_invoice);
@@ -3019,8 +2977,9 @@ if(invoice.payment_intent){
       );
       // Save payment ID and user details in your database after successful payment
       return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID: subscription.id, status: subscriptionPaymentIntetn.status, endDate: subscription.current_period_end, subscription: subscription });
+    } else {
+      return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID: subscription.id, endDate: subscription.current_period_end, subscription: subscription });
     }
-    return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID: subscription.id, status: subscriptionPaymentIntetn.status, endDate: subscription.current_period_end, subscription: subscription });
 
   } catch (error) {
     console.error(error);
