@@ -525,7 +525,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
   }
 
   // res.send(payload)
-  sendToken(user, 200, res);
+  sendToken(req,user, 200, res);
 });
 
 //login user
@@ -572,7 +572,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Your account has been deleted, please check your Email for more information.", 401)
     );
   }
-  sendToken(user, 200, res);
+  sendToken(req,user, 200, res);
 });
 
 //logout

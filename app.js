@@ -100,7 +100,7 @@ app.use("/api/v1", SuperAdminRoutes);
 app.use("/api/v1", paymentRoutes);
 app.use("/api/v1", productRoutes);
 app.use("/api/v1", couponRoutes);
-// app.use('/api/v1',AccountRoutes)
+app.use('/api/v1',AccountRoutes)
 app.use(errorMiddleware);
 
 // app.use((req, res, next) => {
