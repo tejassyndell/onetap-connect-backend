@@ -13,7 +13,9 @@ const {
   getAllComparisionData,
   updateComparisionData,
   publishUpdateCard,
-  publishAddCompanyCard  } = require("../../controllers/OTC-AdminController/Clients/clientsController");
+  publishAddCompanyCard,  
+  forgotPasswordAdmin,
+  resetPasswordAdmin} = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -33,6 +35,9 @@ router.get("/admin/clients", getClients);
 router.get("/admin/allclients", isOtcAdminAuthenticatedUser, getordersclient);
 router.post("/admin/signup", Signup);
 router.post("/admin/login", OtcLogin);
+router.post("/admin/forgot/password", forgotPasswordAdmin);
+router.post("/admin/reset/password/:token", resetPasswordAdmin);
+
 router.post("/admin/logout", Otclogout);
 router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser, getOtcAdminProfile);
 
