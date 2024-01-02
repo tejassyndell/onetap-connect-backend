@@ -2926,8 +2926,6 @@ async function applyDiscounts(matchedCodes) {
 }
 
 applyDiscounts(matchedCodes);
-}else{
-  res.send(myPaymentsubscription)
 }
 
 const finalizeInvoice = await stripe.invoices.finalizeInvoice(subscription.latest_invoice);
@@ -2940,7 +2938,7 @@ if(invoice.payment_intent){
     // Save payment ID and user details in your database after successful payment
     return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID : subscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscription : subscription});
   }
-  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, status :subscriptionPaymentIntetn.status, endDate : subscription.current_period_end, subscription : subscription });
+  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, endDate : subscription.current_period_end, subscription : subscription });
 
 } catch (error) {
   console.error(error);
