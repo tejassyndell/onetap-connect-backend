@@ -38,7 +38,7 @@ const Order = require('../../models/NewSchemas/orderSchemaModel.js');
 const parmalinkSlug = require('../../models/NewSchemas/parmalink_slug.js');
 const ShareCardEmail = require('../../models/NewSchemas/ShareCardEmail.js');
 const UserCouponAssociation = require('../../models/NewSchemas/OtcUserCouponAssociation.js')
-
+const Coupon = require("../../models/NewSchemas/OtcCouponModel.js");
 const { getMaxListeners } = require("events");
 // const AddOnsSchemaModel = require("../../models/NewSchemas/AddOnsSchemaModel.js");
 const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
@@ -463,7 +463,7 @@ exports.googleSignUP = catchAsyncErrors(async (req, res, next) => {
 
   if (existingUser) {
     res.status(200).json({
-      status : 400,
+      status: 400,
       success: false,
       message: "User with the same email already exists.",
     });
@@ -560,7 +560,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   // Check if the user signed up with Google
   if (user.googleId !== null) {
     return next(
-      new ErrorHandler("This account is associated with a Google login. Please log in with Google.", 400)
+      new ErrorHandler("This email is associated with a Google account. Please use the Google/Gmail login option to access your account.", 400)
     );
   }
 
@@ -1600,9 +1600,9 @@ exports.updateCardDetails = catchAsyncErrors(async (req, res) => {
 
 //fetch billing address
 exports.fetchBillingAddress = catchAsyncErrors(async (req, res, next) => {
-  const { id , companyID } = req.user;
+  const { id, companyID } = req.user;
 
- 
+
   let billingData;
 
   // Try to find by companyId
@@ -1642,7 +1642,7 @@ exports.updateBillingAddress = catchAsyncErrors(async (req, res, next) => {
 
   const updateUser = await User.findByIdAndUpdate(id, userData);
   const updateBilling = await billingAddress.findOneAndUpdate(
-    {  companyId: companyID  },
+    { companyId: companyID },
     BillingAddressData,
     { new: true }
   );
@@ -2375,68 +2375,68 @@ exports.updateCompanySlug = catchAsyncErrors(async (req, res, next) => {
 });
 
 //checkout handler
-exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
-  const { id, companyID } = req.user;
-  const { userData, billingdata, shippingData ,planData, cardDetails, shipping_method } = req.body;
-console.log(billingdata, " billingdata")
-  const cardData = {
-    cardNumber: cardDetails.cardNumber,
-    brand: cardDetails.brand,
-    nameOnCard: cardDetails.cardName,
-    cardExpiryMonth: cardDetails.cardExpiryMonth,
-    cardExpiryYear: cardDetails.cardExpiryYear,
-    // CVV: cardDetails.cardCVV
-  };
+// exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
+//   const { id, companyID } = req.user;
+//   const { userData, billingdata, shippingData ,planData, cardDetails, shipping_method } = req.body;
+// console.log(billingdata, " billingdata")
+//   const cardData = {
+//     cardNumber: cardDetails.cardNumber,
+//     brand: cardDetails.brand,
+//     nameOnCard: cardDetails.cardName,
+//     cardExpiryMonth: cardDetails.cardExpiryMonth,
+//     cardExpiryYear: cardDetails.cardExpiryYear,
+//     // CVV: cardDetails.cardCVV
+//   };
 
-  console.log(cardData);
+//   console.log(cardData);
 
-  const user = await User.findById(id);
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
-  }
-  const billingAddressFind = new billingAddress({
-    userId: user._id,
-    billing_address: billingdata,
-  });
+//   const user = await User.findById(id);
+//   if (!user) {
+//     return next(new ErrorHandler("User not found", 404));
+//   }
+//   const billingAddressFind = new billingAddress({
+//     userId: user._id,
+//     billing_address: billingdata,
+//   });
 
-  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+//   let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
 
-  if (!shippingAddressFind) {
-    shippingAddressFind = new shippingAddress({
-      userId: user._id,
-      shipping_address: [shippingData],
-    });
-  } else {
-    shippingAddressFind.shipping_address.push(shippingData);
-  }
-  const card = await Cards.create(cardData);
-  card.userID = id;
+//   if (!shippingAddressFind) {
+//     shippingAddressFind = new shippingAddress({
+//       userId: user._id,
+//       shipping_address: [shippingData],
+//     });
+//   } else {
+//     shippingAddressFind.shipping_address.push(shippingData);
+//   }
+//   const card = await Cards.create(cardData);
+//   card.userID = id;
 
-  user.isPaidUser = true;
-  user.first_name = userData.first_name;
-  user.first_last = userData.first_last;
-  user.address = billingdata;
-  // user.billing_address = userData.billing_address;
-  // user.shipping_address = userData.shipping_address;
-  user.subscription_details = planData;
-  user.subscription_details.auto_renewal = true;
-  user.shipping_method = shipping_method;
+//   user.isPaidUser = true;
+//   user.first_name = userData.first_name;
+//   user.first_last = userData.first_last;
+//   user.address = billingdata;
+//   // user.billing_address = userData.billing_address;
+//   // user.shipping_address = userData.shipping_address;
+//   user.subscription_details = planData;
+//   user.subscription_details.auto_renewal = true;
+//   user.shipping_method = shipping_method;
 
-  const company = await Company.findById(companyID);
-  company.address = billingdata;
-  console.log(company.address, "company address");
+//   const company = await Company.findById(companyID);
+//   company.address = billingdata;
+//   console.log(company.address, "company address");
 
-  await user.save();
-  await card.save();
-  await company.save();
-  await billingAddressFind.save();
-  await shippingAddressFind.save();
+//   await user.save();
+//   await card.save();
+//   await company.save();
+//   await billingAddressFind.save();
+//   await shippingAddressFind.save();
 
-  res.status(200).json({
-    success: true,
-    billingdata
-  });
-});
+//   res.status(200).json({
+//     success: true,
+//     billingdata
+//   });
+// });
 
 exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const { id, companyID } = req.user;
@@ -2451,7 +2451,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     saveAddress,
     selectedEditAddress,
     couponData,
-    serviceCode, 
+    serviceCode,
     totalShipping,
   } = req.body;
 
@@ -2531,11 +2531,11 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
           itemId: addon.itemId,
           assignTo: addon.assignTo,
           price: addon.price,
-          addonDiscountPrice:addon.addonDiscountPrice
+          addonDiscountPrice: addon.addonDiscountPrice
         })),
         subscription_id: planData.subscription_id,
-        subscription_schedules_id : planData.subscriptionScheduleID,
-        sub_shed_itemId : planData.sub_shed_itemId,
+        subscription_schedules_id: planData.subscriptionScheduleID,
+        sub_shed_itemId: planData.sub_shed_itemId,
         total_amount: planData.total_amount,
         plan: planData.plan,
         endDate: planData.endDate,
@@ -2563,8 +2563,8 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
         addonDiscountPrice: addon.addonDiscountPrice
       })),
       subscription_id: planData.subscription_id,
-      subscription_schedules_id : planData.subscriptionScheduleID,
-      sub_shed_itemId : planData.sub_shed_itemId,
+      subscription_schedules_id: planData.subscriptionScheduleID,
+      sub_shed_itemId: planData.sub_shed_itemId,
       total_amount: planData.total_amount,
       plan: planData.plan,
       endDate: planData.endDate,
@@ -2596,7 +2596,7 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
   const order = new Order({
     paymentStatus: "paid",
     user: user._id,
-    userShippingOrderNote : userData.userShippingOrderNote ,
+    userShippingOrderNote: userData.userShippingOrderNote,
     company: companyID,
     first_name: user.first_name,
     last_name: user.last_name,
@@ -2698,7 +2698,15 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
       { $setOnInsert: { userId: user._id }, $inc: { usageCount: 1 } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
-    console.log(logCoupons);
+    const decreaseCoupon = await Coupon.findOneAndUpdate(
+      { code: couponData.appliedCouponCode },
+      { $inc: { usageLimit: -1 } },
+      { new: true } 
+    );  
+    if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+      await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+    }
+    console.log(logCoupons , decreaseCoupon);
   }
 
   // status update for supeadmin deactivated account.
@@ -5511,7 +5519,7 @@ exports.redirectUser = catchAsyncErrors(async (req, res, next) => {
 
 exports.getOrders = catchAsyncErrors(async (req, res, next) => {
   const { companyID } = req.user;
-  console.log(companyID,"iddddddddddddddddddd")
+  console.log(companyID, "iddddddddddddddddddd")
   try {
     // Find orders by user ID
     const orders = await Order.find({ company: companyID }).populate({
@@ -6304,12 +6312,12 @@ exports.verifydeactivateAccountotp = catchAsyncErrors(async (req, res, next) => 
 });
 exports.assignSmartAccessroiesToUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { userId,companyId, uniqueIds } = req.body;
+    const { userId, companyId, uniqueIds } = req.body;
 
     // Update the userId for multiple uniqueIds
     const updatedAccessories = await SmartAccessoriesModal.updateMany(
       { uniqueId: { $in: uniqueIds } },
-      { $set: { userId: userId , companyId: companyId, status: "Activate"} },
+      { $set: { userId: userId, companyId: companyId, status: "Activate" } },
       { new: true }
     );
 
@@ -6356,7 +6364,7 @@ exports.removeUserFromSmartAccessories = catchAsyncErrors(async (req, res, next)
     // Remove the userId field for the specified uniqueIds
     const removedUserAccessories = await SmartAccessoriesModal.updateMany(
       { _id: { $in: uniqueIds } },
-      { $unset: { userId: 1 , companyId: 1} },
+      { $unset: { userId: 1, companyId: 1 } },
       { new: true }
     );
     if (!removedUserAccessories) {
@@ -6441,8 +6449,8 @@ exports.getuniqueslug = catchAsyncErrors(async (req, res, next) => {
 
 
 exports.updateUserSlug = catchAsyncErrors(async (req, res, next) => {
-  const { userurlslug , userID } = req.body;
-  console.log(req.body , "pppppppppppppppppppp")
+  const { userurlslug, userID } = req.body;
+  console.log(req.body, "pppppppppppppppppppp")
   if (!userurlslug) {
     return res.status(400).json({ error: 'userurlslug is required in the request body' });
   }
