@@ -12,6 +12,7 @@ const nodemailer = require("nodemailer");
 const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
 const PurchasedSmartAccessoryModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 const UserCouponAssociation = require("../../models/NewSchemas/OtcUserCouponAssociation.js");
+const Coupon = require("../../models/NewSchemas/OtcCouponModel.js");
 const ProductModel = require("../../models/NewSchemas/ProductModel.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
@@ -315,7 +316,7 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
           customer_id: customerID,
           id: plandata.planId,
         },
-        percent_off: (couponData.perUserDiscountPrice * plandata.usersCount)
+        amount_off: (couponData.perUserDiscountPrice * plandata.usersCount) * 100
       };
       planCoupon = await stripe.coupons.create(couponOptions);
 
@@ -334,7 +335,7 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
               customer_id: customerID,
               id: addon.addonId,
             },
-            percent_off: addon.addonDiscountPrice
+            amount_off: addon.addonDiscountPrice * 100
           };
 
           const addonCoupon = await stripe.coupons.create(couponOptions);
@@ -1145,6 +1146,14 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
           { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
           { upsert: true, new: true, setDefaultsOnInsert: true }
         )
+        const decreaseCoupon = await Coupon.findOneAndUpdate(
+          { code: couponData.appliedCouponCode },
+          { $inc: { usageLimit: -1 } },
+          { new: true } 
+        );  
+        if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+          await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+        }
         console.log(logCoupons);
       }
       // Save the order to the database
@@ -1185,7 +1194,8 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       dealOwner,
       customerIp,
       orderedBy,
-      discount
+      discount,
+      couponData
     } = req.body;
 
 
@@ -1239,7 +1249,10 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
           first_name,
           billingAddress,
           shippingAddress,
-          orderData,
+          subscription_details: orderData.subscription_details,
+          smartAccessories: orderData.smartAccessories,
+          addaddons: orderData.addaddons,
+          shipping_method: orderData.shipping_method,
           totalAmount,
           referrer,
           referrerName,
@@ -1254,11 +1267,19 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       if (!updatedOrder) {
         return next(new ErrorHandler("Order not found", 404));
       }
+      if (couponData !== null && Object.keys(couponData).length !== 0) {
+        updatedOrder.isCouponUsed = true;
+        updatedOrder.coupons = {
+          code: couponData.appliedCouponCode,
+          value: couponData.discountValue
+        };
+      }
+      const newupdatedOrder = await updatedOrder.save();
 
       res.status(200).json({
         success: true,
         message: 'Order updated successfully',
-        order: updatedOrder,
+        order: newupdatedOrder,
       });
       orderNumber = updatedOrder.orderNumber;
       orderidtoredirect = updatedOrder._id
@@ -2089,6 +2110,14 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
         { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       )
+      const decreaseCoupon = await Coupon.findOneAndUpdate(
+        { code: couponData.appliedCouponCode },
+        { $inc: { usageLimit: -1 } },
+        { new: true } 
+      );  
+      if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+        await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+      }
       console.log(logCoupons);
     }
     // Ensure totalAmount is treated as a number
@@ -2790,7 +2819,7 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
     //     customer_id: customerID,
     //     id : plandata.planID,
     //   },
-    //   percent_off : 20
+    //   amount_off : 20
     // };
     // const couponOptions2 = {
     //   duration: 'once',

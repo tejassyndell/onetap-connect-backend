@@ -15,7 +15,7 @@ exports.fecthCoupons = catchAsyncErrors(async (req, res, next) => {
   if(coupons.length <= 0){
     return res.status(200).json({ success: false,status : 404, msg : "Invalid coupon code."});
   }
-  const activeCoupons = coupons.filter(coupon => coupon.status === 'Published');
+  const activeCoupons = coupons.filter(coupon => coupon.status === 'Published' && coupon.visibility === 'Public');
 
 if (activeCoupons.length <= 0) {
     return res.status(200).json({ success: false, status : 401, msg: "This coupon is not active" });
@@ -31,6 +31,7 @@ if (validCoupons.length <= 0) {
 
   exports.verifyCouponUsage = catchAsyncErrors(async (req, res, next) => {
     const { userID, usageLimit, code } = req.body;
+    console.log(usageLimit)
     try {
         const findUser = await UserCouponAssociation.findOne({ userId: userID, couponCode: code });
         if (findUser && findUser.usageCount >= usageLimit) {
