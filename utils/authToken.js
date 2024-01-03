@@ -1,16 +1,27 @@
 const jwt = require('jsonwebtoken');
 
 
+// const extractDigits = (number) => {
+//     const numberString = number.toString();
+//     const firstTwoDigits = numberString.slice(0, 2);
+//     const middleTwoDigits = numberString.slice(Math.max(0, numberString.length - 3), -1);
+//     const lastTwoDigits = numberString.slice(-2);
+//     return `${firstTwoDigits}${middleTwoDigits}${lastTwoDigits}`;
+// };
+
 const extractDigits = (number) => {
+    console.log(number, "EEEEEEEE")
     const numberString = number.toString();
-    const firstTwoDigits = numberString.slice(0, 2);
-    const middleTwoDigits = numberString.slice(Math.max(0, numberString.length - 3), -1);
-    const lastTwoDigits = numberString.slice(-2);
-    return `${firstTwoDigits}${middleTwoDigits}${lastTwoDigits}`;
+    const firstThreeDigits = numberString.slice(0, 3);
+    const lastThreeDigits = numberString.slice(-3);
+
+    console.log(firstThreeDigits, "GGGG", lastThreeDigits, "HHHH")
+    return `${firstThreeDigits}${lastThreeDigits}`;
+
 };
 
 
-const sendToken = (req,user, statusCode, res) => {
+const sendToken = (req, user, statusCode, res) => {
     console.log(user, "JJJJJ")
     const token = user.getJWTToken();
     const secretUserID = extractDigits(user.id);
@@ -33,19 +44,19 @@ const sendToken = (req,user, statusCode, res) => {
 
     const userCookie = jwt.sign(jwtPayload, process.env.JWT_SECRET);
     const encryptedUserID = jwt.sign(userIDpayLoad, process.env.JWT_SECRET);
-     
-    
+
+
     res
-    .status(statusCode)
-    .cookie(`token_${secretUserID}`, token, cookieOptions)
-    .cookie('combinedId', userCookie, cookieOptions)
-    .cookie('active_account', encryptedUserID, cookieOptions)
-    .json({
-        success: true,
-        user,
-        token,
-        encryptedUserID
-    });
+        .status(statusCode)
+        .cookie(`token_${secretUserID}`, token, cookieOptions)
+        .cookie('combinedId', userCookie, cookieOptions)
+        .cookie('active_account', encryptedUserID, cookieOptions)
+        .json({
+            success: true,
+            user,
+            token,
+            encryptedUserID
+        });
 };
 
 module.exports = sendToken;
