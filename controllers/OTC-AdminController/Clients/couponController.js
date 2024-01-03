@@ -15,7 +15,7 @@ exports.fecthCoupons = catchAsyncErrors(async (req, res, next) => {
   if(coupons.length <= 0){
     return res.status(200).json({ success: false,status : 404, msg : "Invalid coupon code."});
   }
-  const activeCoupons = coupons.filter(coupon => coupon.status === 'Published');
+  const activeCoupons = coupons.filter(coupon => coupon.status === 'Published' && coupon.visibility === 'public');
 
 if (activeCoupons.length <= 0) {
     return res.status(200).json({ success: false, status : 401, msg: "This coupon is not active" });
