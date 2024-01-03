@@ -1,8 +1,8 @@
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../utils/errorHandler");
 const jwt = require("jsonwebtoken");
-const User = require("../models/Customers/UserModel");
-const Company = require('../models/Customers/CompanyModel');
+const User = require("../models/NewSchemas/UserModel");
+const Company = require('../models/NewSchemas/Company_informationModel');
 
 const extractDigits = (number) => {
     const numberString = number.toString();

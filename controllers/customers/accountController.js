@@ -3,7 +3,7 @@ const catchAsyncErrors = require("../../middleware/catchAsyncErrors.js");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const { ObjectId } = require('mongodb');
-const User = require('../../models/Customers/UserModel.js');
+const User = require('../../models/NewSchemas/UserModel.js');
 
 dotenv.config();
 
