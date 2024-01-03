@@ -226,6 +226,7 @@ userSchema.methods.getJWTToken = function () {
   });
 };
 
+
 userSchema.methods.comparePassword = async function (enteredPassword) {
   console.log(enteredPassword, this);
   return await bcrypt.compare(enteredPassword, this.password);

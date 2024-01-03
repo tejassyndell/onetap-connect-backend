@@ -7,6 +7,7 @@ const planComparisonSchema = new mongoose.Schema({
         free: { value: String, comment: String },
         professional: { value: String, comment: String },
         team: { value: String, comment: String },
+        // enterprise: { value: String, comment: String },
     }],
     status: {
         type: String,
