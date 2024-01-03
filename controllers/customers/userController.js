@@ -560,7 +560,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   // Check if the user signed up with Google
   if (user.googleId !== null) {
     return next(
-      new ErrorHandler("This account is associated with a Google login. Please log in with Google.", 400)
+      new ErrorHandler("This email is associated with a Google account. Please use the Google/Gmail login option to access your account.", 400)
     );
   }
 
