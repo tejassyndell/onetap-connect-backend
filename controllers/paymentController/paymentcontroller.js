@@ -12,6 +12,7 @@ const nodemailer = require("nodemailer");
 const Company_informationModel = require("../../models/NewSchemas/Company_informationModel.js");
 const PurchasedSmartAccessoryModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 const UserCouponAssociation = require("../../models/NewSchemas/OtcUserCouponAssociation.js");
+const Coupon = require("../../models/NewSchemas/OtcCouponModel.js");
 const ProductModel = require("../../models/NewSchemas/ProductModel.js");
 
 const productId = process.env.PLAN_PRODUCT_ID
@@ -315,7 +316,7 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
           customer_id: customerID,
           id: plandata.planId,
         },
-        percent_off: (couponData.perUserDiscountPrice * plandata.usersCount)
+        amount_off: (couponData.perUserDiscountPrice * plandata.usersCount) * 100
       };
       planCoupon = await stripe.coupons.create(couponOptions);
 
@@ -334,7 +335,7 @@ exports.createSubscription = catchAsyncErrors(async (req, res, next) => {
               customer_id: customerID,
               id: addon.addonId,
             },
-            percent_off: addon.addonDiscountPrice
+            amount_off: addon.addonDiscountPrice * 100
           };
 
           const addonCoupon = await stripe.coupons.create(couponOptions);
@@ -1145,6 +1146,14 @@ exports.createOrderWithoutPayment = catchAsyncErrors(async (req, res, next) => {
           { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
           { upsert: true, new: true, setDefaultsOnInsert: true }
         )
+        const decreaseCoupon = await Coupon.findOneAndUpdate(
+          { code: couponData.appliedCouponCode },
+          { $inc: { usageLimit: -1 } },
+          { new: true } 
+        );  
+        if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+          await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+        }
         console.log(logCoupons);
       }
       // Save the order to the database
@@ -1185,7 +1194,8 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       dealOwner,
       customerIp,
       orderedBy,
-      discount
+      discount,
+      couponData
     } = req.body;
 
 
@@ -1239,7 +1249,10 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
           first_name,
           billingAddress,
           shippingAddress,
-          orderData,
+          subscription_details: orderData.subscription_details,
+          smartAccessories: orderData.smartAccessories,
+          addaddons: orderData.addaddons,
+          shipping_method: orderData.shipping_method,
           totalAmount,
           referrer,
           referrerName,
@@ -1254,11 +1267,19 @@ exports.createOrderWithoutPaymentAndSendInvoice = catchAsyncErrors(async (req, r
       if (!updatedOrder) {
         return next(new ErrorHandler("Order not found", 404));
       }
+      if (couponData !== null && Object.keys(couponData).length !== 0) {
+        updatedOrder.isCouponUsed = true;
+        updatedOrder.coupons = {
+          code: couponData.appliedCouponCode,
+          value: couponData.discountValue
+        };
+      }
+      const newupdatedOrder = await updatedOrder.save();
 
       res.status(200).json({
         success: true,
         message: 'Order updated successfully',
-        order: updatedOrder,
+        order: newupdatedOrder,
       });
       orderNumber = updatedOrder.orderNumber;
       orderidtoredirect = updatedOrder._id
@@ -1640,7 +1661,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         order,
         clientSecret: paymentIntent.client_secret
       });
-      await sendpurchaseOrderconfirmationEmail(userId === 'Guest' ? userData.email : user.email, shippingAddress, smartAccessories, order, shipping_method);
+      await sendpurchaseOrderconfirmationEmail(userId === 'Guest' ? userData.email : user.email, shippingAddress, smartAccessories, order, shipping_method, totalShipping);
     } else {
       // Payment confirmation failed
       res.status(400).json({
@@ -1712,7 +1733,7 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
           <td>&nbsp;&nbsp;$ ${smartAccessory.price}</td>
         </tr>
       `;
-      totalAmount += parseFloat(smartAccessory.price);
+      totalAmount += parseFloat(smartAccessory.subtotal);
     });
 
     const rootDirectory = process.cwd();
@@ -1799,13 +1820,19 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
             <td></td>
             <td></td>
             <td style="text-align: end;"><b>Shipping:</b></td>
-            <td>&nbsp;&nbsp;${shipping_method?.price}</td>
+            <td>&nbsp;&nbsp;$ ${totalShipping}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Tax:</b></td>
+            <td>&nbsp;&nbsp;$ ${order.tax.toFixed(2)}</td>
           </tr>
           <tr style="border-bottom: 1px solid #ccc;">
             <td></td>
             <td></td>
             <td style="text-align: end;"><b>Total:</b></td>
-            <td>&nbsp;&nbsp;$ ${order.totalAmount}</td>
+            <td>&nbsp;&nbsp;$ ${order.totalAmount.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
@@ -2089,6 +2116,14 @@ exports.purchaseaddon = catchAsyncErrors(async (req, res, next) => {
         { $setOnInsert: { userId: userId }, $inc: { usageCount: 1 } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       )
+      const decreaseCoupon = await Coupon.findOneAndUpdate(
+        { code: couponData.appliedCouponCode },
+        { $inc: { usageLimit: -1 } },
+        { new: true } 
+      );  
+      if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+        await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+      }
       console.log(logCoupons);
     }
     // Ensure totalAmount is treated as a number
@@ -2790,7 +2825,7 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
     //     customer_id: customerID,
     //     id : plandata.planID,
     //   },
-    //   percent_off : 20
+    //   amount_off : 20
     // };
     // const couponOptions2 = {
     //   duration: 'once',
