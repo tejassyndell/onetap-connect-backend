@@ -1640,7 +1640,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
         order,
         clientSecret: paymentIntent.client_secret
       });
-      await sendpurchaseOrderconfirmationEmail(userId === 'Guest' ? userData.email : user.email, shippingAddress, smartAccessories, order, shipping_method);
+      await sendpurchaseOrderconfirmationEmail(userId === 'Guest' ? userData.email : user.email, shippingAddress, smartAccessories, order, shipping_method, totalShipping);
     } else {
       // Payment confirmation failed
       res.status(400).json({
@@ -1712,7 +1712,7 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
           <td>&nbsp;&nbsp;$ ${smartAccessory.price}</td>
         </tr>
       `;
-      totalAmount += parseFloat(smartAccessory.price);
+      totalAmount += parseFloat(smartAccessory.subtotal);
     });
 
     const rootDirectory = process.cwd();
@@ -1799,13 +1799,19 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
             <td></td>
             <td></td>
             <td style="text-align: end;"><b>Shipping:</b></td>
-            <td>&nbsp;&nbsp;$ ${shipping_method?.price}</td>
+            <td>&nbsp;&nbsp;$ ${totalShipping}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Tax:</b></td>
+            <td>&nbsp;&nbsp;$ ${order.tax.toFixed(2)}</td>
           </tr>
           <tr style="border-bottom: 1px solid #ccc;">
             <td></td>
             <td></td>
             <td style="text-align: end;"><b>Total:</b></td>
-            <td>&nbsp;&nbsp;$ ${order.totalAmount}</td>
+            <td>&nbsp;&nbsp;$ ${order.totalAmount.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
