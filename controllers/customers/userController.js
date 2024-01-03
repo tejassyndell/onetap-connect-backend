@@ -309,7 +309,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     })
     await user_parmalink.save();
   }
-  sendToken(user, 200, res);
+  sendToken(req,user, 200, res);
 });
 
 // exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
@@ -488,7 +488,7 @@ exports.googleSignUP = catchAsyncErrors(async (req, res, next) => {
     last_name,
     googleId: payload.sub,
   };
-
+  
   res.status(200).json({
     success: true,
     token: urlToken,
@@ -536,7 +536,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
   }
 
   // res.send(payload)
-  sendToken(user, 200, res);
+  sendToken(req,user, 200, res);
 });
 
 //login user
@@ -583,12 +583,23 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Your account has been deleted, please check your Email for more information.", 401)
     );
   }
-  sendToken(user, 200, res);
+  sendToken(req,user, 200, res);
 });
 
 //logout
 exports.logout = catchAsyncErrors(async (req, res, next) => {
-  res.cookie("token", null, {
+  const { userid } = req.body;
+
+  const firstThreeDigits = userid.slice(0, 3);
+  const lastThreeDigits = userid.slice(-3);
+  const tokenString = `token_${firstThreeDigits}${lastThreeDigits}`;
+
+  res.cookie(tokenString, null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+
+  res.cookie("active_account", null, {
     expires: new Date(Date.now()),
     httpOnly: true,
   });
