@@ -1799,7 +1799,7 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
             <td></td>
             <td></td>
             <td style="text-align: end;"><b>Shipping:</b></td>
-            <td>&nbsp;&nbsp;${shipping_method?.price}</td>
+            <td>&nbsp;&nbsp;$ ${shipping_method?.price}</td>
           </tr>
           <tr style="border-bottom: 1px solid #ccc;">
             <td></td>
