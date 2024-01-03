@@ -1421,6 +1421,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       sumTotalWeights,
       totalShipping,
       serviceCode,
+      couponData
     } = req.body;
     console.log(userId, "user id guest or not....")
     console.log(totalShipping, "totalShipping------------------------------------------")
@@ -1608,6 +1609,22 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
           brand: cardDetails.brand,
         },
       });
+      
+      if (couponData !== null && Object.keys(couponData).length !== 0) {
+        order.isCouponUsed = true;
+        order.coupons = {
+          code: couponData.appliedCouponCode,
+          value: couponData.discountValue
+        };
+        const decreaseCoupon = await Coupon.findOneAndUpdate(
+          { code: couponData.appliedCouponCode },
+          { $inc: { usageLimit: -1 } },
+          { new: true } 
+        );  
+        if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+          await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+        }
+      }
       // Save the order to the database
       const orderData = await order.save();
 
