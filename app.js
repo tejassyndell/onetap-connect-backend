@@ -154,7 +154,7 @@ app.get("/test", (req, res) => {
       </head>
       <body>
         <h1>Hello! &#128075;</h1>
-        <p>OneTapConnectttttt Server</p>
+        <p>OneTapConnect Server</p>
       </body>
     </html>
   `; // HTML content with inline CSS
