@@ -1,21 +1,18 @@
 const mongoose = require('mongoose');
 
-const TemplatesModel = new mongoose.Schema(
+const OtcTemplatesModel = new mongoose.Schema(
     {
-        company: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "companies_information",
-            default: null,
-        },
         name: {
             type: String,
             required: true,
         },
         description: {
             type: String,
+            required: true
         },
         status: {
             type: String,
+            required: true,
         },
         Assigned_To: {
             type: String,
@@ -47,4 +44,4 @@ const TemplatesModel = new mongoose.Schema(
     { timestamps: true }
 );
 
-module.exports = mongoose.model('templates', TemplatesModel);
+module.exports = mongoose.model('otc_templates', OtcTemplatesModel);

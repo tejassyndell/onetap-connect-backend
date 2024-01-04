@@ -44,6 +44,7 @@ const { getMaxListeners } = require("events");
 const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
 const SmartAccessoriesModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
+const TemplatesModel = require("../../models/NewSchemas/TemplatesModel.js");
 dotenv.config();
 const usedCodes = new Set();
 
@@ -309,7 +310,7 @@ exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
     })
     await user_parmalink.save();
   }
-  sendToken(req,user, 200, res);
+  sendToken(req, user, 200, res);
 });
 
 // exports.signUP2 = catchAsyncErrors(async (req, res, next) => {
@@ -488,7 +489,7 @@ exports.googleSignUP = catchAsyncErrors(async (req, res, next) => {
     last_name,
     googleId: payload.sub,
   };
-  
+
   res.status(200).json({
     success: true,
     token: urlToken,
@@ -536,7 +537,7 @@ exports.googleLogin = catchAsyncErrors(async (req, res, next) => {
   }
 
   // res.send(payload)
-  sendToken(req,user, 200, res);
+  sendToken(req, user, 200, res);
 });
 
 //login user
@@ -583,7 +584,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Your account has been deleted, please check your Email for more information.", 401)
     );
   }
-  sendToken(req,user, 200, res);
+  sendToken(req, user, 200, res);
 });
 
 //logout
@@ -622,7 +623,15 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("user not found", 401));
   }
   if (user.delete_account_status === "inactive") {
-    res.cookie("token", null, {
+    const firstThreeDigits = id.slice(0, 3);
+    const lastThreeDigits = id.slice(-3);
+    const tokenString = `token_${firstThreeDigits}${lastThreeDigits}`;
+
+    res.cookie(tokenString, null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+    res.cookie("active_account", null, {
       expires: new Date(Date.now()),
       httpOnly: true,
     });
@@ -2712,12 +2721,12 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     const decreaseCoupon = await Coupon.findOneAndUpdate(
       { code: couponData.appliedCouponCode },
       { $inc: { usageLimit: -1 } },
-      { new: true } 
-    );  
+      { new: true }
+    );
     if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
       await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
     }
-    console.log(logCoupons , decreaseCoupon);
+    console.log(logCoupons, decreaseCoupon);
   }
 
   // status update for supeadmin deactivated account.
@@ -5159,10 +5168,18 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         ],
       };
       await transporter.sendMail(mailOptions);
-      res.cookie("token", null, {
-        expires: new Date(Date.now()),
-        httpOnly: true,
-      });
+
+      // const firstThreeDigits = userid.slice(0, 3);
+      // const lastThreeDigits = userid.slice(-3);
+      // const tokenString = `token_${firstThreeDigits}${lastThreeDigits}`;
+      // res.cookie(tokenString, null, {
+      //   expires: new Date(Date.now()),
+      //   httpOnly: true,
+      // });
+      // res.cookie("active_account", null, {
+      //   expires: new Date(Date.now()),
+      //   httpOnly: true,
+      // });
       scheduleTokenExpiration(recoveryToken, userid, companyid);
       return res.status(200).json({ success: true, message: 'OTP verified' });
     } else {
@@ -6484,3 +6501,38 @@ exports.updateUserSlug = catchAsyncErrors(async (req, res, next) => {
     next(error);
   }
 });
+
+
+
+exports.getAllTemplatesData = catchAsyncErrors((async (req, res, next) => {
+  const templates = await TemplatesModel.find();
+  console.log(templates, '.........................................')
+  console.log(templates, '.........................................')
+  console.log(templates, '.........................................')
+  if (!templates) {
+    return next(new ErrorHandler("No templates", 400))
+  }
+  res.status(201).json({
+    success: true,
+    templates
+
+  })
+}))
+
+
+exports.createTemplatesData = catchAsyncErrors((async (req, res, next) => {
+  const { companyId, name, description, status } = req.body
+  console.log(req.body, "ttttttttttttttttttttttttttt")
+
+  newTemplate = await TemplatesModel.create({
+    company: companyId,
+    name,
+    description,
+    status,
+  });
+
+  res.status(201).json({
+    success: true,
+    newTemplate
+  })
+}))
