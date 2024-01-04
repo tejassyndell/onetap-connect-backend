@@ -1972,6 +1972,33 @@ exports.updateUserDetails = catchAsyncErrors(async (req, res, next) => {
   try {
     const user = await User.findById(id);
 
+    
+
+    const cards = user.card_temp
+    cards.map(item => {
+      const cardIndex = item.content.findIndex(content => content.type === "Card");
+      if (cardIndex !== -1) {
+        item.content[cardIndex].props.Name = userDetails.first_name +" "+ userDetails.last_name;
+        item.content[cardIndex].props.Company = userDetails.personlize_company_name;
+      }
+
+       // Add "root" and "zones" if missing
+    if (!item.root) {
+      item.root = {};
+  }
+
+  if (!item.zones) {
+      item.zones = {};
+  }
+
+    });
+
+    const updatedCard = cards;
+    // Update name and company in existing templates
+    user.card_temp = updatedCard ;
+    user.markModified("card_temp");
+    await user.save();
+
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
