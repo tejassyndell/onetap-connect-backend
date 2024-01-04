@@ -4028,3 +4028,309 @@ console.log("???????????????????????????????????????????????????????????????????
     message: "Password Updated Successfully",
   });
 });
+
+
+
+
+exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
+  // const { id, companyID } = req.user;
+  const {
+    id, companyID,
+    userData,
+    company_name,
+    billingdata,
+    shippingData,
+    shipping_method,
+    planData,
+    cardDetails,
+    saveAddress,
+    selectedEditAddress,
+    couponData,
+    serviceCode,
+    totalShipping,
+  } = req.body;
+
+
+
+  const user = await User.findById(id);
+  // console.log(user, "user");
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  let billingAddressFind = await billingAddress.findOne({ userId: user._id });
+
+  if (!billingAddressFind) {
+    billingAddressFind = new billingAddress({
+      userId: user._id,
+      companyId: user.companyID,
+      billing_address: billingdata,
+    });
+  } else {
+    billingAddressFind.billing_address = billingdata;
+  }
+
+  let shippingAddressFind = await shippingAddress.findOne({ userId: user._id });
+
+  if (!shippingAddressFind) {
+    shippingAddressFind = new shippingAddress({
+      userId: user._id,
+      shipping_address: [],
+    });
+  }
+  // if(saveAddress) {
+  //   shippingAddressFind.shipping_address.push(shippingData);
+  // }
+  // if (saveAddress) {
+  //   if (selectedEditAddress) {
+  //     const index = shippingAddressFind.shipping_address.findIndex(
+  //       (address) => address._id.toString() === selectedEditAddress._id.toString()
+  //     );
+  //     if (index !== -1) {
+  //       // Replace the existing address with the updated address
+  //       shippingAddressFind.shipping_address[index] = shippingData;
+  //     }
+  //   } else {
+  //     // Add a new address
+  //     shippingAddressFind.shipping_address.push(shippingData);
+  //   }
+  // }
+
+  const card = await Cards.create(cardData);
+  card.userID = user._id;
+
+  let userInformation = await UserInformation.findOne({ user_id: user._id });
+
+  if (!userInformation) {
+    userInformation = new UserInformation({
+      user_id: user._id,
+      smartAccessories: planData.smartAccessories.map((e) => ({
+        productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+      })),
+      subscription_details: {
+        // addones: planData.addones,
+        addones: planData.addones.map((addon) => ({
+          addonId: addon.addonId,  // Convert addonId to ObjectId
+          status: addon.status,
+          itemId: addon.itemId,
+          assignTo: addon.assignTo,
+          price: addon.price,
+          addonDiscountPrice: addon.addonDiscountPrice
+        })),
+        subscription_id: planData.subscription_id,
+        subscription_schedules_id: planData.subscriptionScheduleID,
+        sub_shed_itemId: planData.sub_shed_itemId,
+        total_amount: planData.total_amount,
+        plan: planData.plan,
+        endDate: planData.endDate,
+        total_user: planData.total_user,
+        billing_cycle: planData.billing_cycle,
+        recurring_amount: planData.recurring_amount,
+        renewal_date: planData.renewal_date,
+        taxRate: planData.taxRate,
+        customer_id: planData.customer_id,
+        planID: planData.planID
+      },
+    });
+    // userInformation.subscription_details = planData;
+    // console.log(userInformation, "userInformation");
+  } else {
+    userInformation.subscription_details = {
+      ...userInformation.subscription_details,
+      // addones: planData.addones,
+      addones: planData.addones && planData.addones.map((addon) => ({
+        addonId: addon.addonId,  // Convert addonId to ObjectId
+        status: addon.status,
+        itemId: addon.itemId,
+        assignTo: addon.assignTo,
+        price: addon.price,
+        addonDiscountPrice: addon.addonDiscountPrice
+      })),
+      subscription_id: planData.subscription_id,
+      subscription_schedules_id: planData.subscriptionScheduleID,
+      sub_shed_itemId: planData.sub_shed_itemId,
+      total_amount: planData.total_amount,
+      plan: planData.plan,
+      endDate: planData.endDate,
+      total_user: planData.total_user,
+      billing_cycle: planData.billing_cycle,
+      recurring_amount: planData.recurring_amount,
+      renewal_date: planData.renewal_date,
+      taxRate: planData.taxRate,
+      customer_id: planData.customer_id,
+      perUser_price: planData.perUser_price,
+      planID: planData.planID
+    };
+  }
+  userInformation.smartAccessories = planData.smartAccessories.map((e) => ({
+    productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+  })),
+    shippingAddressFind.shipping_address.address_name = "Default";
+  userInformation.subscription_details.auto_renewal = true;
+  userInformation.shipping_method = shipping_method;
+  userInformation.isInitailUser = false;
+  user.isPaidUser = true;
+  // user.first_name = userData.first_name;
+  // user.last_name = userData.last_name;
+  // user.contact = userData.contact;
+  // user.email = userData.email;
+  user.address = billingdata;
+  user.first_login = true;
+
+  const order = new Order({
+    paymentStatus: "paid",
+    user: user._id,
+    userShippingOrderNote: userData.userShippingOrderNote,
+    company: companyID,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    contact: user.contact,
+    totalShipping: totalShipping,
+    serviceCode: serviceCode,
+    paymentDate: new Date(),
+    type: "Subscription",
+    smartAccessories: planData.smartAccessories.map((e) => ({
+      productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+    })),
+    subscription_details: {
+      // addones: planData.addones,
+      addones: planData.addones && planData.addones.map((addon) => ({
+        addonId: addon.addonId,  // Convert addonId to ObjectId
+        status: addon.status,
+        assignTo: addon.assignTo,
+        price: addon.price,
+      })),
+      ...planData
+    },
+    // card_details: {
+    //   nameOnCard: cardDetails.cardName,
+    //   cardNumber: cardDetails.cardNumber,
+    //   cardExpiryMonth: cardDetails.cardExpiryMonth,
+    //   cardExpiryYear: cardDetails.cardExpiryYear,
+    //   brand: cardDetails.brand,
+    // },
+    // subscription_details: planData,
+    shippingAddress: shippingData,
+    billingAddress: billingdata,
+    // shipping_method: shipping_method,
+    referredby: userData.referredby,
+    referredName: userData.referredName,
+  });
+  const company = await Company.findById(companyID);
+  company.address = billingdata;
+  company.company_name = company_name;
+  console.log(company.address, "company address");
+
+  const userplan = planData.plan;
+  let slug = null;
+  let companyslug = null;
+  const username = user.first_name;
+  const userlastname = user.last_name;
+  const companyName = company_name;
+  if (userplan === "Free") {
+    // If the plan is "free", skip slug generation
+  } else if (userplan === "Professional" || userplan === "Team") {
+    const firstName = username.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const lastName = userlastname.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const comapny_Name = companyName.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    slug = `${firstName}${lastName}`;
+    companyslug = `${comapny_Name}`;
+  }
+  let userVar = null
+  if (slug !== null) {
+    // Check for duplicates in user_parmalink collection before saving
+    const isDuplicate = await parmalinkSlug.exists({ "unique_slugs.value": slug });
+    if (!isDuplicate) {
+      // Save the slug
+      const uniqueSlug = { value: slug, timestamp: Date.now() };
+      userVar = uniqueSlug;
+      await parmalinkSlug.updateOne(
+        { user_id: user._id },
+        { $addToSet: { unique_slugs: uniqueSlug }, userurlslug: slug },
+      );
+    }
+
+  }
+  let companyVar = null
+  if (companyslug !== null) {
+    const iscompanyDuplicate = await parmalinkSlug.exists({ "companyunique_slug.value": companyslug });
+    if (!iscompanyDuplicate) {
+      // Save the slug
+      const uniquecompanySlug = { value: companyslug, timestamp: Date.now() };
+      companyVar = uniquecompanySlug;
+      await parmalinkSlug.updateOne(
+        { user_id: user._id },
+        { $addToSet: { companyunique_slug: uniquecompanySlug }, companyurlslug: companyslug },
+      );
+    }
+  }
+  if (userVar !== null) {
+    user.userurlslug = userVar.value;
+  }
+  if (companyVar !== null) {
+    company.companyurlslug = companyVar.value;
+  }
+  if (couponData !== null && Object.keys(couponData).length !== 0) {
+    order.isCouponUsed = true;
+    order.coupons = {
+      code: couponData.appliedCouponCode,
+      value: couponData.discountValue
+    };
+    const logCoupons = await UserCouponAssociation.findOneAndUpdate(
+      { userId: user._id, couponCode: couponData.appliedCouponCode },
+      { $setOnInsert: { userId: user._id }, $inc: { usageCount: 1 } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    const decreaseCoupon = await Coupon.findOneAndUpdate(
+      { code: couponData.appliedCouponCode },
+      { $inc: { usageLimit: -1 } },
+      { new: true } 
+    );  
+    if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
+      await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
+    }
+    console.log(logCoupons , decreaseCoupon);
+  }
+
+  // status update for supeadmin deactivated account.
+  const updatedUser = await User.updateOne(
+    { _id: id },
+    {
+      $set: { Account_status: 'is_Activated' },
+    },
+    { new: true }
+  );
+  const companyUsers = await User.updateMany(
+    {
+      companyID: companyID,
+      role: { $in: ["administrator", "teammember", "manager"] },
+      Account_status: { $in: ['is_Deactivated'] }
+    },
+    {
+      $set: { status: 'active', Account_status: 'is_Activated' },
+    },
+  );
+  if (companyUsers.nModified === 0) {
+    console.log('No matching users found for companyUsers update.');
+  }
+  if (!updatedUser) {
+    console.log('No matching users found for companyUsers update.');
+    // return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  await user.save();
+  await card.save();
+  await company.save();
+  await order.save();
+  await billingAddressFind.save();
+  await shippingAddressFind.save();
+  await userInformation.save();
+  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
+  res.status(200).json({
+    success: true,
+    user,
+    userInformation,
+  });
+}
+);
