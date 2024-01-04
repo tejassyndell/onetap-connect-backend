@@ -623,7 +623,15 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("user not found", 401));
   }
   if (user.delete_account_status === "inactive") {
-    res.cookie("token", null, {
+    const firstThreeDigits = id.slice(0, 3);
+    const lastThreeDigits = id.slice(-3);
+    const tokenString = `token_${firstThreeDigits}${lastThreeDigits}`;
+
+    res.cookie(tokenString, null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+    res.cookie("active_account", null, {
       expires: new Date(Date.now()),
       httpOnly: true,
     });
@@ -5160,10 +5168,18 @@ exports.verifyotp = catchAsyncErrors(async (req, res, next) => {
         ],
       };
       await transporter.sendMail(mailOptions);
-      res.cookie("token", null, {
-        expires: new Date(Date.now()),
-        httpOnly: true,
-      });
+
+      // const firstThreeDigits = userid.slice(0, 3);
+      // const lastThreeDigits = userid.slice(-3);
+      // const tokenString = `token_${firstThreeDigits}${lastThreeDigits}`;
+      // res.cookie(tokenString, null, {
+      //   expires: new Date(Date.now()),
+      //   httpOnly: true,
+      // });
+      // res.cookie("active_account", null, {
+      //   expires: new Date(Date.now()),
+      //   httpOnly: true,
+      // });
       scheduleTokenExpiration(recoveryToken, userid, companyid);
       return res.status(200).json({ success: true, message: 'OTP verified' });
     } else {
