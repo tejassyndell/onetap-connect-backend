@@ -107,6 +107,8 @@ const {
   removeUserFromSmartAccessories,
   getuniqueslug,
   updateUserSlug,
+  createTemplatesData,
+  getAllTemplatesData,
   // Testapidummy
 } = require("../../controllers/customers/userController.js");
 const {
@@ -282,13 +284,18 @@ router.post('/getAddonsForOrderSummary', getAddonsForOrderSummary)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
 router.get('/test/cardEditordata', cardEditorData)
-router.post('/deactivate/verify-otp',verifydeactivateAccountotp)
+router.post('/deactivate/verify-otp', verifydeactivateAccountotp)
 router.post('/assignSmartAccessroiesToUser', assignSmartAccessroiesToUser)
 router.post('/updateSmartAccessoryStatus', updateSmartAccessoryStatus)
 router.post('/removeUserFromSmartAccessories', removeUserFromSmartAccessories)
 router.get('/getUserAssignSmartAccessoriesForCompany', getUserAssignSmartAccessoriesForCompany)
-router.post('/getuniqueslugs',getuniqueslug)
-router.post('/updateUserSlug',updateUserSlug)
+router.post('/getuniqueslugs', getuniqueslug)
+router.post('/updateUserSlug', updateUserSlug)
+
+
+
+router.post('/createTemplatesData', createTemplatesData)
+router.get('/getAllTemplatesData', getAllTemplatesData)
 
 
 // router.post('/testapii' ,Testapidummy)
