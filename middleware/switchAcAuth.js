@@ -21,13 +21,12 @@ const extractDigits = (number) => {
   return `${firstThreeDigits}${lastThreeDigits}`;
 
 };
-
 exports.isAccountAuthenticated = catchAsyncErrors(async (req, res, next) => {
-    const ID = req.body.userID;
-    const switchingAcID = extractDigits(ID);
+  const ID = req.body.userID;
+  const switchingAcID = extractDigits(ID);
 
-//   const decodedUserID = jwt.verify(combinedId, process.env.JWT_SECRET);
-//   const activeUserId = jwt.verify(active_account, process.env.JWT_SECRET);
+  //   const decodedUserID = jwt.verify(combinedId, process.env.JWT_SECRET);
+  //   const activeUserId = jwt.verify(active_account, process.env.JWT_SECRET);
   const tokenKey = `token_${switchingAcID}`;
   const tokenValue = req.cookies[tokenKey];
 
