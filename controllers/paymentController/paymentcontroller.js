@@ -3216,7 +3216,7 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
       product: productID,
       tax_behavior: 'exclusive',
       recurring: {
-        interval: plandata.billing_cycle === 'monthly' ? "month" : "year",
+        interval: plandata.type === 'monthly' ? "month" : "year",
         interval_count: 1
       },
     });
@@ -3275,6 +3275,7 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
         unit_amount: addon.price * 100,
         product: Subscription_Addons,
         recurring: {
+          // interval: "month",
           interval: plandata.type === 'monthly' ? "month" : "year",
           interval_count: 1
         },
@@ -3435,69 +3436,80 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
         finalizeInvoice.payment_intent
       );
       // Save payment ID and user details in your database after successful payment
-      return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID: subscription.id, status: subscriptionPaymentIntetn.status, endDate: subscription.current_period_end, subscriptionDetails : subscription.items.data });
+      return res.status(200).json({ success: true, client_secret: subscriptionPaymentIntetn.client_secret, subscriptionID: subscription.id, status: subscriptionPaymentIntetn.status, endDate: subscription.current_period_end, subscriptionDetails : subscription.items.data , subscriptionScheduleID : myPaymentsubscription.id });
     }  return res.status(200).json({ success: true, client_secret: "subscription-change", subscriptionID : subscription.id, status :subscription.status, endDate : subscription.current_period_end,  subscriptionScheduleID : myPaymentsubscription.id  ,subscriptionDetails : subscription.items.data });
 
   } catch (error) {
     console.error(error);
     // handle subscription failure
-    try {
+    // try {
 
-      // function to delete invoice items
-      async function deleteInvoiceItems(items) {
-        try {
-          const deletedItems = [];
-          for (const item of items) {
-            await stripe.invoiceItems.del(item.id);
-          }
-          return deletedItems;
-        } catch (error) {
-          console.error('Error deleting invoice items:', error);
-          throw error;
-        }
-      }
-      async function deactivatePrices(priceIDs) {
-        try {
-          for (const priceID of priceIDs) {
-            const price = await stripe.prices.update(priceID, {
-              active: false
-            });
-          }
-        } catch (error) {
-          console.error('Error deactivating prices:', error);
-          throw error;
-        }
-      }
+    //   // function to delete invoice items
+    //   async function deleteInvoiceItems(items) {
+    //     try {
+    //       const deletedItems = [];
+    //       for (const item of items) {
+    //         await stripe.invoiceItems.del(item.id);
+    //       }
+    //       return deletedItems;
+    //     } catch (error) {
+    //       console.error('Error deleting invoice items:', error);
+    //       throw error;
+    //     }
+    //   }
+    //   async function deactivatePrices(priceIDs) {
+    //     console.log("priceIDs")
+    //     console.log(priceIDs)
+    //     console.log("priceIDs")
+    //     try {
+    //       for (const priceID of priceIDs) {
+    //         const price = await stripe.prices.update(priceID, {
+    //           active: false
+    //         });
+    //       }
+    //     } catch (error) {
+    //       console.error('Error deactivating prices:', error);
+    //       throw error;
+    //     }
+    //   }
 
-      const deleteCustomer = customerID && await stripe.customers.del(customerID);
-      const deletedInvoiceItem =
-        initialChargeInvoice && initialChargeInvoice.id && (await stripe.invoiceItems.del(invoiceItem?.id));
-      await deleteInvoiceItems(productsInvoice)
-      await deleteInvoiceItems(onetimeAddonsInvoice)
-      await deactivatePrices([planPrice])
-      await deactivatePrices(addonPrices)
-      const detachPT =
-        attachedPaymentMethod &&
-        attachedPaymentMethod.id &&
-        (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
-      const deletePrice = price && await stripe.prices.update(
-        price.id,
-        {
-          active: false
-        }
-      );
+    //   const deleteCustomer = customerID && await stripe.customers.del(customerID);
+    //   const deletedInvoiceItem =
+    //     initialChargeInvoice && initialChargeInvoice.id && (await stripe.invoiceItems.del(invoiceItem.id));
+    //  if(productsInvoice && productsInvoice.length > 0) {
+    //   await deleteInvoiceItems(productsInvoice)
+    // }
+    // if(onetimeAddonsInvoice && onetimeAddonsInvoice.length > 0){
+    //   await deleteInvoiceItems(onetimeAddonsInvoice)
+    // }
+    // if([planPrice] && [planPrice].length > 0){
+    //   await deactivatePrices([planPrice])
+    // }
+    // if(addonPrices && addonPrices.length > 0){
+    //   await deactivatePrices(addonPrices)
+    // }
+    //   const detachPT =
+    //     attachedPaymentMethod &&
+    //     attachedPaymentMethod.id &&
+    //     (await stripe.paymentMethods.detach(attachedPaymentMethod.id));
+    //   const deletePrice = price && await stripe.prices.update(
+    //     price.id,
+    //     {
+    //       active: false
+    //     }
+    //   );
 
-      console.error(
-        'Cleanup performed after failure:',
-        deleteCustomer,
-        deletedInvoiceItem,
-        detachPT,
-        deletePrice
-      );
-    } catch (cleanupError) {
-      res.status(500).json({ success: false, error: cleanupError.message });
-      console.error('Error during cleanup:', cleanupError);
-    }
+    //   console.error(
+    //     'Cleanup performed after failure:',
+    //     deleteCustomer,
+    //     deletedInvoiceItem,
+    //     detachPT,
+    //     deletePrice
+    //   );
+    // } catch (cleanupError) {
+    //   res.status(500).json({ success: false, error: cleanupError.message });
+    //   console.error('Error during cleanup:', cleanupError);
+    // }
     res.status(500).json({ success: false, error: error.message });
   }
 })

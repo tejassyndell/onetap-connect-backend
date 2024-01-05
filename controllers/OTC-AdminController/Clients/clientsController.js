@@ -34,6 +34,7 @@ const json = require("body-parser/lib/types/json.js");
 const SmartAccessoriesModal = require("../../../models/NewSchemas/SmartAccessoriesModal.js");
 const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
 const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
+const UserCouponAssociation = require("../../../models/NewSchemas/OtcUserCouponAssociation.js");
 const OtcPlanComparisonModel = require("../../../models/NewSchemas/OtcPlanComparisonModel.js");
 function generateUniqueCode() {
   let code;
@@ -2176,7 +2177,7 @@ exports.createClient = catchAsyncErrors(async (req, res, next) => {
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const message = {
-      from: '`OneTapConnect:${process.env.NODMAILER_EMAIL}`',
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: email,
       subject: `Please confirm your email`,
       html: `
@@ -4048,6 +4049,7 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     couponData,
     serviceCode,
     totalShipping,
+    oldorderid
   } = req.body;
 
 
@@ -4096,8 +4098,8 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
   //   }
   // }
 
-  const card = await Cards.create(cardData);
-  card.userID = user._id;
+  // const card = await Cards.create(cardData);
+  // card.userID = user._id;
 
   let userInformation = await UserInformation.findOne({ user_id: user._id });
 
@@ -4190,9 +4192,7 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     serviceCode: serviceCode,
     paymentDate: new Date(),
     type: "Subscription",
-    smartAccessories: planData.smartAccessories.map((e) => ({
-      productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
-    })),
+    smartAccessories: planData.smartAccessories,
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones && planData.addones.map((addon) => ({
@@ -4203,13 +4203,13 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
       })),
       ...planData
     },
-    // card_details: {
-    //   nameOnCard: cardDetails.cardName,
-    //   cardNumber: cardDetails.cardNumber,
-    //   cardExpiryMonth: cardDetails.cardExpiryMonth,
-    //   cardExpiryYear: cardDetails.cardExpiryYear,
-    //   brand: cardDetails.brand,
-    // },
+    card_details: {
+      nameOnCard: cardDetails.cardName,
+      cardNumber: cardDetails.cardNumber,
+      cardExpiryMonth: cardDetails.cardExpiryMonth,
+      cardExpiryYear: cardDetails.cardExpiryYear,
+      brand: cardDetails.brand,
+    },
     // subscription_details: planData,
     shippingAddress: shippingData,
     billingAddress: billingdata,
@@ -4318,19 +4318,22 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     console.log('No matching users found for companyUsers update.');
     // return res.status(404).json({ success: false, message: 'User not found' });
   }
+if(oldorderid){
+  const oldorder = await Order.findByIdAndDelete(oldorderid);
+}
 
   await user.save();
-  await card.save();
   await company.save();
   await order.save();
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
-  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
+  // await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
   res.status(200).json({
     success: true,
     user,
     userInformation,
+    order
   });
 }
 );
