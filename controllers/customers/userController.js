@@ -6520,19 +6520,30 @@ exports.getAllTemplatesData = catchAsyncErrors((async (req, res, next) => {
 }))
 
 
-exports.createTemplatesData = catchAsyncErrors((async (req, res, next) => {
-  const { companyId, name, description, status } = req.body
-  console.log(req.body, "ttttttttttttttttttttttttttt")
+exports.createTemplatesData = catchAsyncErrors(async (req, res, next) => {
+  const { datatoSend, id } = req.body;
 
-  newTemplate = await TemplatesModel.create({
-    company: companyId,
-    name,
-    description,
-    status,
-  });
+  try {
+    let newTemplate;
 
-  res.status(201).json({
-    success: true,
-    newTemplate
-  })
-}))
+    if (!id) {
+      newTemplate = await TemplatesModel.create(datatoSend);
+    } else {
+      newTemplate = await TemplatesModel.findByIdAndUpdate(id, datatoSend, {
+        new: true, // Return the updated document
+        runValidators: true, // Run validators on update
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      newTemplate,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+    });
+  }
+});
