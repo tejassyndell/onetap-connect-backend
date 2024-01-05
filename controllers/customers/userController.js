@@ -45,6 +45,7 @@ const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
 const SmartAccessoriesModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 const TemplatesModel = require("../../models/NewSchemas/TemplatesModel.js");
+const Product = require('../../models/NewSchemas/ProductModel');
 dotenv.config();
 const usedCodes = new Set();
 
@@ -5771,21 +5772,21 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
 
 exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
 
-  console.log("get req----------------------------------------------------------------------------")
-  console.log(req)
-  console.log("get req----------------------------------------------------------------------------")
+  // console.log("get req----------------------------------------------------------------------------")
+  // console.log(req)
+  // console.log("get req----------------------------------------------------------------------------")
   // console.log("called-----------------------------------------");
   const allorders = await Order.find({ type: 'smartAccessories' });
-  // const allorders = await Order.find({ orderNumber: "188" });
-  console.log(allorders)
+  // const allorders = await Order.find({ orderNumber: "258" });
+  // console.log(allorders)
 
-  const xmlOrders = allorders.map(order => {
+  const xmlOrders = await Promise.all(allorders.map(async (order) => {
     const orderID = order._id;
     const odrNum = order.orderNumber;
     const odrtotalweight = order.sumTotalWeights;
     const OrderDate = order.createdAt;
     const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
-    const OrderStatus = order.status;
+    const OrderStatus = order.paymentStatus;
     const LastModified = order.updatedAt;
     const formattedLastDate = `${(LastModified.getMonth() + 1).toString().padStart(2, '0')}/${LastModified.getDate().toString().padStart(2, '0')}/${LastModified.getFullYear()} ${LastModified.getHours().toString().padStart(2, '0')}:${LastModified.getMinutes().toString().padStart(2, '0')} ${LastModified.getHours() >= 12 ? 'PM' : 'AM'}`;
     const OrderTotal = order.totalAmount;
@@ -5800,33 +5801,45 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
     const state = order?.shippingAddress[0]?.state;
     const cntry = order?.shippingAddress[0]?.country;
     const Pcode = order?.shippingAddress[0]?.postal_code;
+    const shipCarrier = order?.serviceCode;
+    const totalShipping = order?.totalShipping;
+    const contact = order?.contact;
+    const Email = order?.email;
+    switch (shipCarrier) {
+      case "usps_first_class_mail":
+        mappedShippingMethod = "USPSFirstClassMail";
+        break;
+      case "usps_first_class_mail_international":
+        mappedShippingMethod = "USPSFirstClassMailInternational";
+        break;
+      case "usps_priority_mail":
+        mappedShippingMethod = "USPSPriorityMail";
+        break;
+      case "usps_priority_mail_international":
+        mappedShippingMethod = "USPSPriorityMailInternational";
+        break;
+      default:
+        mappedShippingMethod = shipCarrier;
+    }
 
-    const xmlItems = order?.smartAccessories.map(item => {
+    const xmlItems = await Promise.all(order.smartAccessories.map(async (item) => {
       const unitPriceFloat = parseFloat(item.price).toFixed(2);
-      return `
-    <Item>
-      <SKU><![CDATA[FD88821]]></SKU>
-      <Name><![CDATA[Sample Product]]></Name>
-      <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
-      <Weight>16</Weight>
-      <WeightUnits>Ounces</WeightUnits>
-      <Quantity>${item.quantity}</Quantity>
-      <UnitPrice>${unitPriceFloat}</UnitPrice>
-      <Location><![CDATA[C3-D4]]></Location>
-      <Options>
-          <Option>
-            <Name><![CDATA[Size]]></Name>
-            <Value><![CDATA[Medium]]></Value>
-            <Weight>20</Weight>
-          </Option>
-          <Option>
-            <Name><![CDATA[Color]]></Name>
-            <Value><![CDATA[Blue]]></Value>
-            <Weight>15</Weight>
-          </Option>
-      </Options>
-    </Item>`;
-    }).join('');
+      const product = await Product.findOne({ _id: item.productId });
+      // console.log(product, "KKKKK")
+      if (product) {
+        return `
+          <Item>
+            <SKU><![CDATA[${product.sku}]]></SKU>
+            <Name><![CDATA[${product.name}]]></Name>
+            <Weight>${product.weight}</Weight>
+            <WeightUnits>Ounces</WeightUnits>
+            <Quantity>${item.quantity}</Quantity>
+            <UnitPrice>${unitPriceFloat}</UnitPrice>
+          </Item>`;
+      }
+      // console.log(xmlItems)
+      return '';
+    }));
 
     return `
       <Order>
@@ -5835,12 +5848,12 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
         <OrderDate>${formattedOrderDate}</OrderDate>
         <OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
         <LastModified>${formattedLastDate}</LastModified>
-        <ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
-        <PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
+        <ShippingMethod><![CDATA[${mappedShippingMethod}]]></ShippingMethod>
+        <PaymentMethod><![CDATA[Debit/Credit Card]]></PaymentMethod>
         <CurrencyCode>USD</CurrencyCode> 
         <OrderTotal>${OrderTotal}</OrderTotal>
         <TaxAmount>${TaxAmount}</TaxAmount>
-        <ShippingAmount>0.00</ShippingAmount>
+        <ShippingAmount>${totalShipping}</ShippingAmount>
         <CustomerNotes></CustomerNotes>
         <InternalNotes></InternalNotes>
         <Gift>false</Gift>
@@ -5851,13 +5864,13 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
         <Customer>
            <CustomerCode></CustomerCode>
            <BillTo>
-             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Name><![CDATA[${fname} ${lname}]]></Name>
              <Company><![CDATA[${compName}]]></Company>
-             <Phone><![CDATA[512-555-5555]]></Phone>
-             <Email><![CDATA[customer@mystore.com]]></Email>
+             <Phone><![CDATA[${contact}]]></Phone>
+             <Email><![CDATA[${Email}]]></Email>
            </BillTo>
            <ShipTo>
-             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Name><![CDATA[${fname} ${lname}]]></Name>
              <Company><![CDATA[${compName}]]></Company>
              <Address1><![CDATA[${Line1}]]></Address1>
              <Address2><![CDATA[${Line2}]]></Address2>
@@ -5865,19 +5878,19 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
              <State><![CDATA[${state}]]></State>
              <PostalCode><![CDATA[${Pcode}]]></PostalCode>
              <Country><![CDATA[${cntry}]]></Country>
-             <Phone><![CDATA[512-555-5555]]></Phone>
+             <Phone><![CDATA[${contact}]]></Phone>
            </ShipTo>
         </Customer>
-        <Items>${xmlItems}</Items>
+        <Items>${xmlItems.join('')}</Items>
       </Order>`;
-  }).join('');
+  }));
 
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
   <Orders pages="${allorders.length}">
-    ${xmlOrders}
+    ${xmlOrders.join('')}
   </Orders>`;
 
-  console.log(xmlOrders)
+  // console.log(xmlOrders)
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
 
