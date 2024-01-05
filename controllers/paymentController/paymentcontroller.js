@@ -25,6 +25,7 @@ const monthlyProfessionalPriceID = process.env.MONTHLY_PROFESSIONAL_PLAN_PRICE_I
 const monthlyTeamPriceID = process.env.MONTHLY_TEAM_PLAN_PRICE_ID
 const Subscription_Addons = process.env.Subscription_Addons
 const Onetime_Addons = process.env.Onetime_Addons
+const Tax_forproducts = process.env.Tax_forproducts
 
 // const { v4: uuidv4 } = require('uuid');
 
@@ -1248,7 +1249,7 @@ if(finalizeInvoice.payment_intent){
 
 
 exports.createTax = catchAsyncErrors(async (req, res, next) => {
-  const TAX_CODE = 'txcd_99999999';
+  const TAX_CODE = Tax_forproducts ;
   const { shippingAddress } = req.body;
 
   console.log(shippingAddress);
@@ -3193,7 +3194,7 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
 
     // create invoice item for products
     if (smartAccessories.length > 0) {
-      productsInvoice = await createInvoiceItems(smartAccessories, customerID, "product", "txcd_99999999")
+      productsInvoice = await createInvoiceItems(smartAccessories, customerID, "product", Tax_forproducts)
       if (!productsInvoice) {
         return  // show error
       }
