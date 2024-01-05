@@ -2474,7 +2474,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     serviceCode,
     totalShipping,
   } = req.body;
-
+  console.log("????????????????????????????????????????????????????????????????????????????????????????????????????????")
+console.log(planData.smartAccessories)
+console.log("????????????????????????????????????????????????????????????????????????????????????????????????????????")
 
   const existingCards = await Cards.find({ userID: id });
 
@@ -2627,13 +2629,14 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     paymentDate: new Date(),
     type: "Subscription",
     smartAccessories: planData.smartAccessories.map((e) => ({
-      productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+      productId: e.productId, productName: e.productName, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
     })),
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones && planData.addones.map((addon) => ({
         addonId: addon.addonId,  // Convert addonId to ObjectId
         status: addon.status,
+        addonName:addon.addonName,
         assignTo: addon.assignTo,
         price: addon.price,
       })),
@@ -2781,13 +2784,42 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
         pass: process.env.NODEMAILER_PASS,
       },
     });
+    const oorder = await Order.findById({ _id: orderId })
+    const smtaccName = oorder?.subscription_details?.addones;
+    const smtacc = oorder.smartAccessories;
+    const addedusersQuantity = oorder?.subscription_details?.total_user[0]?.additionalUser;
+    const PeruserDiscont = oorder?.subscription_details?.perUserDiscountPrice;
+    const PerUserprice = oorder?.subscription_details?.perUser_price;
+    const adjustedUserPrice = PeruserDiscont === 0 ? PerUserprice : PerUserprice - PeruserDiscont;
+    const cycle = oorder?.subscription_details?.billing_cycle;
+
+    let finalMultipliedPrice;
+    if (cycle === "yearly") {
+      const multipliedPrice = addedusersQuantity * adjustedUserPrice
+      finalMultipliedPrice = multipliedPrice * 12;
+    } else if (cycle === "monthly") {
+      finalMultipliedPrice = addedusersQuantity * adjustedUserPrice;
+    } else {
+      finalMultipliedPrice = 0;
+    }
+
+    const addedUsersRow = addedusersQuantity !== 0
+      ? `<tr>
+      <td>Added users</td>
+      <td></td>
+      <td>${addedusersQuantity}</td>
+      <td>&nbsp;&nbsp;$${finalMultipliedPrice}</td>
+     </tr>`
+      : '';
+
+
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
       from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: orderemail,
-      // to: "tarun.syndell@gmail.com",
+      // to: "mailto:tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
       // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
       html: `
@@ -2800,92 +2832,115 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
   </head>
   
   <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
-  
-      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-          <img src="cid:logo">
-          </div>
-          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-          <h3>Welcome to OneTapConnect!</h3>
-          <p>Dear ${orderfirstname},<br/>
-          <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
-          <p>Subscription Details:</p>
-          <ul>
-            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${plandataplan}</li>
-            <li><b>Duration:</b>&nbsp;&nbsp;${plandatacycle}</li>
-            <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(plandatarenew).toLocaleDateString()}</li>
-            <li><b>Amount:</b>&nbsp;&nbsp;$ ${plandataamount}</li>
-          </ul>
 
-          <!-- Invoice Table -->
-          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #e65925; color: #fff; text-align: left;">
-                    <th style="padding: 10px;">Subscription</th>
-                    <!-- <th style="padding: 10px;">Description</th> -->
-                    <!-- <th style="padding: 10px;">Unit Price</th> -->
-                    <th style="padding: 10px; text-align: center;">Quantity</th>
-                    <th></th>
-                    <th style="padding: 10px;">Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Add your invoice items dynamically here -->
-                <tr>
-                    <td>${plandataplan}-${plandatacycle}</td>
-                    <!-- <td>Description of Your Item</td> -->
-                    <!-- <td></td> -->
-                    <td style="text-align: center;">&nbsp;&nbsp;1</td>
-                    <td></td>
-                    <td>&nbsp;&nbsp;$ ${plandataamount}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #ccc;">
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: end;">Initial setup fee</td>
-                    <td>&nbsp;&nbsp;$ ${plandatainitial}</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: end;">Shipping</td>
-                    <td>&nbsp;&nbsp;$ ${totalShipping}</td>
-                </tr>
-                <tr>
-                    <td>addonname</td>
-                    <td></td>
-                    <td></td>
-                    <td>&nbsp;&nbsp;</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #ccc;">
-                    <td>Payment Method:</td>
-                    <td style="text-align: center;">&nbsp;&nbsp;method</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #ccc;">
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: end;"><b>Total:</b></td>
-                    <td>&nbsp;&nbsp;$ ${plandatatotal}</td>
-                </tr>
-                <!-- Add more rows as needed -->
-            </tbody>
-        </table><br/>
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+    </div>
+    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+      <h3>Welcome to OneTapConnect!</h3>
+      <p>Dear ${orderfirstname},<br />
+      <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+      <p>Subscription Details:</p>
+      <ul>
+        <li><b>Subscription Plan:</b>&nbsp;&nbsp;${plandataplan}</li>
+        <li><b>Duration:</b>&nbsp;&nbsp;${plandatacycle}</li>
+        <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(plandatarenew).toLocaleDateString()}</li>
+        <li><b>Amount:</b>&nbsp;&nbsp;$${plandataamount}</li>
+        <li><b>Payment Method:</b>&nbsp;&nbsp; Debit/Credit card</li>
+      </ul>
 
-          <p>Please keep this email for your records.</p>
-          <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
-        </div> 
-          <h3>Technical issue?</h3>
-          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      <!-- Invoice Table -->
+      <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #e65925; color: #fff; text-align: left;">
+            <th style="padding: 10px;">Subscription</th>
+            <!-- <th style="padding: 10px;">Description</th> -->
+            <!-- <th style="padding: 10px;">Unit Price</th> -->
+            <th style="padding: 10px; text-align: center;">Quantity</th>
+            <th></th>
+            <th style="padding: 10px;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add your invoice items dynamically here -->
+          <tr>
+            <td>${plandataplan}-${plandatacycle}</td>
+            <!-- <td>Description of Your Item</td> -->
+            <!-- <td></td> -->
+            <td style="text-align: center;">&nbsp;&nbsp;1</td>
+            <td></td>
+            <td>&nbsp;&nbsp;$${plandataamount}</td>
+          </tr>
+          ${smtacc
+            ? smtacc.map((smartAccessory, index) => `
+                  <tr>
+                    <td>${smartAccessory.productName}</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;${smartAccessory.quantity}</td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;$${smartAccessory.discountAmount === 0
+                      ? smartAccessory.price
+                      : (smartAccessory.price - smartAccessory.discountAmount) * smartAccessory.quantity}</td>
+                  </tr>
+                `).join('')
+            : ''}
+
+          ${smtaccName
+          ? smtaccName.map((addon, index) => `
+                <tr>
+                  <td>${addon.addonName}</td>
+                  <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                  <td></td>
+                  <td>&nbsp;&nbsp;$${addon.price}</td>
+                </tr>
+              `).join('')
+          : ''}
+
+          ${addedUsersRow}
+
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <!-- <tr>
+            <td>Payment Method:</td>
+            <td style="text-align: center;">&nbsp;&nbsp;method</td>
+          </tr> -->
+          ${plandatainitial !== null
+            ? `<tr>
+                <td></td>
+                <td></td>
+                <td style="text-align: end;">Initial setup fee</td>
+                <td>&nbsp;&nbsp;$${plandatainitial}</td>
+              </tr>`
+            : ''}
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;">Shipping</td>
+            <td>&nbsp;&nbsp;$${totalShipping}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Total:</b></td>
+            <td>&nbsp;&nbsp;$${plandatatotal}</td>
+          </tr>
+          <!-- Add more rows as needed -->
+        </tbody>
+      </table><br />
+
+      <p>Please keep this email for your records.</p>
+      <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
       </div>
-  
-  </body>
+      <h3>Technical issue?</h3>
+      <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+    </div>
+
+</body>
   
   </html>
 `,

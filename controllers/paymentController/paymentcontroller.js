@@ -2040,11 +2040,13 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
           <td>&nbsp;&nbsp;&nbsp;${matchingVariation ? selectedProduct?.Type : selectedProduct?.name}</td>
           <td style="text-align: center;">&nbsp;&nbsp;${smartAccessory.quantity}</td>
           <td></td>
-          <td>&nbsp;&nbsp;$ ${smartAccessory.price}</td>
+          <td>&nbsp;&nbsp;$ ${smartAccessory.price * smartAccessory.quantity}</td>
         </tr>
       `;
       totalAmount += parseFloat(smartAccessory.subtotal);
     });
+
+    const includeshippingTaxTotal = parseInt(totalAmount.toFixed(2), 10) + parseInt(order.tax.toFixed(2),10) + parseInt(totalShipping.toFixed(2), 10)
 
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
@@ -2142,7 +2144,7 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
             <td></td>
             <td></td>
             <td style="text-align: end;"><b>Total:</b></td>
-            <td>&nbsp;&nbsp;$ ${order.totalAmount.toFixed(2)}</td>
+            <td>&nbsp;&nbsp;$ ${includeshippingTaxTotal.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
