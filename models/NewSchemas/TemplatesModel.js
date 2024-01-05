@@ -18,31 +18,12 @@ const TemplatesModel = new mongoose.Schema(
             type: String,
         },
         Assigned_To: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "team",
+            default: null,
         },
-        images: {
-            type: [String],
-            required: true,
-        },
-        testimonials: [
-            {
-                name: {
-                    type: String,
-                    required: true,
-                },
-                content: {
-                    type: String,
-                    required: true,
-                }
-            }
-        ],
-        Assigned_Group: [
-            {
-                type: String,
-                value: { type: String },
-                required: true,
-            }
-        ],
+  
+     
     },
     { timestamps: true }
 );

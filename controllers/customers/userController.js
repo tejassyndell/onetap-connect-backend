@@ -45,6 +45,7 @@ const Adminaddonsschema = require("../../models/NewSchemas/OtcAddOnsSchema.js");
 const { Types } = require("mongoose");
 const SmartAccessoriesModal = require("../../models/NewSchemas/SmartAccessoriesModal.js");
 const TemplatesModel = require("../../models/NewSchemas/TemplatesModel.js");
+const Product = require('../../models/NewSchemas/ProductModel');
 dotenv.config();
 const usedCodes = new Set();
 
@@ -2474,7 +2475,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     serviceCode,
     totalShipping,
   } = req.body;
-
+  console.log("????????????????????????????????????????????????????????????????????????????????????????????????????????")
+console.log(planData.smartAccessories)
+console.log("????????????????????????????????????????????????????????????????????????????????????????????????????????")
 
   const existingCards = await Cards.find({ userID: id });
 
@@ -2627,13 +2630,14 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     paymentDate: new Date(),
     type: "Subscription",
     smartAccessories: planData.smartAccessories.map((e) => ({
-      productId: e.productId, productName: e.Type, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
+      productId: e.productId, productName: e.productName, variationId: e.variationId, price: 0, subtotal: 0, quantity: 1
     })),
     subscription_details: {
       // addones: planData.addones,
       addones: planData.addones && planData.addones.map((addon) => ({
         addonId: addon.addonId,  // Convert addonId to ObjectId
         status: addon.status,
+        addonName:addon.addonName,
         assignTo: addon.assignTo,
         price: addon.price,
       })),
@@ -2781,13 +2785,42 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
         pass: process.env.NODEMAILER_PASS,
       },
     });
+    const oorder = await Order.findById({ _id: orderId })
+    const smtaccName = oorder?.subscription_details?.addones;
+    const smtacc = oorder.smartAccessories;
+    const addedusersQuantity = oorder?.subscription_details?.total_user[0]?.additionalUser;
+    const PeruserDiscont = oorder?.subscription_details?.perUserDiscountPrice;
+    const PerUserprice = oorder?.subscription_details?.perUser_price;
+    const adjustedUserPrice = PeruserDiscont === 0 ? PerUserprice : PerUserprice - PeruserDiscont;
+    const cycle = oorder?.subscription_details?.billing_cycle;
+
+    let finalMultipliedPrice;
+    if (cycle === "yearly") {
+      const multipliedPrice = addedusersQuantity * adjustedUserPrice
+      finalMultipliedPrice = multipliedPrice * 12;
+    } else if (cycle === "monthly") {
+      finalMultipliedPrice = addedusersQuantity * adjustedUserPrice;
+    } else {
+      finalMultipliedPrice = 0;
+    }
+
+    const addedUsersRow = addedusersQuantity !== 0
+      ? `<tr>
+      <td>Added users</td>
+      <td></td>
+      <td>${addedusersQuantity}</td>
+      <td>&nbsp;&nbsp;$${finalMultipliedPrice}</td>
+     </tr>`
+      : '';
+
+
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
 
     const mailOptions = {
       from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
       to: orderemail,
-      // to: "tarun.syndell@gmail.com",
+      // to: "mailto:tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
       // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
       html: `
@@ -2800,92 +2833,115 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
   </head>
   
   <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
-  
-      <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
-          <img src="cid:logo">
-          </div>
-          <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
-          <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
-          <h3>Welcome to OneTapConnect!</h3>
-          <p>Dear ${orderfirstname},<br/>
-          <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
-          <p>Subscription Details:</p>
-          <ul>
-            <li><b>Subscription Plan:</b>&nbsp;&nbsp;${plandataplan}</li>
-            <li><b>Duration:</b>&nbsp;&nbsp;${plandatacycle}</li>
-            <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(plandatarenew).toLocaleDateString()}</li>
-            <li><b>Amount:</b>&nbsp;&nbsp;$ ${plandataamount}</li>
-          </ul>
 
-          <!-- Invoice Table -->
-          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #e65925; color: #fff; text-align: left;">
-                    <th style="padding: 10px;">Subscription</th>
-                    <!-- <th style="padding: 10px;">Description</th> -->
-                    <!-- <th style="padding: 10px;">Unit Price</th> -->
-                    <th style="padding: 10px; text-align: center;">Quantity</th>
-                    <th></th>
-                    <th style="padding: 10px;">Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Add your invoice items dynamically here -->
-                <tr>
-                    <td>${plandataplan}-${plandatacycle}</td>
-                    <!-- <td>Description of Your Item</td> -->
-                    <!-- <td></td> -->
-                    <td style="text-align: center;">&nbsp;&nbsp;1</td>
-                    <td></td>
-                    <td>&nbsp;&nbsp;$ ${plandataamount}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #ccc;">
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: end;">Initial setup fee</td>
-                    <td>&nbsp;&nbsp;$ ${plandatainitial}</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: end;">Shipping</td>
-                    <td>&nbsp;&nbsp;$ ${totalShipping}</td>
-                </tr>
-                <tr>
-                    <td>addonname</td>
-                    <td></td>
-                    <td></td>
-                    <td>&nbsp;&nbsp;</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #ccc;">
-                    <td>Payment Method:</td>
-                    <td style="text-align: center;">&nbsp;&nbsp;method</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #ccc;">
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: end;"><b>Total:</b></td>
-                    <td>&nbsp;&nbsp;$ ${plandatatotal}</td>
-                </tr>
-                <!-- Add more rows as needed -->
-            </tbody>
-        </table><br/>
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+    </div>
+    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+      <h3>Welcome to OneTapConnect!</h3>
+      <p>Dear ${orderfirstname},<br />
+      <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+      <p>Subscription Details:</p>
+      <ul>
+        <li><b>Subscription Plan:</b>&nbsp;&nbsp;${plandataplan}</li>
+        <li><b>Duration:</b>&nbsp;&nbsp;${plandatacycle}</li>
+        <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(plandatarenew).toLocaleDateString()}</li>
+        <li><b>Amount:</b>&nbsp;&nbsp;$${plandataamount}</li>
+        <li><b>Payment Method:</b>&nbsp;&nbsp; Debit/Credit card</li>
+      </ul>
 
-          <p>Please keep this email for your records.</p>
-          <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
-        </div> 
-          <h3>Technical issue?</h3>
-          <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+      <!-- Invoice Table -->
+      <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #e65925; color: #fff; text-align: left;">
+            <th style="padding: 10px;">Subscription</th>
+            <!-- <th style="padding: 10px;">Description</th> -->
+            <!-- <th style="padding: 10px;">Unit Price</th> -->
+            <th style="padding: 10px; text-align: center;">Quantity</th>
+            <th></th>
+            <th style="padding: 10px;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add your invoice items dynamically here -->
+          <tr>
+            <td>${plandataplan}-${plandatacycle}</td>
+            <!-- <td>Description of Your Item</td> -->
+            <!-- <td></td> -->
+            <td style="text-align: center;">&nbsp;&nbsp;1</td>
+            <td></td>
+            <td>&nbsp;&nbsp;$${plandataamount}</td>
+          </tr>
+          ${smtacc
+            ? smtacc.map((smartAccessory, index) => `
+                  <tr>
+                    <td>${smartAccessory.productName}</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;${smartAccessory.quantity}</td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;$${smartAccessory.discountAmount === 0
+                      ? smartAccessory.price
+                      : (smartAccessory.price - smartAccessory.discountAmount) * smartAccessory.quantity}</td>
+                  </tr>
+                `).join('')
+            : ''}
+
+          ${smtaccName
+          ? smtaccName.map((addon, index) => `
+                <tr>
+                  <td>${addon.addonName}</td>
+                  <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                  <td></td>
+                  <td>&nbsp;&nbsp;$${addon.price}</td>
+                </tr>
+              `).join('')
+          : ''}
+
+          ${addedUsersRow}
+
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <!-- <tr>
+            <td>Payment Method:</td>
+            <td style="text-align: center;">&nbsp;&nbsp;method</td>
+          </tr> -->
+          ${plandatainitial !== null
+            ? `<tr>
+                <td></td>
+                <td></td>
+                <td style="text-align: end;">Initial setup fee</td>
+                <td>&nbsp;&nbsp;$${plandatainitial}</td>
+              </tr>`
+            : ''}
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;">Shipping</td>
+            <td>&nbsp;&nbsp;$${totalShipping}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Total:</b></td>
+            <td>&nbsp;&nbsp;$${plandatatotal}</td>
+          </tr>
+          <!-- Add more rows as needed -->
+        </tbody>
+      </table><br />
+
+      <p>Please keep this email for your records.</p>
+      <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
       </div>
-  
-  </body>
+      <h3>Technical issue?</h3>
+      <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+    </div>
+
+</body>
   
   </html>
 `,
@@ -5716,21 +5772,21 @@ exports.verifyPassword = catchAsyncErrors(async (req, res, next) => {
 
 exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
 
-  console.log("get req----------------------------------------------------------------------------")
-  console.log(req)
-  console.log("get req----------------------------------------------------------------------------")
+  // console.log("get req----------------------------------------------------------------------------")
+  // console.log(req)
+  // console.log("get req----------------------------------------------------------------------------")
   // console.log("called-----------------------------------------");
   const allorders = await Order.find({ type: 'smartAccessories' });
-  // const allorders = await Order.find({ orderNumber: "188" });
-  console.log(allorders)
+  // const allorders = await Order.find({ orderNumber: "258" });
+  // console.log(allorders)
 
-  const xmlOrders = allorders.map(order => {
+  const xmlOrders = await Promise.all(allorders.map(async (order) => {
     const orderID = order._id;
     const odrNum = order.orderNumber;
     const odrtotalweight = order.sumTotalWeights;
     const OrderDate = order.createdAt;
     const formattedOrderDate = `${(OrderDate.getMonth() + 1).toString().padStart(2, '0')}/${OrderDate.getDate().toString().padStart(2, '0')}/${OrderDate.getFullYear()} ${OrderDate.getHours().toString().padStart(2, '0')}:${OrderDate.getMinutes().toString().padStart(2, '0')} ${OrderDate.getHours() >= 12 ? 'PM' : 'AM'}`;
-    const OrderStatus = order.status;
+    const OrderStatus = order.paymentStatus;
     const LastModified = order.updatedAt;
     const formattedLastDate = `${(LastModified.getMonth() + 1).toString().padStart(2, '0')}/${LastModified.getDate().toString().padStart(2, '0')}/${LastModified.getFullYear()} ${LastModified.getHours().toString().padStart(2, '0')}:${LastModified.getMinutes().toString().padStart(2, '0')} ${LastModified.getHours() >= 12 ? 'PM' : 'AM'}`;
     const OrderTotal = order.totalAmount;
@@ -5745,33 +5801,45 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
     const state = order?.shippingAddress[0]?.state;
     const cntry = order?.shippingAddress[0]?.country;
     const Pcode = order?.shippingAddress[0]?.postal_code;
+    const shipCarrier = order?.serviceCode;
+    const totalShipping = order?.totalShipping;
+    const contact = order?.contact;
+    const Email = order?.email;
+    switch (shipCarrier) {
+      case "usps_first_class_mail":
+        mappedShippingMethod = "USPSFirstClassMail";
+        break;
+      case "usps_first_class_mail_international":
+        mappedShippingMethod = "USPSFirstClassMailInternational";
+        break;
+      case "usps_priority_mail":
+        mappedShippingMethod = "USPSPriorityMail";
+        break;
+      case "usps_priority_mail_international":
+        mappedShippingMethod = "USPSPriorityMailInternational";
+        break;
+      default:
+        mappedShippingMethod = shipCarrier;
+    }
 
-    const xmlItems = order?.smartAccessories.map(item => {
+    const xmlItems = await Promise.all(order.smartAccessories.map(async (item) => {
       const unitPriceFloat = parseFloat(item.price).toFixed(2);
-      return `
-    <Item>
-      <SKU><![CDATA[FD88821]]></SKU>
-      <Name><![CDATA[Sample Product]]></Name>
-      <ImageUrl><![CDATA[http://www.example.com/products/98765.jpg]]></ImageUrl>
-      <Weight>16</Weight>
-      <WeightUnits>Ounces</WeightUnits>
-      <Quantity>${item.quantity}</Quantity>
-      <UnitPrice>${unitPriceFloat}</UnitPrice>
-      <Location><![CDATA[C3-D4]]></Location>
-      <Options>
-          <Option>
-            <Name><![CDATA[Size]]></Name>
-            <Value><![CDATA[Medium]]></Value>
-            <Weight>20</Weight>
-          </Option>
-          <Option>
-            <Name><![CDATA[Color]]></Name>
-            <Value><![CDATA[Blue]]></Value>
-            <Weight>15</Weight>
-          </Option>
-      </Options>
-    </Item>`;
-    }).join('');
+      const product = await Product.findOne({ _id: item.productId });
+      // console.log(product, "KKKKK")
+      if (product) {
+        return `
+          <Item>
+            <SKU><![CDATA[${product.sku}]]></SKU>
+            <Name><![CDATA[${product.name}]]></Name>
+            <Weight>${product.weight}</Weight>
+            <WeightUnits>Ounces</WeightUnits>
+            <Quantity>${item.quantity}</Quantity>
+            <UnitPrice>${unitPriceFloat}</UnitPrice>
+          </Item>`;
+      }
+      // console.log(xmlItems)
+      return '';
+    }));
 
     return `
       <Order>
@@ -5780,12 +5848,12 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
         <OrderDate>${formattedOrderDate}</OrderDate>
         <OrderStatus><![CDATA[${OrderStatus}]]></OrderStatus>
         <LastModified>${formattedLastDate}</LastModified>
-        <ShippingMethod><![CDATA[USPSPriorityMail]]></ShippingMethod>
-        <PaymentMethod><![CDATA[Credit Card]]></PaymentMethod>
+        <ShippingMethod><![CDATA[${mappedShippingMethod}]]></ShippingMethod>
+        <PaymentMethod><![CDATA[Debit/Credit Card]]></PaymentMethod>
         <CurrencyCode>USD</CurrencyCode> 
         <OrderTotal>${OrderTotal}</OrderTotal>
         <TaxAmount>${TaxAmount}</TaxAmount>
-        <ShippingAmount>0.00</ShippingAmount>
+        <ShippingAmount>${totalShipping}</ShippingAmount>
         <CustomerNotes></CustomerNotes>
         <InternalNotes></InternalNotes>
         <Gift>false</Gift>
@@ -5796,13 +5864,13 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
         <Customer>
            <CustomerCode></CustomerCode>
            <BillTo>
-             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Name><![CDATA[${fname} ${lname}]]></Name>
              <Company><![CDATA[${compName}]]></Company>
-             <Phone><![CDATA[512-555-5555]]></Phone>
-             <Email><![CDATA[customer@mystore.com]]></Email>
+             <Phone><![CDATA[${contact}]]></Phone>
+             <Email><![CDATA[${Email}]]></Email>
            </BillTo>
            <ShipTo>
-             <Name><![CDATA[${fname}${lname}]]></Name>
+             <Name><![CDATA[${fname} ${lname}]]></Name>
              <Company><![CDATA[${compName}]]></Company>
              <Address1><![CDATA[${Line1}]]></Address1>
              <Address2><![CDATA[${Line2}]]></Address2>
@@ -5810,19 +5878,19 @@ exports.postshipstation = catchAsyncErrors(async (req, res, next) => {
              <State><![CDATA[${state}]]></State>
              <PostalCode><![CDATA[${Pcode}]]></PostalCode>
              <Country><![CDATA[${cntry}]]></Country>
-             <Phone><![CDATA[512-555-5555]]></Phone>
+             <Phone><![CDATA[${contact}]]></Phone>
            </ShipTo>
         </Customer>
-        <Items>${xmlItems}</Items>
+        <Items>${xmlItems.join('')}</Items>
       </Order>`;
-  }).join('');
+  }));
 
   const xmlContent = `<?xml version="1.0" encoding="utf-8"?>
   <Orders pages="${allorders.length}">
-    ${xmlOrders}
+    ${xmlOrders.join('')}
   </Orders>`;
 
-  console.log(xmlOrders)
+  // console.log(xmlOrders)
   res.status(200).header('Content-Type', 'application/xml').send(xmlContent);
 });
 
@@ -6520,19 +6588,30 @@ exports.getAllTemplatesData = catchAsyncErrors((async (req, res, next) => {
 }))
 
 
-exports.createTemplatesData = catchAsyncErrors((async (req, res, next) => {
-  const { companyId, name, description, status } = req.body
-  console.log(req.body, "ttttttttttttttttttttttttttt")
+exports.createTemplatesData = catchAsyncErrors(async (req, res, next) => {
+  const { datatoSend, id } = req.body;
 
-  newTemplate = await TemplatesModel.create({
-    company: companyId,
-    name,
-    description,
-    status,
-  });
+  try {
+    let newTemplate;
 
-  res.status(201).json({
-    success: true,
-    newTemplate
-  })
-}))
+    if (!id) {
+      newTemplate = await TemplatesModel.create(datatoSend);
+    } else {
+      newTemplate = await TemplatesModel.findByIdAndUpdate(id, datatoSend, {
+        new: true, // Return the updated document
+        runValidators: true, // Run validators on update
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      newTemplate,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+    });
+  }
+});

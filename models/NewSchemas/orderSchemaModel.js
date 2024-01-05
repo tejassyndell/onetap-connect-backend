@@ -66,6 +66,7 @@ const order_Schema = new mongoose.Schema(
       {
         productId: { type: mongoose.Schema.Types.ObjectId, ref: "product" },
         variationId: { type: String },
+        productName : { type: String } ,
         subtotal: { type: Number },
         quantity: { type: Number },
         price: { type: Number }, // final price
@@ -106,6 +107,7 @@ const order_Schema = new mongoose.Schema(
       addones: [
         {
           addonId: { type: mongoose.Schema.Types.ObjectId, ref: "otc_addons" },
+          addonName: {type : String} ,
           status: { type: String, default: 'N/A' },
           assignTo: { type: String, default: '' },
           price: { type: Number, default: 0 },
