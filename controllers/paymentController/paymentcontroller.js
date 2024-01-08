@@ -3198,6 +3198,9 @@ exports.createAdminPlanOrder = catchAsyncErrors(async (req, res, next) => {
       if (!productsInvoice) {
         return  // show error
       }
+      console.log("productsInvoice")
+      console.log(productsInvoice)
+      console.log("productsInvoice")
     }
 
     // create invoice item for ontetime purchase addons

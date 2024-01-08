@@ -4328,7 +4328,7 @@ if(oldorderid){
   await billingAddressFind.save();
   await shippingAddressFind.save();
   await userInformation.save();
-  // await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
+  await sendOrderConfirmationEmail(order.first_name, order.email, order._id, planData.plan, planData.billing_cycle, planData.renewal_date, planData.recurring_amount, planData.total_amount, totalShipping, planData.InitialSetupFee);
   res.status(200).json({
     success: true,
     user,
@@ -4337,3 +4337,189 @@ if(oldorderid){
   });
 }
 );
+async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, plandataplan, plandatacycle, plandatarenew, plandataamount, plandatatotal, totalShipping, plandatainitial) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      port: 587,
+      auth: {
+        user: process.env.NODMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASS,
+      },
+    });
+    const oorder = await Order.findById({ _id: orderId })
+    const smtaccName = oorder?.subscription_details?.addones;
+    const smtacc = oorder.smartAccessories;
+    const addedusersQuantity = oorder?.subscription_details?.total_user[0]?.additionalUser;
+    const PeruserDiscont = oorder?.subscription_details?.perUserDiscountPrice;
+    const PerUserprice = oorder?.subscription_details?.perUser_price;
+    const totalDiscount = oorder?.coupons ? oorder?.coupons?.value : 0 ;
+    const adjustedUserPrice = PerUserprice ;
+    // const adjustedUserPrice = PeruserDiscont === 0 ? PerUserprice : PerUserprice - PeruserDiscont;
+    const cycle = oorder?.subscription_details?.billing_cycle;
+
+    let finalMultipliedPrice;
+    if (cycle === "yearly") {
+      finalMultipliedPrice = adjustedUserPrice * 12;
+    } else if (cycle === "monthly") {
+      finalMultipliedPrice = adjustedUserPrice
+    } 
+
+    const addedUsersRow = addedusersQuantity !== 0
+      ? `<tr>
+      <td>Added users</td>
+      <td style="text-align: center;">&nbsp;&nbsp;${addedusersQuantity}</td>
+      <td></td>
+      <td>&nbsp;&nbsp;$${addedusersQuantity * finalMultipliedPrice}</td>
+     </tr>`
+      : '';
+
+
+    const rootDirectory = process.cwd();
+    const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
+
+    const mailOptions = {
+      from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
+      to: orderemail,
+      // to: "mailto:tarun.syndell@gmail.com",
+      subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
+      // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
+      html: `
+      <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="initial-scale=1, width=device-width" />
+  </head>
+  
+  <body style="margin: 0; line-height: normal; font-family: 'Assistant', sans-serif;">
+
+  <div style="background-color: #f2f2f2; padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background-color: #000; border-radius: 20px 20px 0 0; padding: 20px 15px; text-align: center;">
+      <img src="cid:logo">
+    </div>
+    <div style="background-color: #fff; border-radius: 0 0 20px 20px; padding: 20px; color: #333; font-size: 14px;">
+      <!-- <div><img src="https://onetapconnect.com/wp-content/uploads/2023/05/OneTapConnect-logo-2023.png" width="150px"/></div> -->
+      <h3>Welcome to OneTapConnect!</h3>
+      <p>Dear ${orderfirstname},<br />
+      <p>Thank you for choosing OneTapConnect! We're excited to confirm that your subscription is now active. You are officially part of our community, and we appreciate your trust in us.</p>
+      <p>Subscription Details:</p>
+      <ul>
+        <li><b>Subscription Plan:</b>&nbsp;&nbsp;${plandataplan}</li>
+        <li><b>Duration:</b>&nbsp;&nbsp;${plandatacycle}</li>
+        <li><b>Renewal Date:</b>&nbsp;&nbsp;${new Date(plandatarenew).toLocaleDateString()}</li>
+        <li><b>Amount:</b>&nbsp;&nbsp;$${plandataamount}</li>
+        <li><b>Payment Method:</b>&nbsp;&nbsp; Debit/Credit card</li>
+      </ul>
+
+      <!-- Invoice Table -->
+      <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #e65925; color: #fff; text-align: left;">
+            <th style="padding: 10px;">Subscription</th>
+            <!-- <th style="padding: 10px;">Description</th> -->
+            <!-- <th style="padding: 10px;">Unit Price</th> -->
+            <th style="padding: 10px; text-align: center;">Quantity</th>
+            <th></th>
+            <th style="padding: 10px;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add your invoice items dynamically here -->
+          <tr>
+            <td>${plandataplan}-${plandatacycle}</td>
+            <!-- <td>Description of Your Item</td> -->
+            <!-- <td></td> -->
+            <td style="text-align: center;">&nbsp;&nbsp;1</td>
+            <td></td>
+            <td>&nbsp;&nbsp;$${(oorder?.subscription_details?.total_user[0]?.baseUser) * (oorder?.subscription_details?.perUser_price)}</td>
+          </tr>
+          ${addedUsersRow}
+          ${smtacc
+            ? smtacc.map((smartAccessory, index) => `
+                  <tr>
+                    <td>${smartAccessory.productName}</td>
+                    <td style="text-align: center;">&nbsp;&nbsp;${smartAccessory.quantity}</td>
+                    <td></td>
+                    <td>&nbsp;&nbsp;$${
+                      (smartAccessory.price * smartAccessory.quantity)
+                      }</td>
+                  </tr>
+                `).join('')
+            : ''}
+
+          ${smtaccName
+          ? smtaccName.map((addon, index) => `
+                <tr>
+                  <td>${addon.addonName}</td>
+                  <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                  <td></td>
+                  <td>&nbsp;&nbsp;$${addon.price}</td>
+                </tr>
+              `).join('')
+          : ''}
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          ${totalDiscount !== 0
+            ? `<tr>
+                <td></td>
+                <td></td>
+                <td style="text-align: end; ">Total discount amount</td>
+                <td style="color: red; ">&nbsp;&nbsp;-$${totalDiscount}</td>
+              </tr>`
+            : ''}
+          ${plandatainitial !== null
+            ? `<tr>
+                <td></td>
+                <td></td>
+                <td style="text-align: end;">Initial setup fee</td>
+                <td>&nbsp;&nbsp;$${plandatainitial}</td>
+              </tr>`
+            : ''}
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;">Shipping</td>
+            <td>&nbsp;&nbsp;$${totalShipping}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #ccc;">
+            <td></td>
+            <td></td>
+            <td style="text-align: end;"><b>Total:</b></td>
+            <td>&nbsp;&nbsp;$${plandatatotal}</td>
+          </tr>
+          <!-- Add more rows as needed -->
+        </tbody>
+      </table><br />
+
+      <p>Please keep this email for your records.</p>
+      <div style="display: flex; justify-content: space-evenly; gap: 25px; ">
+      </div>
+      <h3>Technical issue?</h3>
+      <p>In case you facing any technical issue, please contact our support team <a href="https://onetapconnect.com/contact-sales/">here</a>.</p>
+    </div>
+
+</body>
+  
+  </html>
+`,
+      attachments: [
+        {
+          filename: "Logo.png",
+          path: uploadsDirectory,
+          cid: "logo",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Order confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+  }
+}
