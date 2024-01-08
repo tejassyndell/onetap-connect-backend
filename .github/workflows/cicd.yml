@@ -38,3 +38,4 @@ jobs:
     - name: Display PORT value
       run: |
         echo "PORT value is $PORT"
+        echo "PORT value is $NODMAILER_EMAIL"
