@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const planSchema = new mongoose.Schema({
   InternalPlanName: String,
   PublicPlanName: String,
@@ -28,10 +27,8 @@ const planSchema = new mongoose.Schema({
   publishedDate: Date,
   discoutedPercentage: { type : Number, default: 20} ,
   features:{type : String , default:''} ,
-  // smart_accessories : 
   smart_accessories: [{
     type: mongoose.Schema.Types.ObjectId,
-    // ref: 'product',
     require: false,
     set: (v) => (v === "" ? null : v),
   }],
@@ -42,7 +39,5 @@ const planSchema = new mongoose.Schema({
     set: (v) => (v === "" ? null : v),
   }]
 });
-
 const Plan = mongoose.model('otc_plans', planSchema);
-
 module.exports = Plan;

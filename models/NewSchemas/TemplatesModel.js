@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const TemplatesModel = new mongoose.Schema(
     {
         company: {
@@ -23,10 +22,7 @@ const TemplatesModel = new mongoose.Schema(
             ref: "team",
             default: null,
         },
-
-
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('templates', TemplatesModel);

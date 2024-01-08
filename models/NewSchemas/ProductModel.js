@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -44,7 +43,6 @@ const productSchema = new mongoose.Schema(
     unit: { type: String, default: 'oz' },
     price: {
       type: Number,
-      // required: true,
     },
     saleprice: {
       type: Number,
@@ -100,7 +98,6 @@ const productSchema = new mongoose.Schema(
     },
     variations: [
       {
-
         Type: {
           type: String,
           required: true,
@@ -170,5 +167,4 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 module.exports = mongoose.model("product", productSchema);

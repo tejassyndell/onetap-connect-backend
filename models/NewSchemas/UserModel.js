@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 require("dotenv").config();
-
 const userSchema = new mongoose.Schema(
   {
     first_name: {
@@ -21,19 +20,6 @@ const userSchema = new mongoose.Schema(
       require: false,
       set: (v) => (v === "" ? null : v),
     },
-    // team: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   default: null,
-    //   validate: {
-    //     validator: function(value) {
-    //       if (value === null || value === "") {
-    //         return true; // Allow null or empty string
-    //       }
-    //       return typeof value === "string" && validator.isMongoId(value);
-    //     },
-    //     message: "Team must be a valid ObjectId, null, or an empty string",
-    //   },
-    // },
     first_login: {
       type: Boolean,
       default: true,
@@ -172,8 +158,6 @@ const userSchema = new mongoose.Schema(
     personlize_Primary_activities: { type: String, default: null },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-
-
     dealOwner: {
       type: String,
     },
@@ -195,11 +179,8 @@ const userSchema = new mongoose.Schema(
       default: 'is_Activated'
     }
   },
-  
   { timestamps: true }
 );
-
-
 userSchema.pre("save", async function (next) {
   // Increment userID only if it's a new document
   if (this.isNew && this.userID) {
@@ -208,30 +189,20 @@ userSchema.pre("save", async function (next) {
   }
   next();
 });
-
-
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    console.log("ADSFD")
     next();
   }
-  console.log(this);
-  console.log(this.password);
   this.password = await bcrypt.hash(this.password, 10);
 });
-
 userSchema.methods.getJWTToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
-
-
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  console.log(enteredPassword, this);
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 userSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
   this.resetPasswordToken = crypto
@@ -241,12 +212,10 @@ userSchema.methods.getResetPasswordToken = function () {
   this.resetPasswordExpire = Date.now() + 15 * 60 * 60 * 1000;
   return this.resetPasswordToken; // Return the value stored in this.resetPasswordToken
 };
-
 userSchema.pre("save", function (next) {
   if (this.isModified("status")) {
     this.statusChangeDate = new Date();
   }
   next();
 });
-
 module.exports = mongoose.model("user", userSchema);

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-
 const cardsSchema = new mongoose.Schema({
   nameOnCard: {
     type: String,
@@ -27,7 +26,6 @@ const cardsSchema = new mongoose.Schema({
     default: 'active',
   },
 }, { timestamps: true });
-
 // Mongoose pre-save middleware to hash the security code before saving
 cardsSchema.pre('save', async function (next) {
   try {
@@ -41,7 +39,6 @@ cardsSchema.pre('save', async function (next) {
     return next(err);
   }
 });
-
 // Method to compare security code during verification
 cardsSchema.methods.compareCVV = async function (CVV) {
   try {
@@ -50,6 +47,4 @@ cardsSchema.methods.compareCVV = async function (CVV) {
     throw err;
   }
 };
-
 module.exports = mongoose.model('card', cardsSchema);
-

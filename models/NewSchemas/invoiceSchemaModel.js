@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const invoice_Schema = new mongoose.Schema(
     {
         invoiceNumber: { type: Number },
@@ -11,5 +10,4 @@ const invoice_Schema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('invoice ', invoice_Schema);

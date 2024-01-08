@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const ShareCardEmail = new mongoose.Schema(
     {
         user_id: {
@@ -19,5 +18,4 @@ const ShareCardEmail = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("Share_Mycard_Email", ShareCardEmail);

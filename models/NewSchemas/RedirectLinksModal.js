@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const redirect_link_schema = new mongoose.Schema(
     {
         user_id: {
@@ -17,13 +16,10 @@ const redirect_link_schema = new mongoose.Schema(
                 timestamp: { type: Date, default: Date.now },
             }
         ],
-
         userurlslug: {
             type: String,
         },
-
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("redirect_link", redirect_link_schema);

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const Adminaddonsschema = new mongoose.Schema(
   {
     internalname: {
@@ -65,51 +64,7 @@ const Adminaddonsschema = new mongoose.Schema(
       },
       price: { type: Number },
     },
-    
   },
   { timestamps: true }
 );
-
-
-// // Define the sub-schemas for 'subscription' and 'One time payment'
-// const subscriptionSchema = new mongoose.Schema({
-//   yearlysku: {
-//     type: String,
-//     unique: true,
-//     sparse: true,
-//   },
-//   yearlyprice: { type: String },
-//   monthlyprice: { type: String },
-//   monthlysku: {
-//     type: String,
-//     unique: true,
-//     sparse: true,
-//   },
-//   isuserbased: { type: Boolean },
-//   numofuser: { type: String, when: "isuserbased" }, // Add this field conditionally
-//   yearlyuserprice: { type: String, when: "isuserbased" }, // Add this field conditionally
-//   monthlyuserprice: { type: String, when: "isuserbased" }, // Add this field conditionally
-// });
-
-// const oneTimePaymentSchema = new mongoose.Schema({
-//   sku: {
-//     type: String,
-//     unique: true,
-//     sparse: true,
-//   },
-//   price: { type: String },
-// });
-
-// Adminaddonsschema.methods.getAddonspaymentdata = function() {
-//   if (this.paymentType === "subscription") {
-//     console.log("first===============================================================")
-//     return this.Addonspaymentdata = subscriptionSchema;
-//   } else if (this.paymentType === "onetimepayment") {
-//     return this.Addonspaymentdata = oneTimePaymentSchema;
-//   }
-//   // Handle other cases or errors as needed
-// };
-
-
-
 module.exports = mongoose.model("otc_addons", Adminaddonsschema);

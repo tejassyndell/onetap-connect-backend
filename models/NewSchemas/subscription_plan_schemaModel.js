@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const subscription_plan_schema = new mongoose.Schema(
     {
         name: {
@@ -26,5 +25,4 @@ const subscription_plan_schema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("subscription_plan_schema", subscription_plan_schema);

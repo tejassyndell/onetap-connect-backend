@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const refunds_schema = new mongoose.Schema(
     {
         userID: {
@@ -62,5 +61,4 @@ const refunds_schema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('refunds ', refunds_schema);

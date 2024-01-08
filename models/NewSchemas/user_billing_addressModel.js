@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const user_billing_address = new mongoose.Schema(
     {
         userId : {
@@ -12,7 +11,6 @@ const user_billing_address = new mongoose.Schema(
             require: false,
             set: (v) => (v === "" ? null : v),
             ref: 'companies_information',
-            // required: true,
         },
           billing_address: {
             first_name:{ type: String, default: null },
@@ -30,5 +28,4 @@ const user_billing_address = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("user_billing_address", user_billing_address);

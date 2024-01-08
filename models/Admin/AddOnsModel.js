@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const addOnSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -22,7 +21,5 @@ const addOnSchema = new mongoose.Schema({
     default: true
   }
 });
-
 const AddOn = mongoose.model('plan_package_addons', addOnSchema);
-
 module.exports = AddOn;

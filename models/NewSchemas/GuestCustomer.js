@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 require("dotenv").config();
-
 const guestCustomerSchema = new mongoose.Schema(
     {
         first_name: {
@@ -61,11 +60,9 @@ const guestCustomerSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 guestCustomerSchema.methods.getJWTToken = function () {
     return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRE,
     });
 };
-
 module.exports = mongoose.model("guestCustomer", guestCustomerSchema);

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const support_Ticket = new mongoose.Schema(
     {
         userID: {
@@ -23,5 +22,4 @@ const support_Ticket = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('support_Ticket ', support_Ticket);

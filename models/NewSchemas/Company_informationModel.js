@@ -6,11 +6,11 @@ const Company_information = new mongoose.Schema(
       type: String,
       // required: [true, "Please Enter Your Company Name"],
     },
-    owner_first_name:{
-      type:String,
+    owner_first_name: {
+      type: String,
     },
-    owner_last_name:{
-      type:String,
+    owner_last_name: {
+      type: String,
     },
     contact: { type: Number, default: null },
     fax_number: {
@@ -40,7 +40,7 @@ const Company_information = new mongoose.Schema(
         quantity: { type: Number },
         price: { type: Number }, // final price
         status: { type: String, default: 'N/A' },
-        uniqueId: { type: String, default:'', }
+        uniqueId: { type: String, default: '', }
       },
     ],
     global_email: {
@@ -55,7 +55,7 @@ const Company_information = new mongoose.Schema(
         return this.company_name.toLowerCase().replace(/[^a-z0-9-]/g, "");
       },
     },
-    keywords: { type: String , default: "" },
+    keywords: { type: String, default: "" },
     team_size: { type: String },
     website_url: {
       type: String,
@@ -73,27 +73,27 @@ const Company_information = new mongoose.Schema(
     timeZone: { type: String, default: "" },
     booking_link: { type: String, default: "" },
     other_links: [
-        {
-            icon: { type: String, default: "" },
-            name: { type: String, default: "" },
-            link: { type: String, default: "" },
-            permission: { type: Boolean, default: false },
-        },
+      {
+        icon: { type: String, default: "" },
+        name: { type: String, default: "" },
+        link: { type: String, default: "" },
+        permission: { type: Boolean, default: false },
+      },
     ],
     custom_fields: [
-        {
-            name: { type: String, default: "" },
-            value: { type: String, default: "" },
-            permission: { type: Boolean, default: false },
-        },
+      {
+        name: { type: String, default: "" },
+        value: { type: String, default: "" },
+        permission: { type: Boolean, default: false },
+      },
     ],
     socialLinks: [
-        {
-            icon: { type: String, default: null },
-            name: { type: String, default: null },
-            link: { type: String, default: null },
-            permission: { type: Boolean, default: false },
-        },
+      {
+        icon: { type: String, default: null },
+        name: { type: String, default: null },
+        link: { type: String, default: null },
+        permission: { type: Boolean, default: false },
+      },
     ],
     primary_account: {
       type: mongoose.Schema.ObjectId,
@@ -124,95 +124,95 @@ const Company_information = new mongoose.Schema(
     fav_icon: { type: String, default: "" },
     fav_icon_path: { type: String, default: "" },
     additional_colors: [
-        {
-          name: { type: String, default: null },
-          code: { type: String, default: null },
-        },
-      ],
-      primary_color:  {
+      {
         name: { type: String, default: null },
         code: { type: String, default: null },
       },
-      secondary_color:  {
-        name: { type: String, default: null },
-        code: { type: String, default: null },
-      } ,
-      text_color:{
-        name: { type: String, default: null},
-        code: { type: String, default: null},
-      },
-      accent_color:{
-        name: { type: String, default: null},
-        code: { type: String, default: null},
-      },
+    ],
+    primary_color: {
+      name: { type: String, default: null },
+      code: { type: String, default: null },
+    },
+    secondary_color: {
+      name: { type: String, default: null },
+      code: { type: String, default: null },
+    },
+    text_color: {
+      name: { type: String, default: null },
+      code: { type: String, default: null },
+    },
+    accent_color: {
+      name: { type: String, default: null },
+      code: { type: String, default: null },
+    },
     company_name_permission: {
-        type: Boolean,
-        default: false,
-      },
+      type: Boolean,
+      default: false,
+    },
     website_url_permission: {
-        type: Boolean,
-        default: false,
-      },
-      global_email_address_permission: {
-        type: Boolean,
-        default: false,
-      },
-      primary_office_number_permission: {
-        type: Boolean,
-        default: false,
-      },
-      fax_number_permission: {
-        type: Boolean,
-        default: false,
-      },
-      primary_activities_permission: {
-        type: Boolean,
-        default: false,
-      },
-      booking_link_permission: {
-        type: Boolean,
-        default: false,
-      },
-      make_private_permission: {
-        type: Boolean,
-        default: false,
-      },
-      company_line1_address_permission: {
-        type: Boolean,
-        default: false,
-      },
-      company_line2_apartment_permission: {
-        type: Boolean,
-        default: false,
-      },
-      company_city_permission: {
-        type: Boolean,
-        default: false,
-      },
-      company_state_permission: {
-        type: Boolean,
-        default: false,
-      },
-      company_postal_code_permission: {
-        type: Boolean,
-        default: false,
-      },
-      client_Tags: [
-        {
-          value: { type: String, default: null },
-        }
-      ],
-      status: { type: String, default: "active" },
-      referer : {
-        type : String,
-        default:null
-      },
-      card_temp: [{type: Object}],
-      unq_compnany_id: {
-        type: Number,
-        default: 1,
-      },
-     
+      type: Boolean,
+      default: false,
+    },
+    global_email_address_permission: {
+      type: Boolean,
+      default: false,
+    },
+    primary_office_number_permission: {
+      type: Boolean,
+      default: false,
+    },
+    fax_number_permission: {
+      type: Boolean,
+      default: false,
+    },
+    primary_activities_permission: {
+      type: Boolean,
+      default: false,
+    },
+    booking_link_permission: {
+      type: Boolean,
+      default: false,
+    },
+    make_private_permission: {
+      type: Boolean,
+      default: false,
+    },
+    company_line1_address_permission: {
+      type: Boolean,
+      default: false,
+    },
+    company_line2_apartment_permission: {
+      type: Boolean,
+      default: false,
+    },
+    company_city_permission: {
+      type: Boolean,
+      default: false,
+    },
+    company_state_permission: {
+      type: Boolean,
+      default: false,
+    },
+    company_postal_code_permission: {
+      type: Boolean,
+      default: false,
+    },
+    client_Tags: [
+      {
+        value: { type: String, default: null },
+      }
+    ],
+    status: { type: String, default: "active" },
+    referer: {
+      type: String,
+      default: null
+    },
+    card_temp: [{ type: Object }],
+    unq_compnany_id: {
+      type: Number,
+      default: 1,
+    },
+
   },
   { timestamps: true }
 );

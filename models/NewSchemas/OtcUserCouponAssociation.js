@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const UserCouponAssociationSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId, 
@@ -15,7 +14,5 @@ const UserCouponAssociationSchema = new mongoose.Schema({
         default: 1,
     },
 }, { timestamps: true });
-
 const UserCouponAssociation = mongoose.model('UserCouponAssociation', UserCouponAssociationSchema);
-
 module.exports = UserCouponAssociation;
