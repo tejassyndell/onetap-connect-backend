@@ -26,10 +26,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: test code
-      run: |
-      echo "$PORT"
-
     - name: Setup ECR
       run: |
         aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
@@ -38,5 +34,8 @@ jobs:
       run: |    
         docker build -t ${{ env.ECR_REPOSITORY }}/onetap-backend:latest .
         docker push ${{ env.ECR_REPOSITORY }}/onetap-backend:latest
-        
-        
+    
+     # Add a step to echo the value of PORT
+      - name: Display PORT value
+        run: |
+          echo "PORT value is $PORT"
