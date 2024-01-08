@@ -11,11 +11,11 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  PORT: ${{ secrets.PORT }}
-  COOKIE_EXPIRE: ${{ secrets.COOKIE_EXPIRE }}
-  JWT_EXPIRE: ${{ secrets.JWT_EXPIRE }}
-  NODMAILER_EMAIL: ${{ secrets.NODMAILER_EMAIL }}
-  FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+  PORT: ${{ vars.PORT }}
+  COOKIE_EXPIRE: ${{ vars.COOKIE_EXPIRE }}
+  JWT_EXPIRE: ${{ vars.JWT_EXPIRE }}
+  NODMAILER_EMAIL: ${{ vars.NODMAILER_EMAIL }}
+  FRONTEND_URL: ${{ vars.FRONTEND_URL }}
 
 
 jobs:
