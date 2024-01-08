@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const supportTicketSchema = new mongoose.Schema({
   user: {
     type: Schema.Types.ObjectId,
@@ -28,6 +27,4 @@ const supportTicketSchema = new mongoose.Schema({
     ref: 'oneTapConnectMembers',
   },
 }, { timestamps: true });
-
 module.exports = mongoose.model('supportTicket', supportTicketSchema);
-

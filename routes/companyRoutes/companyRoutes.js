@@ -118,9 +118,7 @@ const {
   deleteFaviconImage,
 } = require("../../middleware/imageUpload");
 const { imageinviteUpload } = require("../../middleware/inviteimgupload.js");
-
 const router = express.Router();
-
 router.post("/register", signUP1);
 router.post("/register/step-2/:token", signUP2);
 router.post("/google-sign-up", googleSignUP);
@@ -138,7 +136,6 @@ router.get("/users", isAuthenticatedUser, getUsers);
 router.get("/userInformation", isAuthenticatedUser, getUserInformation);
 router.get("/profile", isAuthenticatedUser, getProfile);
 router.get("/user/:id", isAuthenticatedUser, getUserDetails);
-
 router.post("/user/update/:id", isAuthenticatedUser, updateUserDetails);
 router.put("/user/update/team", isAuthenticatedUser, updateTeam);
 router.put("/user/update/status", isAuthenticatedUser, updateStatus);
@@ -150,9 +147,6 @@ router.post("/deleteCardDetails/:id", isAuthenticatedUser, deleteCardDetails);
 router.post("/invite/user", isAuthenticatedUser, inviteTeamMember);
 router.delete("/invited-users/:invitedUserID", deleteInvitedUser);
 router.post("/user/teamdata", isAuthenticatedUser, getTeam);
-
-// router.post('/add/member/manually',isAuthenticatedUser,addTeamMemberManually);
-
 router.get("/invitedusers", isAuthenticatedUser, getinvitedUsers);
 router.post(
   "/update/billingAddress",
@@ -184,7 +178,6 @@ router.delete("/deleteLogoImage/:logoFileName", deleteLogoImage);
 router.delete("/deleteFaviconImage/:faviconFileName", deleteFaviconImage);
 router.post("/uploadlogo", isAuthenticatedUser, imageUpload, uploadLogo);
 router.post("/uploadfavicon", isAuthenticatedUser, imageUpload, uploadfavicon);
-// router.post('/check-availability', isAuthenticatedUser,checkslugavailiblity)
 router.put("/company/update", isAuthenticatedUser, updateCompanyDetails);
 router.put(
   "/company/update/information",
@@ -205,7 +198,6 @@ router.post(
 );
 router.post("/update-AutoRenewal", isAuthenticatedUser, updateAutoRenewal);
 router.post("/invite/userByCSV", isAuthenticatedUser, inviteTeamMemberByCSV);
-
 router.get(
   "/company_share_referreldata",
   isAuthenticatedUser,
@@ -216,7 +208,6 @@ router.put(
   isAuthenticatedUser,
   updatecompany_referral_data
 );
-
 router.post(
   "/user/shippingAddress/add",
   isAuthenticatedUser,
@@ -227,7 +218,6 @@ router.post("/invited/register-user", registerInvitedUser);
 router.post("/invited/google-sign-up", invitedUserGoogleSignup);
 router.post("/reinviteuser", isAuthenticatedUser, resendemailinvitation);
 router.post("/reject-invitation/:invitationToken", rejectInvitation);
-// router.get("/user/shippingAddresses",isAuthenticatedUser, getAllShippingAddress)
 router.get(
   "/user/all/shippingAddresses",
   isAuthenticatedUser,
@@ -249,25 +239,19 @@ router.get("/get-user-information/:id", getUserinfoDetails);
 router.post("/user/updatelogin", isAuthenticatedUser, updateUserStatus);
 router.post("/user/updaterole", isAuthenticatedUser, updateUserRole);
 router.post("/user/updateplanonrolechange", isAuthenticatedUser, updateUserPlanonRoleChange);
-
-// router.post("/user/removeRole", isAuthenticatedUser, removeUserRole);
 router.post("/users/add-manual-user", isAuthenticatedUser, inviteTeamMembermanually);
 router.post("/users/image-upload", imageinviteUpload, uploadImage);
 router.post("/save_user_data/:id", isAuthenticatedUser, saveuserdata);
 router.post("/save_company_data", isAuthenticatedUser, savecompanydata);
 router.post("/save_userinfo_data/:id", isAuthenticatedUser, saveuserinfodata);
-// router.delete('/deleteuser', isAuthenticatedUser, deleteuser)
-// router.post('/verifyPassword', isAuthenticatedUser, verifypassword);
 router.post('/recover_account', verifyRecoveryToken)
 router.post("/reqmanger", isAuthenticatedUser, requestToManagerForUpdateUserInfo);
-// router.delete("/deleteuser", isAuthenticatedUser, deleteuser);
 router.get('/getProfileimages', isAuthenticatedUser, getProfileimage);
 router.post('/generate-otp', isAuthenticatedUser, generateotp)
 router.post('/verify-otp', verifyotp)
 router.post('/google_acc_recover', google_verify_recover_account)
 router.get('/user_slugs', isAuthenticatedUser, getunique_slug)
 router.get('/userslugs/:id', getuniqueslugbyid)
-
 router.post('/update_accountSetupsteps', isAuthenticatedUser, accountSetupsteps)
 router.post('/cancel_invitation', CancelInvitedUser)
 router.get("/getallcompanies", isAuthenticatedUser, getcompanies);
@@ -276,11 +260,9 @@ router.post('/user/redirect', redirectUser)
 router.post('/share_mycard_email', isAuthenticatedUser, sharemycard_email)
 router.get('/ship/shipstation', postshipstation);
 router.post('/ship/shipstation', getchangesoforder);
-// router.post('/ship/shipstation/webhook', getchangesoforder);
 router.post('/verify_pass', isAuthenticatedUser, verifyPassword)
 router.post('/getorderdetails', getorderdetails)
 router.post('/getAddonsForOrderSummary', getAddonsForOrderSummary)
-// router.post('/ship/rate', getrateoforder)
 // test wordpress route
 router.get('/wp/getdata', sendTestData)
 router.get('/test/cardEditordata', cardEditorData)
@@ -291,12 +273,6 @@ router.post('/removeUserFromSmartAccessories', removeUserFromSmartAccessories)
 router.get('/getUserAssignSmartAccessoriesForCompany', getUserAssignSmartAccessoriesForCompany)
 router.post('/getuniqueslugs', getuniqueslug)
 router.post('/updateUserSlug', updateUserSlug)
-
-
-
 router.post('/createTemplatesData', createTemplatesData)
 router.get('/getAllTemplatesData/:id', getAllTemplatesData)
-
-
-// router.post('/testapii' ,Testapidummy)
 module.exports = router;

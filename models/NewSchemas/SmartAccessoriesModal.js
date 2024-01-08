@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
-
 const purchasedSmartAccessory = new mongoose.Schema(
     {
-
         companyId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'company',
@@ -21,9 +19,7 @@ const purchasedSmartAccessory = new mongoose.Schema(
         price: { type: Number }, // final price
         status: { type: String, default: 'N/A' },
         uniqueId: { type: String, default: '', }
-
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("smart_accessories", purchasedSmartAccessory);

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const smartAccessories_Schema = new mongoose.Schema(
     {
         smartAccessory_Name: {
@@ -30,5 +29,4 @@ const smartAccessories_Schema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('smartAccessories', smartAccessories_Schema);

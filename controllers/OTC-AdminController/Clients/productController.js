@@ -4,15 +4,10 @@ const User = require("../../../models/NewSchemas/UserModel.js");
 const UserInformation = require("../../../models/NewSchemas/users_informationModel.js");
 const Product = require('../../../models/NewSchemas/ProductModel.js');
 const ProductCategory = require("../../../models/NewSchemas/OtcCategoryModel.js");
-
-
-
 // Create or update a product
 exports.createProduct = async (req, res, next) => {
     try {
-
         const { dataToSend, id } = req.body;
-        // console.log("Creating", _id);
         const product = dataToSend
         const {
             name,
@@ -48,14 +43,12 @@ exports.createProduct = async (req, res, next) => {
             variations,
             isActive,
         } = product;
-
         if (id) {
             // Editing an existing product
             const existingProduct = await Product.findById(id);
             if (!existingProduct) {
                 return res.status(404).json({ success: false, message: 'Product not found' });
             }
-
             // Update the product fields
             existingProduct.name = name;
             existingProduct.status = status;
@@ -89,10 +82,8 @@ exports.createProduct = async (req, res, next) => {
             existingProduct.ShippingAndReturnInformation = ShippingAndReturnInformation;
             existingProduct.variations = variations;
             existingProduct.isActive = isActive;
-
             // Save the updated product
             const updatedProduct = await existingProduct.save();
-
             res.status(200).json({ success: true, product: updatedProduct });
         } else {
             // Creating a new product
@@ -130,21 +121,17 @@ exports.createProduct = async (req, res, next) => {
                 variations,
                 isActive,
             });
-
             // Save the new product
             const createdProduct = await newProduct.save();
-
             res.status(201).json({ success: true, product: createdProduct });
         }
     } catch (error) {
-        // Handle error
         next(error);
     }
 };
 exports.createProductCategory = catchAsyncErrors(async (req, res, next) => {
     try {
         const { name, isActive, parentCategory, CustomPermalink, description, featuredImage, status, Visibility, activitylog, categoryType } = req.body;
-        // const categoryType = "Smart-accessories"
         const newCategory = new ProductCategory({
             name,
             isActive,
@@ -164,36 +151,23 @@ exports.createProductCategory = catchAsyncErrors(async (req, res, next) => {
         next(error);
     }
 });
-
-
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
         success: true,
         imageName: req.file.originalname,
     });
 });
-
-
-
-
 exports.imageUpload = catchAsyncErrors(async (req, res, next) => {
     const fileNames = req.fileNames;
     const fileTypes = req.body.fileType || [] // Get the "fileType" from the request body
-
     // Create an array of objects with name and fileType
     const imagesWithTypes = fileNames.map((name, index) => ({
         name,
         fileType: Array.isArray(fileTypes) ? fileTypes[index] : fileTypes,
         // Include the "fileType" for each image
     }));
-
     res.status(200).json({
         success: true,
         imageNames: imagesWithTypes,
     });
 });
-
-
-
-
-

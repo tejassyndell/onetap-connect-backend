@@ -41,30 +41,22 @@ const adminSchema = new mongoose.Schema(
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
-  
   { timestamps: true }
 );
-
 adminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
   }
-  console.log(this);
-  console.log(this.password);
   this.password = await bcrypt.hash(this.password, 10);
 });
-
 adminSchema.methods.comparePassword = async function (enteredPassword) {
-  console.log(enteredPassword, this.password);
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 adminSchema.methods.getJWTToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
-
 adminSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
   this.resetPasswordToken = crypto
@@ -76,5 +68,4 @@ adminSchema.methods.getResetPasswordToken = function () {
 };
 // Create a model based on the schema
 const Admin = mongoose.model("Otc_Adminusers", adminSchema);
-
 module.exports = Admin;

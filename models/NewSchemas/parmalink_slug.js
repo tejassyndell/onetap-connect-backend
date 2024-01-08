@@ -1,11 +1,9 @@
 const mongoose = require("mongoose");
-
 const parmalink_slug_Schema = new mongoose.Schema(
     {
         user_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'user',
-            // required: true,
         },
         companyID: {
             type: mongoose.Schema.Types.ObjectId,
@@ -43,5 +41,4 @@ const parmalink_slug_Schema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("parmalink_slug", parmalink_slug_Schema);

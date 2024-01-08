@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-
-
 const couponSchema = new mongoose.Schema({
   code: {
     type: String,
@@ -27,8 +25,5 @@ const couponSchema = new mongoose.Schema({
   assignedTo:{
     type:String,
   },
- 
 }, { timestamps: true } );
-
 module.exports = mongoose.model('coupon', couponSchema);
-

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const planComparisonSchema = new mongoose.Schema({
     fieldName: String,
     features: [{
@@ -7,7 +6,6 @@ const planComparisonSchema = new mongoose.Schema({
         free: { value: String, comment: String },
         professional: { value: String, comment: String },
         team: { value: String, comment: String },
-        // enterprise: { value: String, comment: String },
     }],
     status: {
         type: String,
@@ -18,9 +16,7 @@ const planComparisonSchema = new mongoose.Schema({
         default: 'Public',
     },
     publishedBy: String,
-
 },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('otc_planComparisions', planComparisonSchema);

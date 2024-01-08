@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const refundsSchema = new mongoose.Schema({
   user_id: {
     type: Schema.Types.ObjectId,
@@ -59,6 +58,4 @@ const refundsSchema = new mongoose.Schema({
     },
   },
 });
-
 module.exports = mongoose.model('refund', refundsSchema);
-

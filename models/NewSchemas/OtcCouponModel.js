@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const CouponSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -92,7 +91,6 @@ const CouponSchema = new mongoose.Schema({
             type: Number,
             default: null,
         },
-
         monthlyDiscountedPrice: {
             type: Number,
             default: null,
@@ -101,7 +99,6 @@ const CouponSchema = new mongoose.Schema({
             type: Number,
             default: null,
         },
-
     },],
     status: {
         type: String,
@@ -187,7 +184,6 @@ const CouponSchema = new mongoose.Schema({
         },
     },],
 }, { timestamps: true });
-
 CouponSchema.pre("validate", function (next) {
     if (!this.freeShipping) {
         this.minimumOrderPrice = undefined;
@@ -205,8 +201,6 @@ CouponSchema.pre('save', function (next) {
     }
     next();
 });
-
 const Coupons =
     mongoose.models.otc_coupon || mongoose.model("otc_coupon", CouponSchema);
-
 module.exports = Coupons;

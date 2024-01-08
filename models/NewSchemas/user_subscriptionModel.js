@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const user_subscription = new mongoose.Schema(
     {
         userID: {
@@ -24,5 +23,4 @@ const user_subscription = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('user_subscription ', user_subscription);

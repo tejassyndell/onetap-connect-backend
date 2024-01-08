@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const user_shipping_addresses = new mongoose.Schema(
     {
         userId : {
@@ -23,5 +22,4 @@ const user_shipping_addresses = new mongoose.Schema(
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("user_shipping_addresses", user_shipping_addresses);

@@ -1,12 +1,8 @@
 const mongoose = require('mongoose');
 const validator = require("validator");
-
 require('dotenv').config();
-
-
 // Role enum for validation
 // const roles = ['administrator', 'manager', 'member'];
-
 const invitedTeamMemberSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -44,11 +40,7 @@ const invitedTeamMemberSchema = new mongoose.Schema({
     required: true,
   },
   team: { type: mongoose.Schema.Types.ObjectId, require: false, set: v => v === '' ? null : v },
-
   status:{type:String,default:'pending'}
-
 }, { timestamps: true } );
-
 module.exports = mongoose.model('invited_team_members', invitedTeamMemberSchema);
-
 // module.exports = InvitedTeamMember;

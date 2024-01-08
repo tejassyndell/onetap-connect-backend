@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
-
 const users_information = new mongoose.Schema(
     {
         user_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'user',
-            // required: true,
         },
         company_ID: {
             type: mongoose.Schema.Types.ObjectId,
@@ -14,32 +12,26 @@ const users_information = new mongoose.Schema(
         team: { type: mongoose.Schema.Types.ObjectId },
         company_name: {
             type: String,
-            // required: [true, "Please Enter Your Company Name"],
         },
         website_url: {
             type: String,
             default: ""
-            // required: [true, "Please Enter The Company URL"],
         },
         global_email: {
             type: String,
-            // required: [true, "Please Enter The Company email"],
         },
         cardEditorData: [
           {
             type: String,
             default : null
-            // required: [true, "Please Enter The Company email"],
           }
       ],
         primary_office_num: {
             type: Number,
             default: ""
-            // required: [true, "Please Enter The Company Number"],
         },
         fax_number: {
             type: Number,
-            // required: [true, "Please Enter The Company fax Number"],
         },
         address: {
             line1: { type: String, default: null },
@@ -59,7 +51,6 @@ const users_information = new mongoose.Schema(
         },
         business_email: {
             type: String,
-            // required: [true, "Please Enter The Company business email"],
         },
         booking_links: {
             type: String,
@@ -83,7 +74,6 @@ const users_information = new mongoose.Schema(
             {
                 name: { type: String, default: null },
                 value: { type: String, default: null },
-                
             },
         ],
         shipping_method: [{
@@ -98,20 +88,14 @@ const users_information = new mongoose.Schema(
               quantity: { type: Number },
               price: { type: Number }, // final price
               status: { type: String, default: 'N/A' },
-      
             },
           ],
         subscription_details: {
-            // subscription: {
-            //   type: mongoose.Schema.Types.ObjectId,
-            //   ref: "Subscription",
-            // },
             planID: { type: mongoose.Schema.Types.ObjectId , ref: "otc_plans"},
             subscription_id : {type : String , default : null},
             subscription_schedules_id : {type : String , default : null},
             sub_shed_itemId : {type : String , default : null},
             customer_id : {type : String , default : null},
-            // addones: [{type: mongoose.Schema.Types.ObjectId}],
             addones: [
               { 
                addonId : { type: mongoose.Schema.Types.ObjectId , ref: "otc_addons"},
@@ -125,7 +109,6 @@ const users_information = new mongoose.Schema(
             userCount: { type : Number},
             total_amount: { type: Number },
             creditBalance : { type: Number, default: null },
-            // payment_status: { type: String },
             billing_cycle: { type: String },
             endDate: { type: Number, default : null },
             plan: { type: String , default : null },
@@ -140,9 +123,7 @@ const users_information = new mongoose.Schema(
             auto_renewal: { type: Boolean, default: true },
             taxRate: { type: String , default:'0'},
           },
-
           isInitailUser: { type: Boolean, default: true  },
-
           connect_button_behaviour: {
             type: Boolean,
             default: false,
@@ -172,9 +153,7 @@ const users_information = new mongoose.Schema(
               default: false,
             },
           },
-        // addones: [{ service: { type: String }, price: { type: Number } }],
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model('users_information', users_information);

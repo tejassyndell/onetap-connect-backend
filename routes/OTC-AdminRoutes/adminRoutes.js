@@ -16,18 +16,16 @@ const {
   publishAddCompanyCard,
   forgotPasswordAdmin,
   resetPasswordAdmin,
-  admincheckoutHandler, 
+  admincheckoutHandler,
   getAllTemplatesData,
-  createTemplatesData} = require("../../controllers/OTC-AdminController/Clients/clientsController");
+  createTemplatesData } = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
-
 const { newTestAPIS } = require('../../controllers/OTC-AdminController/Clients/couponController');
 const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
 const { otcImageUpload, deleteimageupload } = require("../../middleware/OtcImageUpload");
 const { templateImageUpload } = require("../../middleware/OTC-TemplateImageUpload");
-
 router.get("/admin/mockdata/:email", mockdata);
 router.post("/admin/updateCard/:email", updateCard);
 router.post("/admin/addCompanyCard/:email", addCompanyCard);
@@ -41,15 +39,11 @@ router.post("/admin/signup", Signup);
 router.post("/admin/login", OtcLogin);
 router.post("/admin/forgot/password", forgotPasswordAdmin);
 router.post("/admin/reset/password/:token", resetPasswordAdmin);
-
 router.post("/admin/logout", Otclogout);
 router.get("/admin/loadadmin", isOtcAdminAuthenticatedUser, getOtcAdminProfile);
-
 router.post("/admin/product", createProduct);
 router.post("/admin/productCategory/create", createCategories);
-// router.post("/admin/productCategory/img" ,productImageUpload, imageUpload);
 router.post("/admin/imageUpload", productImageUpload, imageUpload);
-// router.post("/admin/productCategory/create", productImageUpload ,createProductCategories);
 router.get("/admin/productCategory/fetch", getCategories);
 router.post("/admin/imageUpload", productImageUpload, imageUpload);
 router.get("/admin/users", isOtcAdminAuthenticatedUser, getallusers);
@@ -62,17 +56,13 @@ router.get(
 router.get("/admin/companyusers/:id", getallusersofcompany);
 router.get("/admin/getcompanyuserstatus", getcompanyuserstatus);
 router.post("/admin/createproductCategory", createProductCategory);
-
 router.post("/admin/updateAddons", updateAddons);
 router.get("/admin/getAddons", getAddons);
 router.post("/admin/plan/create", createPlan);
 router.get("/admin/plans", getPlans);
 router.post("/admin/getorderssofcompany", getOrderssofcompany);
-// router.post("/admin/coupons/create", newTestAPIS);
-
 router.get("/admin/getCoupon", getCoupon);
 router.post("/admin/coupon/create", createCoupon);
-
 router.post("/admin/user/update/team", updateTeamofuser);
 router.post("/admin/user/update/status", updateStatusofuser);
 router.post("/admin/company/update/status", updateStatusofcompany);
@@ -93,7 +83,6 @@ router.post(
 );
 router.post(
   "/admin/upload-logo-picture",
-  // isOtcAdminAuthenticatedUser,
   otcImageUpload,
   uploadLogo
 );
@@ -109,7 +98,6 @@ router.post(
   GetSubscriptionDetailsForAdmin
 );
 router.post("/admin/SubsciptiondetialsofiD", getsubscriptiondetails);
-
 router.post("/admin/invite/user", AdmininviteTeamMember);
 router.post("/admin/invite/userByCSV", AdmininviteTeamMemberByCSV);
 router.post("/admin/invite/manual", inviteTeamMembermanuallybyadmin);
@@ -118,10 +106,8 @@ router.post(
   "/admin/resendemailinvitationbyadmin",
   resendemailinvitationbyadmin
 );
-
 router.post("/admin/createclient", createClient);
 router.get("/admin/getActiveUSers", getActiveUsersOfCompany);
-
 router.get("/admin/orders", isOtcAdminAuthenticatedUser, getAllOrders);
 router.post("/admin/orders/update", isOtcAdminAuthenticatedUser, updateOrders);
 router.post("/admin/orders/delete", isOtcAdminAuthenticatedUser, deleteOrders);
@@ -185,7 +171,6 @@ router.post(
   updateBillingAddressofcompany
 );
 router.post("/admin/getallcompanynames", getallcompanynames);
-
 router.get("/admin/otc_adminusers", otcadminusers);
 router.post("/admin/otc_addAdminUser", addAdminUser);
 router.post("/admin/otc_updateAdminUser/:userId", updateAdminUser);
@@ -213,5 +198,4 @@ router.post('/admin/checkoutforclient', admincheckoutHandler);
 router.post('/admin/createTemplatesData', createTemplatesData)
 router.get('/admin/getAllTemplatesData', getAllTemplatesData)
 router.post("/admin/templates/imageUpload", templateImageUpload, imageUpload);
-
 module.exports = router;

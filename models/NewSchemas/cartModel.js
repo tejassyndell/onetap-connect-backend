@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const Cart_Schema = new mongoose.Schema(
     {
         userID: {
@@ -15,9 +14,7 @@ const Cart_Schema = new mongoose.Schema(
                 variation: String,
             },
         ],
-
     },
     { timestamps: true }
 );
-
 module.exports = mongoose.model("Cart", Cart_Schema);

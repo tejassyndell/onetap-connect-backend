@@ -31,11 +31,9 @@ const {
 } = require("../../controllers/paymentController/paymentcontroller");
 const router = express.Router();
 const { isAuthenticatedUser } = require("../../middleware/auth");
-
 router.post('/payment/process', createSubscription)
 router.post('/payment/create-customer', createCustomer)
 router.post('/payment/tax', createTax)
-// router.post('/payment/subcription', createSubscription)
 router.post('/payment/switchToManualRenewal', switchToManualRenewal)
 router.post("/create-order", createOrder);
 router.post('/payment/change-plan', switchPlan)
@@ -47,11 +45,8 @@ router.post('/payment/cancelSubscription/deactivateaccount', cancelPlandeactivat
 router.post('/payment/get-saved-cards', fetchCards)
 router.post('/payment/update-card', isAuthenticatedUser, updateCards)
 router.post("/addon-purchase", isAuthenticatedUser, purchaseaddon);
-router.post("/user-purchase",isAuthenticatedUser , purchaseusers);
-router.post("/payment/manual-renew-subscription" , manualRenewSubscription);
-
-
-
+router.post("/user-purchase", isAuthenticatedUser, purchaseusers);
+router.post("/payment/manual-renew-subscription", manualRenewSubscription);
 // ---------OTC ADMIN PANEL------------
 router.post('/admin/payment/get-saved-cards', fetchCardsforOtcAdminPanel)
 router.post('/admin/payment/update-card', updateCardsforOtcAdminPanel)
