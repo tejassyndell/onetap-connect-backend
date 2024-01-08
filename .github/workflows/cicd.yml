@@ -35,7 +35,6 @@ jobs:
         docker build -t ${{ env.ECR_REPOSITORY }}/onetap-backend:latest .
         docker push ${{ env.ECR_REPOSITORY }}/onetap-backend:latest
     
-     # Add a step to echo the value of PORT
-      - name: Display PORT value
-        run: |
-          echo "PORT value is $PORT"
+    - name: Display PORT value
+      run: |
+        echo "PORT value is $PORT"
