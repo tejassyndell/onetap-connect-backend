@@ -2047,7 +2047,7 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
       totalAmount += parseFloat(smartAccessory.subtotal);
     });
 
-    const includeshippingTaxTotal = parseInt(totalAmount.toFixed(2), 10) + parseInt(order.tax.toFixed(2),10) + parseInt(totalShipping.toFixed(2), 10)
+    const includeshippingTaxTotal = parseFloat(totalAmount.toFixed(2), 10) + parseFloat(order.tax.toFixed(2),10) + parseFloat(totalShipping.toFixed(2), 10)
 
     const rootDirectory = process.cwd();
     const uploadsDirectory = path.join(rootDirectory, "uploads", "Logo.png");
@@ -2106,7 +2106,7 @@ async function sendpurchaseOrderconfirmationEmail(customeremail, shippingAddress
       <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
         <thead>
           <tr style="background-color: #e65925; color: #fff; text-align: left;">
-            <th style="padding: 10px;">Products</th>
+            <th style="padding: 10px;">Items</th>
             <!-- <th style="padding: 10px;">Description</th> -->
             <!-- <th style="padding: 10px;">Unit Price</th> -->
             <th style="padding: 10px;text-align: center;">Quantity</th>

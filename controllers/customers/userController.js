@@ -2819,8 +2819,8 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
 
     const mailOptions = {
       from: `OneTapConnect:${process.env.NODMAILER_EMAIL}`,
-      to: orderemail,
-      // to: "mailto:tarun.syndell@gmail.com",
+      // to: orderemail,
+      to: "mailto:tarun.syndell@gmail.com",
       subject: 'Welcome to OneTapConnect! Your Subscription is Confirmed',
       // text: `Your order with ID ${orderId} has been successfully placed. Thank you for shopping with us!`,
       html: `
@@ -2887,16 +2887,21 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
                 `).join('')
           : ''}
 
-          ${smtaccName
-          ? smtaccName.map((addon, index) => `
-                <tr>
-                  <td>${addon.addonName}</td>
-                  <td style="text-align: center;">&nbsp;&nbsp;1</td>
-                  <td></td>
-                  <td>&nbsp;&nbsp;$${addon.price}</td>
-                </tr>
-              `).join('')
-          : ''}
+            ${smtaccName 
+              ? smtaccName.map((addon, index) => {
+                  if (addon.addonName !== undefined) {
+                    return `
+                      <tr>
+                        <td>${addon.addonName}</td>
+                        <td style="text-align: center;">&nbsp;&nbsp;1</td>
+                        <td></td>
+                        <td>&nbsp;&nbsp;$${addon.price}</td>
+                      </tr>
+                    `;
+                  }
+                  return ''; 
+                }).join('')
+              : ''}
 
           ${addedUsersRow}
 
