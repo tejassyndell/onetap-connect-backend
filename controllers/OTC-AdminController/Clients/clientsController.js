@@ -36,6 +36,7 @@ const ProductModel = require("../../../models/NewSchemas/ProductModel.js");
 const GuestCustomer = require("../../../models/NewSchemas/GuestCustomer.js");
 const UserCouponAssociation = require("../../../models/NewSchemas/OtcUserCouponAssociation.js");
 const OtcPlanComparisonModel = require("../../../models/NewSchemas/OtcPlanComparisonModel.js");
+const OtcTemplatesModel = require("../../../models/NewSchemas/OtcTemplatesModel.js");
 function generateUniqueCode() {
   let code;
   const alphabetic = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -100,15 +101,15 @@ exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
 
   // Extract plan name from subscription details
   const planName = userInfo.subscription_details.plan;
- 
-  const role =  user.role;
+
+  const role = user.role;
   // Send the response
   res.status(200).json({ message: 'Fetch Plan Successfully', planName, role });
- });
- 
+});
 
 
- exports.mockdata = catchAsyncErrors(async (req, res, next) => {
+
+exports.mockdata = catchAsyncErrors(async (req, res, next) => {
 
   const { email } = req.params;
   const user = await User.findOne({ email }).populate("companyID");
@@ -123,7 +124,7 @@ exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
       }
     };
     res.send({ modifiedData, role });
-  } else if(user && user.companyID.card_temp[0] && user.companyID.card_temp[0].content && user.companyID.card_temp[0].content.length > 0) {
+  } else if (user && user.companyID.card_temp[0] && user.companyID.card_temp[0].content && user.companyID.card_temp[0].content.length > 0) {
     //getting company templates 
     const modifiedData = {
       "/": {
@@ -152,11 +153,11 @@ exports.fetchPlan = catchAsyncErrors(async (req, res, next) => {
 
     console.log(':::::::::::::lll::::::::::::::', modifiedData)
 
-    res.send({modifiedData, role});
+    res.send({ modifiedData, role });
 
     res.status(404).send({ error: "Data not found or has unexpected structure" });
   }
-  res.send({role});
+  res.send({ role });
 });
 
 
@@ -4004,7 +4005,7 @@ exports.resetPasswordAdmin = catchAsyncErrors(async (req, res, next) => {
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
-console.log("????????????????????????????????????????????????????????????????????????????????????????")
+  console.log("????????????????????????????????????????????????????????????????????????????????????????")
   console.log(user);
   console.log("????????????????????????????????????????????????????????????????????????????????????????")
 
@@ -4285,12 +4286,12 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     const decreaseCoupon = await Coupon.findOneAndUpdate(
       { code: couponData.appliedCouponCode },
       { $inc: { usageLimit: -1 } },
-      { new: true } 
-    );  
+      { new: true }
+    );
     if (decreaseCoupon && decreaseCoupon.usageLimit === 0) {
       await decreaseCoupon.updateOne({ $set: { status: "Archived" } });
     }
-    console.log(logCoupons , decreaseCoupon);
+    console.log(logCoupons, decreaseCoupon);
   }
 
   // status update for supeadmin deactivated account.
@@ -4318,9 +4319,9 @@ exports.admincheckoutHandler = catchAsyncErrors(async (req, res, next) => {
     console.log('No matching users found for companyUsers update.');
     // return res.status(404).json({ success: false, message: 'User not found' });
   }
-if(oldorderid){
-  const oldorder = await Order.findByIdAndDelete(oldorderid);
-}
+  if (oldorderid) {
+    const oldorder = await Order.findByIdAndDelete(oldorderid);
+  }
 
   await user.save();
   await company.save();
@@ -4337,3 +4338,56 @@ if(oldorderid){
   });
 }
 );
+
+
+exports.getAllTemplatesData = catchAsyncErrors((async (req, res, next) => {
+  const templates = await OtcTemplatesModel.find();
+  console.log(templates, '.........................................')
+  console.log(templates, '.........................................')
+  console.log(templates, '.........................................')
+  if (!templates) {
+    return next(new ErrorHandler("No templates", 400))
+  }
+  res.status(201).json({
+    success: true,
+    templates
+
+  })
+}))
+
+
+exports.createTemplatesData = catchAsyncErrors(async (req, res, next) => {
+  const { datatoSend, id } = req.body;
+
+  try {
+    let newTemplate;
+
+    if (!id) {
+      newTemplate = await OtcTemplatesModel.create(datatoSend);
+    } else {
+      newTemplate = await OtcTemplatesModel.findByIdAndUpdate(id, datatoSend, {
+        new: true, // Return the updated document
+        runValidators: true, // Run validators on update
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      newTemplate,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+    });
+  }
+});
+
+
+exports.templateUploadImage = catchAsyncErrors(async (req, res, next) => {
+  res.status(200).json({
+      success: true,
+      imageName: req.file.originalname,
+  });
+});

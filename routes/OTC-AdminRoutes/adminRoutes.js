@@ -13,10 +13,12 @@ const {
   getAllComparisionData,
   updateComparisionData,
   publishUpdateCard,
-  publishAddCompanyCard,  
+  publishAddCompanyCard,
   forgotPasswordAdmin,
   resetPasswordAdmin,
-  admincheckoutHandler} = require("../../controllers/OTC-AdminController/Clients/clientsController");
+  admincheckoutHandler, 
+  getAllTemplatesData,
+  createTemplatesData} = require("../../controllers/OTC-AdminController/Clients/clientsController");
 const { isOtcAdminAuthenticatedUser } = require("../../middleware/OtcAdminAuth");
 const { productImageUpload } = require("../../middleware/OTC-AdminProductimageUpload");
 const { createProduct, imageUpload, createProductCategory } = require("../../controllers/OTC-AdminController/Clients/productController");
@@ -24,6 +26,7 @@ const { createProduct, imageUpload, createProductCategory } = require("../../con
 const { newTestAPIS } = require('../../controllers/OTC-AdminController/Clients/couponController');
 const { uploadProfilePicture, uploadfavicon, uploadLogo } = require("../../controllers/customers/userController");
 const { otcImageUpload, deleteimageupload } = require("../../middleware/OtcImageUpload");
+const { templateImageUpload } = require("../../middleware/OTC-TemplateImageUpload");
 
 router.get("/admin/mockdata/:email", mockdata);
 router.post("/admin/updateCard/:email", updateCard);
@@ -207,4 +210,8 @@ router.post('/admin/updateComparisionData', updateComparisionData);
 router.get('/admin/featureData', getAllComparisionData);
 router.get('/admin/guest-users', getGuestUsers);
 router.post('/admin/checkoutforclient', admincheckoutHandler);
+router.post('/admin/createTemplatesData', createTemplatesData)
+router.get('/admin/getAllTemplatesData', getAllTemplatesData)
+router.post("/admin/templates/imageUpload", templateImageUpload, imageUpload);
+
 module.exports = router;

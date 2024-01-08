@@ -2475,9 +2475,9 @@ exports.checkoutHandler = catchAsyncErrors(async (req, res, next) => {
     serviceCode,
     totalShipping,
   } = req.body;
-  console.log("????????????????????????????????????????????????????????????????????????????????????????????????????????")
-console.log(planData.smartAccessories)
-console.log("????????????????????????????????????????????????????????????????????????????????????????????????????????")
+
+  console.log(planData.smartAccessories)
+
 
   const existingCards = await Cards.find({ userID: id });
 
@@ -2637,7 +2637,7 @@ console.log("???????????????????????????????????????????????????????????????????
       addones: planData.addones && planData.addones.map((addon) => ({
         addonId: addon.addonId,  // Convert addonId to ObjectId
         status: addon.status,
-        addonName:addon.addonName,
+        addonName: addon.addonName,
         assignTo: addon.assignTo,
         price: addon.price,
       })),
@@ -2875,17 +2875,17 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
             <td>&nbsp;&nbsp;$${plandataamount}</td>
           </tr>
           ${smtacc
-            ? smtacc.map((smartAccessory, index) => `
+          ? smtacc.map((smartAccessory, index) => `
                   <tr>
                     <td>${smartAccessory.productName}</td>
                     <td style="text-align: center;">&nbsp;&nbsp;${smartAccessory.quantity}</td>
                     <td></td>
                     <td>&nbsp;&nbsp;$${smartAccessory.discountAmount === 0
-                      ? smartAccessory.price
-                      : (smartAccessory.price - smartAccessory.discountAmount) * smartAccessory.quantity}</td>
+              ? smartAccessory.price
+              : (smartAccessory.price - smartAccessory.discountAmount) * smartAccessory.quantity}</td>
                   </tr>
                 `).join('')
-            : ''}
+          : ''}
 
           ${smtaccName
           ? smtaccName.map((addon, index) => `
@@ -2911,13 +2911,13 @@ async function sendOrderConfirmationEmail(orderfirstname, orderemail, orderId, p
             <td style="text-align: center;">&nbsp;&nbsp;method</td>
           </tr> -->
           ${plandatainitial !== null
-            ? `<tr>
+          ? `<tr>
                 <td></td>
                 <td></td>
                 <td style="text-align: end;">Initial setup fee</td>
                 <td>&nbsp;&nbsp;$${plandatainitial}</td>
               </tr>`
-            : ''}
+          : ''}
           <tr style="border-bottom: 1px solid #ccc;">
             <td></td>
             <td></td>
@@ -6572,20 +6572,21 @@ exports.updateUserSlug = catchAsyncErrors(async (req, res, next) => {
 
 
 
-exports.getAllTemplatesData = catchAsyncErrors((async (req, res, next) => {
-  const templates = await TemplatesModel.find();
-  console.log(templates, '.........................................')
-  console.log(templates, '.........................................')
-  console.log(templates, '.........................................')
-  if (!templates) {
-    return next(new ErrorHandler("No templates", 400))
-  }
-  res.status(201).json({
-    success: true,
-    templates
+exports.getAllTemplatesData = catchAsyncErrors(async (req, res, next) => {
+  const { id: company } = req.params;
 
-  })
-}))
+  const templates = await TemplatesModel.find({ company });
+
+  if (!templates || templates.length === 0) {
+    return next(new ErrorHandler("No templates found for the given company", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    templates,
+  });
+});
+
 
 
 exports.createTemplatesData = catchAsyncErrors(async (req, res, next) => {
