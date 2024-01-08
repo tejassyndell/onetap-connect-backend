@@ -16,6 +16,22 @@ env:
   JWT_EXPIRE: ${{ vars.JWT_EXPIRE }}
   NODMAILER_EMAIL: ${{ vars.NODMAILER_EMAIL }}
   FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+  DB_URI: ${{ secrets.DB_URI }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  NODEMAILER_PASS: ${{ secrets.NODEMAILER_PASS }}
+  STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+  STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+  MONGO_CONNECT_SECERET: ${{ secrets.MONGO_CONNECT_SECERET }}
+  PLAN_PRODUCT_ID: ${{ secrets.PLAN_PRODUCT_ID }}
+  Professional_monthly: ${{ secrets.Professional_monthly }}
+  Professional_Yearly: ${{ secrets.Professional_Yearly }}
+  Team_monthly: ${{ secrets.Team_monthly }}
+  Team_Yearly: ${{ secrets.Team_Yearly }}
+  MONTHLY_PROFESSIONAL_PLAN_PRICE_ID: ${{ secrets.MONTHLY_PROFESSIONAL_PLAN_PRICE_ID }}
+  MONTHLY_TEAM_PLAN_PRICE_ID: ${{ secrets.MONTHLY_TEAM_PLAN_PRICE_ID }}
+  Subscription_Addons: ${{ secrets.Subscription_Addons }}
+  Tax_forproducts: ${{ secrets.Tax_forproducts }}
+  Stripe_webhook_signing_secret: ${{ secrets.Stripe_webhook_signing_secret }}
 
 
 jobs:
@@ -39,3 +55,4 @@ jobs:
       run: |
         echo "PORT value is $PORT"
         echo "PORT value is $NODMAILER_EMAIL"
+        echo "PORT value is $DB_URI"
