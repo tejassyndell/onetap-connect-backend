@@ -12,34 +12,34 @@ const OtcTemplatesModel = new mongoose.Schema(
         },
         status: {
             type: String,
+            default: 'Draft',
+        },
+        image: {
+            type: String,
             required: true,
         },
-        Assigned_To: {
+        createdBy: {
             type: String,
         },
-        images: {
-            type: [String],
-            required: true,
-        },
-        testimonials: [
-            {
-                name: {
-                    type: String,
-                    required: true,
-                },
-                content: {
-                    type: String,
-                    required: true,
-                }
-            }
-        ],
-        Assigned_Group: [
-            {
-                type: String,
-                value: { type: String },
-                required: true,
-            }
-        ],
+        // testimonials: [
+        //     {
+        //         name: {
+        //             type: String,
+        //             required: true,
+        //         },
+        //         content: {
+        //             type: String,
+        //             required: true,
+        //         }
+        //     }
+        // ],
+        // Assigned_Group: [
+        //     {
+        //         type: String,
+        //         value: { type: String },
+        //         required: true,
+        //     }
+        // ],
     },
     { timestamps: true }
 );

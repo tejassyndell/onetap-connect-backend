@@ -295,7 +295,7 @@ router.post('/updateUserSlug', updateUserSlug)
 
 
 router.post('/createTemplatesData', createTemplatesData)
-router.get('/getAllTemplatesData', getAllTemplatesData)
+router.get('/getAllTemplatesData/:id', getAllTemplatesData)
 
 
 // router.post('/testapii' ,Testapidummy)

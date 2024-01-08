@@ -16,14 +16,15 @@ const TemplatesModel = new mongoose.Schema(
         },
         status: {
             type: String,
+            default: 'Draft',
         },
         Assigned_To: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "team",
             default: null,
         },
-  
-     
+
+
     },
     { timestamps: true }
 );
